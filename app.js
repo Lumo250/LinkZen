@@ -7,7 +7,52 @@ let data = {
   zoomEnabled: false,
   sortBy: 'name' // 'name' or 'date'
 };
+// --- BROADCAST CHANNEL PER COMUNICAZIONE TRA PAGINE ---
+const bc = new BroadcastChannel("linkzen-channel");
 
+// Rispondi ai messaggi
+bc.onmessage = (event) => {
+  const msg = event.data;
+  if (!msg || !msg.type) return;
+
+  if (msg.type === "linkzen-ping") {
+    // Rispondi con un pong per segnalare che LinkZen è aperto
+    bc.postMessage({ type: "linkzen-pong" });
+  }
+
+  if (msg.type === "linkzen-add") {
+    // msg dovrebbe contenere url e title codificati URI
+    const url = decodeURIComponent(msg.url || "");
+    const title = decodeURIComponent(msg.title || url);
+
+    if (!url) return;
+
+    // Trova categoria da parole chiave apprese
+    let category = "Uncategorized";
+    for (const kw of data.learnedKeywords) {
+      if (title.toLowerCase().includes(kw.toLowerCase())) {
+        category = kw;
+        break;
+      }
+    }
+    if (!data.categories[category]) {
+      data.categories[category] = [];
+    }
+
+    // Evita duplicati
+    const exists = data.categories[category].some(l => l.url === url);
+    if (!exists) {
+      data.categories[category].push({
+        url,
+        title,
+        date: new Date().toISOString(),
+        favicon: "" // Potresti migliorare con favicon se vuoi
+      });
+      saveData();
+      renderAll();
+    }
+  }
+};
 function getQueryParam(name) {
   const params = new URLSearchParams(window.location.search);
   return params.get(name);
