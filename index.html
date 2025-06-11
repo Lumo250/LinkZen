@@ -3,59 +3,114 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LinkZen PWA</title>
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="style.css" />
+  <title>LinkZen</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 1rem;
+      background: white;
+      color: #222;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark {
+      background: #121212;
+      color: #eee;
+    }
+    input[type="text"] {
+      width: 70%;
+      padding: 0.3rem;
+      font-size: 1rem;
+    }
+    button {
+      margin-left: 0.3rem;
+      padding: 0.3rem 0.7rem;
+      cursor: pointer;
+      border-radius: 3px;
+      border: 1px solid #444;
+      background: #eee;
+      color: #222;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    button:hover {
+      background: #ccc;
+    }
+    body.dark button {
+      background: #333;
+      color: #eee;
+      border-color: #666;
+    }
+    body.dark button:hover {
+      background: #555;
+    }
+    ul {
+      margin-top: 1rem;
+      padding-left: 1.2rem;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+    li {
+      margin-bottom: 0.4rem;
+    }
+    li a {
+      text-decoration: none;
+      color: inherit;
+      margin-right: 0.8rem;
+    }
+    li a:hover {
+      text-decoration: underline;
+    }
+    #undo-btn, #export-btn {
+      margin-top: 0.5rem;
+      display: none;
+    }
+    #filter-sort {
+      margin-top: 0.7rem;
+    }
+    select {
+      margin-right: 0.5rem;
+      padding: 0.2rem 0.4rem;
+    }
+    label {
+      user-select: none;
+    }
+    #toggle-theme {
+      float: right;
+      margin-top: -1.6rem;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>LinkZen</h1>
-    <label>
-      Dark mode
-      <input type="checkbox" id="toggle-theme" />
-    </label>
-    <label>
-      Zoom
-      <input type="range" id="zoom-range" min="80" max="150" value="100" />
-      <span id="zoom-label">100%</span>
-    </label>
-  </header>
+  <h2>LinkZen <small>📌</small></h2>
+  <input id="url-input" type="text" placeholder="Incolla URL qui..." />
+  <button id="save-btn">Salva</button>
+  <input type="checkbox" id="toggle-theme" title="Modalità scura" />
+  
+  <div id="filter-sort">
+    <label for="filter-cat">Categoria:</label>
+    <select id="filter-cat">
+      <option value="all">Tutte</option>
+      <option value="News">News</option>
+      <option value="Shopping">Shopping</option>
+      <option value="Code">Code</option>
+      <option value="Video">Video</option>
+      <option value="Forum">Forum</option>
+      <option value="Documentazione">Documentazione</option>
+      <option value="Altro">Altro</option>
+    </select>
+    <label for="sort-by">Ordina per:</label>
+    <select id="sort-by">
+      <option value="added">Aggiunta (default)</option>
+      <option value="title">Titolo</option>
+      <option value="category">Categoria</option>
+      <option value="url">URL</option>
+    </select>
+  </div>
 
-  <section id="add-link-section">
-    <input id="url-input" type="url" placeholder="Inserisci URL" />
-    <input id="title-input" type="text" placeholder="Titolo (opzionale)" />
-    <select id="category-select"></select>
-    <button id="save-btn">Salva Link</button>
-  </section>
+  <ul id="url-list"></ul>
 
-  <section id="category-management">
-    <input id="new-category-input" type="text" placeholder="Nuova categoria" />
-    <button id="add-category-btn">Aggiungi categoria</button>
-  </section>
-
-  <section id="filter-section">
-    <label>Filtra per categoria: 
-      <select id="filter-category-select">
-        <option value="">Tutte</option>
-      </select>
-    </label>
-    <button id="sort-btn">Ordina per titolo</button>
-  </section>
-
-  <section>
-    <ul id="url-list"></ul>
-  </section>
-
-  <section id="actions">
-    <button id="undo-btn" style="display:none;">Undo Delete</button>
-    <button id="export-btn">Esporta JSON</button>
-    <input type="file" id="import-file" style="display:none;" />
-    <button id="import-btn">Importa JSON</button>
-  </section>
-
-  <footer>
-    <small>© 2025 LinkZen PWA</small>
-  </footer>
+  <button id="undo-btn">Annulla ultima cancellazione</button>
+  <button id="export-btn">Esporta JSON</button>
 
   <script src="app.js"></script>
 </body>
