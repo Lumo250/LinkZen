@@ -1,0 +1,53 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 1rem;
+  font-size: 100%;
+  background: #fff;
+  color: #000;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark {
+  background: #222;
+  color: #eee;
+}
+
+header, section, footer {
+  margin-bottom: 1rem;
+}
+
+ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+button {
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+input[type="url"], input[type="text"], select {
+  padding: 0.3rem;
+  margin-right: 0.5rem;
+  min-width: 200px;
+}
+
+#filter-section label, #add-link-section, #category-management {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#undo-btn {
+  color: red;
+}
+
+footer {
+  font-size: 0.8rem;
+  color: #888;
+  text-align: center;
+}

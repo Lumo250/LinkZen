@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LinkZen PWA</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>LinkZen</h1>
+    <label>
+      Dark mode
+      <input type="checkbox" id="toggle-theme" />
+    </label>
+    <label>
+      Zoom
+      <input type="range" id="zoom-range" min="80" max="150" value="100" />
+      <span id="zoom-label">100%</span>
+    </label>
+  </header>
+
+  <section id="add-link-section">
+    <input id="url-input" type="url" placeholder="Inserisci URL" />
+    <input id="title-input" type="text" placeholder="Titolo (opzionale)" />
+    <select id="category-select"></select>
+    <button id="save-btn">Salva Link</button>
+  </section>
+
+  <section id="category-management">
+    <input id="new-category-input" type="text" placeholder="Nuova categoria" />
+    <button id="add-category-btn">Aggiungi categoria</button>
+  </section>
+
+  <section id="filter-section">
+    <label>Filtra per categoria: 
+      <select id="filter-category-select">
+        <option value="">Tutte</option>
+      </select>
+    </label>
+    <button id="sort-btn">Ordina per titolo</button>
+  </section>
+
+  <section>
+    <ul id="url-list"></ul>
+  </section>
+
+  <section id="actions">
+    <button id="undo-btn" style="display:none;">Undo Delete</button>
+    <button id="export-btn">Esporta JSON</button>
+    <input type="file" id="import-file" style="display:none;" />
+    <button id="import-btn">Importa JSON</button>
+  </section>
+
+  <footer>
+    <small>© 2025 LinkZen PWA</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
