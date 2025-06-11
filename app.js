@@ -51,9 +51,6 @@ function addLinkFromQuery() {
   window.history.replaceState({}, document.title, window.location.pathname);
 }
 
-// Chiamala subito all’avvio
-addLinkFromQuery();
-
 // LOAD data from localStorage
 function loadData() {
   const saved = localStorage.getItem('linkZenData');
@@ -157,7 +154,6 @@ function renderLearnedKeywords() {
     const li = document.createElement('li');
     li.textContent = kw;
 
-    // bottone rimuovi
     const removeBtn = document.createElement('button');
     removeBtn.textContent = '✖';
     removeBtn.title = 'Rimuovi parola chiave';
@@ -173,7 +169,6 @@ function renderLearnedKeywords() {
   }
 }
 
-// Aggiungi categoria
 function addCategory(name) {
   if (!name) return alert('Inserisci il nome della categoria');
   if (data.categories[name]) return alert('Categoria già esistente');
@@ -183,10 +178,8 @@ function addCategory(name) {
   renderAll();
 }
 
-// Aggiungi link manualmente (con data)
 function addVisitedLinkManually(url) {
   if (!url) return;
-  // prova a trovare categoria in base a parole chiave apprese
   let categoryFound = null;
   for (const kw of data.learnedKeywords) {
     if (url.includes(kw)) {
@@ -198,7 +191,6 @@ function addVisitedLinkManually(url) {
 
   if (!data.categories[categoryFound]) data.categories[categoryFound] = [];
 
-  // evita duplicati
   if (data.categories[categoryFound].some(l => l.url === url)) {
     alert('Link già salvato in questa categoria');
     return;
@@ -210,7 +202,6 @@ function addVisitedLinkManually(url) {
   renderAll();
 }
 
-// Cancella tutte parole chiave apprese
 function clearLearnedKeywords() {
   if (!confirm('Sei sicuro di voler cancellare tutte le parole chiave apprese?')) return;
   pushUndo();
@@ -219,7 +210,6 @@ function clearLearnedKeywords() {
   renderAll();
 }
 
-// Dark Mode toggle
 function updateDarkMode() {
   const app = document.getElementById('app');
   if (data.darkMode) {
@@ -237,7 +227,6 @@ function toggleDarkMode() {
   renderAll();
 }
 
-// Zoom testo toggle
 function updateZoom() {
   const app = document.getElementById('app');
   if (data.zoomEnabled) {
@@ -253,7 +242,6 @@ function toggleZoom() {
   renderAll();
 }
 
-// Aggiorna radio ordinamento selezionata
 function updateSortOptions() {
   const radios = document.querySelectorAll('input[name="sort"]');
   radios.forEach(radio => {
@@ -266,8 +254,8 @@ function updateSortOptions() {
 document.addEventListener('DOMContentLoaded', () => {
   loadData();
   renderAll();
+  addLinkFromQuery();
 
-  // Controlla se c'è addLink da parametro GET
   const linkToAdd = getQueryParam('addLink');
   if (linkToAdd) {
     addVisitedLinkManually(linkToAdd);
@@ -275,8 +263,8 @@ document.addEventListener('DOMContentLoaded', () => {
     history.replaceState(null, '', window.location.pathname);
   }
 
-  // bottoni header
   document.getElementById('undoButton').addEventListener('click', undo);
+
   document.getElementById('exportButton').addEventListener('click', () => {
     const dataStr = JSON.stringify(data, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
@@ -317,19 +305,14 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.readAsText(file);
   });
 
-  // Pulsante salva sito corrente (manuale)
   document.getElementById('saveCurrentButton').addEventListener('click', () => {
     const url = prompt("Inserisci l'URL da salvare:");
     if (url) addVisitedLinkManually(url.trim());
   });
 
-  // Dark mode toggle
   document.getElementById('toggleDarkMode').addEventListener('click', toggleDarkMode);
-
-  // Zoom toggle
   document.getElementById('toggleZoom').addEventListener('click', toggleZoom);
 
-  // Aggiungi categoria
   document.getElementById('addCategoryButton').addEventListener('click', () => {
     const catInput = document.getElementById('categoryInput');
     const val = catInput.value.trim();
@@ -339,7 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Ordinamento radio buttons
   document.getElementById('sortOptions').addEventListener('change', e => {
     if (e.target.name === 'sort') {
       data.sortBy = e.target.value;
@@ -348,6 +330,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Cancella parole chiave apprese
   document.getElementById('clearLearnedKeywords').addEventListener('click', clearLearnedKeywords);
 });
+
