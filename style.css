@@ -200,6 +200,25 @@ header h1 {
   outline: none;
 }
 
+.light-mode {
+  background-color: white;
+  color: black;
+}
+
+.dark-mode {
+  background-color: #121212;
+  color: white;
+}
+.dark-mode button {
+  background-color: #333;
+  color: white;
+}
+
+.light-mode button {
+  background-color: #eee;
+  color: black;
+}
+
 /* Sezione parole chiave apprese */
 #learnedKeywordsSection {
   background-color: white;
