@@ -41,21 +41,6 @@ Puoi esportare tutti i link salvati come file `.txt` per salvarli o condividerli
 
 ---
 
-## ⚠️ Limitazioni rispetto all'estensione
-
-- ❌ Non può accedere direttamente all'URL della tab attiva (limitazione del web)
-- ✅ Ma puoi incollare manualmente i link, e salvarli con un clic
-
----
-
-## 📦 Deployment su GitHub Pages
-
-1. Carica tutti i file su GitHub in una repository pubblica
-2. Vai su `Settings > Pages`
-3. Scegli `main` come branch e `root` come cartella
-4. L'app sarà accessibile da `https://tuo-username.github.io/nome-repo/`
-
----
 
 ## ✍️ Autore
 
