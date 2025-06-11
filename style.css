@@ -1,53 +1,99 @@
 body {
-  font-family: Arial, sans-serif;
-  margin: 1rem;
-  font-size: 100%;
-  background: #fff;
-  color: #000;
-  transition: background-color 0.3s, color 0.3s;
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f9f9f9;
+  color: #333;
+  transition: background 0.3s, color 0.3s;
 }
 
 body.dark {
-  background: #222;
-  color: #eee;
+  background: #1e1e1e;
+  color: #f0f0f0;
 }
 
-header, section, footer {
-  margin-bottom: 1rem;
+header {
+  background: #3f51b5;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+main {
+  padding: 1rem;
+  max-width: 600px;
+  margin: auto;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  margin: 0.25rem;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #3f51b5;
+  color: white;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background-color: #303f9f;
+}
+
+button.danger {
+  background-color: #e53935;
+}
+
+button.danger:hover {
+  background-color: #c62828;
 }
 
 ul {
   list-style: none;
-  padding-left: 0;
+  padding: 0;
 }
 
 li {
-  margin-bottom: 0.5rem;
-}
-
-button {
-  cursor: pointer;
-  margin-left: 0.5rem;
-}
-
-input[type="url"], input[type="text"], select {
-  padding: 0.3rem;
-  margin-right: 0.5rem;
-  min-width: 200px;
-}
-
-#filter-section label, #add-link-section, #category-management {
+  margin: 0.5rem 0;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
+  border-bottom: 1px dashed #aaa;
+  padding-bottom: 0.25rem;
 }
 
-#undo-btn {
-  color: red;
+a {
+  text-decoration: none;
+  color: #3f51b5;
+  word-break: break-all;
 }
 
-footer {
+a:hover {
+  text-decoration: underline;
+}
+
+.dark a {
+  color: #90caf9;
+}
+
+.category-label {
   font-size: 0.8rem;
-  color: #888;
-  text-align: center;
+  color: #777;
+  margin-left: 0.5rem;
+  font-style: italic;
 }
