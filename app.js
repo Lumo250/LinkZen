@@ -1,157 +1,280 @@
-(() => {
-  const urlInput = document.getElementById("url-input");
-  const saveBtn = document.getElementById("save-btn");
-  const urlList = document.getElementById("url-list");
-  const undoBtn = document.getElementById("undo-btn");
-  const toggleTheme = document.getElementById("toggle-theme");
-  const body = document.body;
+// app.js
 
-  let undoData = null;
+// Stato globale
+let data = {
+  categories: {}, // { categoria: [link1, link2, ...] }
+  learnedKeywords: [], // parole chiave usate per IA
+  visitedLinks: new Set(), // link marcati come visitati
+  undoStack: []
+};
 
-  // --- Gestione tema ---
-  function loadTheme() {
-    const dark = localStorage.getItem("darkMode") === "true";
-    if (dark) {
-      body.classList.add("dark");
-      toggleTheme.checked = true;
-    } else {
-      body.classList.remove("dark");
-      toggleTheme.checked = false;
+// Elementi DOM
+const categoriesContainer = document.getElementById('categoriesContainer');
+const categoryInput = document.getElementById('categoryInput');
+const addCategoryButton = document.getElementById('addCategoryButton');
+const learnedKeywordsList = document.getElementById('learnedKeywordsList');
+const clearLearnedKeywordsButton = document.getElementById('clearLearnedKeywords');
+const zoomToggle = document.getElementById('zoomToggle');
+const darkModeToggle = document.getElementById('darkModeToggle');
+const exportButton = document.getElementById('exportButton');
+const importButton = document.getElementById('importButton');
+const importOverlay = document.getElementById('importOverlay');
+const importTextarea = document.getElementById('importTextarea');
+const closeImportOverlay = document.getElementById('closeImportOverlay');
+const undoButton = document.getElementById('undoButton');
+
+// Caricamento dati da storage
+function loadData() {
+  if ('localStorage' in window) {
+    const saved = localStorage.getItem('linkZenData');
+    if (saved) {
+      data = JSON.parse(saved);
+      if (Array.isArray(data.visitedLinks)) {
+        data.visitedLinks = new Set(data.visitedLinks);
+      }
     }
   }
-  toggleTheme.addEventListener("change", () => {
-    const enabled = toggleTheme.checked;
-    body.classList.toggle("dark", enabled);
-    localStorage.setItem("darkMode", enabled);
-  });
-  loadTheme();
+  renderAll();
+}
 
-  // --- Storage ---
-  function getLinks() {
-    const saved = localStorage.getItem("links");
-    return saved ? JSON.parse(saved) : [];
+// Salvataggio dati su storage
+function saveData() {
+  if ('localStorage' in window) {
+    const toSave = {...data, visitedLinks: Array.from(data.visitedLinks)};
+    localStorage.setItem('linkZenData', JSON.stringify(toSave));
   }
+}
 
-  function saveLinks(links) {
-    localStorage.setItem("links", JSON.stringify(links));
-  }
+// Renderizza tutte le categorie e link
+function renderAll() {
+  renderCategories();
+  renderLearnedKeywords();
+}
 
-  function getCategory(url, title) {
-    const text = `${url} ${title}`.toLowerCase();
-    if (text.includes("youtube") || text.includes("video")) return "Video";
-    if (text.includes("news") || text.includes("nyt")) return "Notizie";
-    if (text.includes("chatgpt") || text.includes("ai")) return "AI";
-    if (text.includes("github")) return "Dev";
-    return "Altro";
-  }
+// Render categorie e link
+function renderCategories() {
+  categoriesContainer.innerHTML = '';
+  for (const category of Object.keys(data.categories)) {
+    const catDiv = document.createElement('div');
+    catDiv.className = 'category';
+    
+    // Header categoria con titolo e bottone rimuovi
+    const header = document.createElement('div');
+    header.className = 'category-header';
 
-  // --- Rendering lista con categorie e pulsanti ---
-  function renderLinks() {
-    const links = getLinks();
-    urlList.innerHTML = "";
+    const title = document.createElement('div');
+    title.className = 'category-title';
+    title.textContent = category;
 
-    // Raggruppa link per categoria
-    const grouped = links.reduce((acc, item) => {
-      const cat = item.category || "Altro";
-      if (!acc[cat]) acc[cat] = [];
-      acc[cat].push(item);
-      return acc;
-    }, {});
+    const removeCatBtn = document.createElement('button');
+    removeCatBtn.className = 'category-remove';
+    removeCatBtn.textContent = '×';
+    removeCatBtn.title = 'Rimuovi categoria';
+    removeCatBtn.addEventListener('click', () => {
+      undoStackPush();
+      delete data.categories[category];
+      saveData();
+      renderAll();
+    });
 
-    // Ordina categorie alfabeticamente
-    const categories = Object.keys(grouped).sort();
+    header.appendChild(title);
+    header.appendChild(removeCatBtn);
+    catDiv.appendChild(header);
 
-    categories.forEach(cat => {
-      const catHeader = document.createElement("h3");
-      catHeader.textContent = cat;
-      urlList.appendChild(catHeader);
+    // Lista link
+    const ul = document.createElement('ul');
+    ul.className = 'link-list';
 
-      grouped[cat].forEach((item, idx) => {
-        const li = document.createElement("li");
+    data.categories[category].forEach(link => {
+      const li = document.createElement('li');
+      li.textContent = link;
+      li.tabIndex = 0;
+      if (data.visitedLinks.has(link)) {
+        li.classList.add('visited');
+      }
 
-        const a = document.createElement("a");
-        a.href = item.url;
-        a.target = "_blank";
-        a.textContent = item.title ? `${item.title} (${item.url})` : item.url;
-        a.style.marginRight = "1rem";
-
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "x";
-        delBtn.style.color = "red";
-        delBtn.addEventListener("click", () => {
-          undoData = { item, index: links.indexOf(item) };
-          links.splice(links.indexOf(item), 1);
-          saveLinks(links);
-          renderLinks();
-          undoBtn.style.display = "inline-block";
-        });
-
-        li.appendChild(a);
-        li.appendChild(delBtn);
-        urlList.appendChild(li);
+      // Click apre link e marca visitato
+      li.addEventListener('click', () => {
+        window.open(link, '_blank');
+        data.visitedLinks.add(link);
+        saveData();
+        renderAll();
       });
+
+      // Rimuovi singolo link
+      const removeLinkBtn = document.createElement('button');
+      removeLinkBtn.className = 'link-remove';
+      removeLinkBtn.textContent = '×';
+      removeLinkBtn.title = 'Rimuovi link';
+      removeLinkBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        undoStackPush();
+        const idx = data.categories[category].indexOf(link);
+        if (idx > -1) {
+          data.categories[category].splice(idx, 1);
+          data.visitedLinks.delete(link);
+          saveData();
+          renderAll();
+        }
+      });
+
+      li.appendChild(removeLinkBtn);
+      ul.appendChild(li);
     });
 
-    if (!undoData) undoBtn.style.display = "none";
+    catDiv.appendChild(ul);
+    categoriesContainer.appendChild(catDiv);
   }
+}
 
-  // --- Undo delete ---
-  undoBtn.addEventListener("click", () => {
-    if (!undoData) return;
-    const links = getLinks();
-    links.splice(undoData.index, 0, undoData.item);
-    saveLinks(links);
-    undoData = null;
-    undoBtn.style.display = "none";
-    renderLinks();
+// Render parole chiave apprese
+function renderLearnedKeywords() {
+  learnedKeywordsList.innerHTML = '';
+  data.learnedKeywords.forEach(keyword => {
+    const li = document.createElement('li');
+    li.textContent = keyword;
+    learnedKeywordsList.appendChild(li);
   });
+}
 
-  // --- Aggiunta link con fetch titolo e categoria ---
-  saveBtn.addEventListener("click", () => {
-    const url = urlInput.value.trim();
-    if (!url) return alert("Inserisci un URL valido");
+// Aggiungi categoria nuova
+addCategoryButton.addEventListener('click', () => {
+  const newCat = categoryInput.value.trim();
+  if (newCat && !data.categories[newCat]) {
+    undoStackPush();
+    data.categories[newCat] = [];
+    categoryInput.value = '';
+    saveData();
+    renderAll();
+  }
+});
 
-    // Controlla duplicati
-    const links = getLinks();
-    if (links.find(l => l.url === url)) {
-      alert("Link già presente");
-      return;
+// Undo stack
+function undoStackPush() {
+  const snapshot = JSON.stringify(data);
+  data.undoStack = data.undoStack || [];
+  data.undoStack.push(snapshot);
+  if (data.undoStack.length > 20) data.undoStack.shift();
+}
+
+// Undo funzione
+undoButton.addEventListener('click', () => {
+  if (data.undoStack && data.undoStack.length > 0) {
+    const prevState = data.undoStack.pop();
+    data = JSON.parse(prevState);
+    saveData();
+    renderAll();
+  }
+});
+
+// Toggle zoom testo
+zoomToggle.addEventListener('change', (e) => {
+  if (e.target.checked) {
+    document.body.classList.add('zoom-text');
+  } else {
+    document.body.classList.remove('zoom-text');
+  }
+});
+
+// Toggle dark mode
+darkModeToggle.addEventListener('change', (e) => {
+  if (e.target.checked) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+});
+
+// Esporta dati JSON
+exportButton.addEventListener('click', () => {
+  const exportData = JSON.stringify(data, null, 2);
+  const blob = new Blob([exportData], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'linkzen-export.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Mostra overlay import
+importButton.addEventListener('click', () => {
+  importOverlay.classList.remove('hidden');
+  importTextarea.value = '';
+  importTextarea.focus();
+});
+
+// Chiudi overlay import
+closeImportOverlay.addEventListener('click', () => {
+  importOverlay.classList.add('hidden');
+});
+
+// Importa dati JSON
+importTextarea.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.ctrlKey) {
+    try {
+      const imported = JSON.parse(importTextarea.value);
+      if (imported.categories && typeof imported.categories === 'object') {
+        undoStackPush();
+        data = imported;
+        // Converti visitedLinks in Set se necessario
+        if (Array.isArray(data.visitedLinks)) {
+          data.visitedLinks = new Set(data.visitedLinks);
+        }
+        saveData();
+        renderAll();
+        importOverlay.classList.add('hidden');
+      } else {
+        alert('Dati importati non validi.');
+      }
+    } catch {
+      alert('Errore parsing JSON.');
     }
-
-    fetch(url).then(resp => resp.text()).then(html => {
-      const titleMatch = html.match(/<title>([^<]*)<\/title>/i);
-      const title = titleMatch ? titleMatch[1] : "";
-      const category = getCategory(url, title);
-      addLink(url, title, category);
-    }).catch(() => {
-      // Se fetch fallisce, salva senza titolo ma con categoria generica
-      const category = getCategory(url, "");
-      addLink(url, "", category);
-    });
-  });
-
-  function addLink(url, title, category) {
-    const links = getLinks();
-    links.push({ url, title, category });
-    saveLinks(links);
-    urlInput.value = "";
-    renderLinks();
   }
+});
 
-  // --- IA locale per categorizzazione semplice ---
-  // Puoi migliorare con regole più complesse o NLP locale
-  function getCategory(url, title) {
-    const text = (title + " " + url).toLowerCase();
-
-    if (text.includes("news") || text.includes("blog")) return "News";
-    if (text.includes("shop") || text.includes("store") || text.includes("buy")) return "Shopping";
-    if (text.includes("github") || text.includes("code") || text.includes("repo")) return "Code";
-    if (text.includes("video") || text.includes("youtube") || text.includes("vimeo")) return "Video";
-    if (text.includes("forum") || text.includes("discussion") || text.includes("community")) return "Forum";
-    if (text.includes("docs") || text.includes("manual") || text.includes("guide")) return "Documentazione";
-
-    return "Altro";
+// Funzione IA semplice per categorizzazione automatica basata su parole chiave apprese
+function categorizeLink(link) {
+  for (const keyword of data.learnedKeywords) {
+    if (link.includes(keyword)) {
+      // Trova categoria con parola chiave o crea categoria se non esiste
+      if (data.categories[keyword]) {
+        data.categories[keyword].push(link);
+      } else {
+        data.categories[keyword] = [link];
+      }
+      saveData();
+      return true;
+    }
   }
+  return false;
+}
+
+// Aggiungi link visitato manualmente (esempio da background o altro)
+function addVisitedLinkManually(link) {
+  undoStackPush();
+  if (!categorizeLink(link)) {
+    // Se non categorizzato automaticamente, aggiungi in categoria 'Uncategorized'
+    if (!data.categories['Uncategorized']) data.categories['Uncategorized'] = [];
+    data.categories['Uncategorized'].push(link);
+  }
+  data.visitedLinks.add(link);
+  saveData();
+  renderAll();
+}
+
+// Tooltip base (esempio semplice)
+document.body.addEventListener('mouseover', e => {
+  const target = e.target;
+  if (target.matches('.category-title')) {
+    target.title = 'Clicca su × per rimuovere categoria';
+  } else if (target.matches('.link-remove')) {
+    target.title = 'Rimuovi link';
+  } else if (target.matches('.category-remove')) {
+    target.title = 'Rimuovi categoria';
+  }
+});
 
   // --- Gestione aggiunta da query string (bookmarklet) ---
   function tryAddFromQuery() {
@@ -172,26 +295,8 @@
     }
   }
 
-  // --- Esportazione lista link in JSON ---
-  function exportLinks() {
-    const data = JSON.stringify(getLinks(), null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "linkzen_links.json";
-    a.click();
+// Inizializza
+tryAddFromQuery();
+loadData();
 
-    URL.revokeObjectURL(url);
-  }
-
-  // --- Aggiungi bottone export in popup.html e gestisci evento ---
-  const exportBtn = document.getElementById("export-btn");
-  if (exportBtn) {
-    exportBtn.addEventListener("click", exportLinks);
-  }
-
-  // --- Avvio ---
-  tryAddFromQuery();
-  renderLinks();
