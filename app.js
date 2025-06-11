@@ -178,11 +178,9 @@ zoomToggle.addEventListener('change', (e) => {
 
 // Toggle dark mode
 darkModeToggle.addEventListener('change', (e) => {
-  if (e.target.checked) {
-    document.body.classList.add('dark-mode');
-  } else {
-    document.body.classList.remove('dark-mode');
-  }
+  const isDark = e.target.checked;
+  document.body.classList.toggle('dark-mode', isDark);
+  localStorage.setItem('darkMode', isDark ? 'true' : 'false');
 });
 
 // Esporta dati JSON
@@ -299,4 +297,9 @@ document.body.addEventListener('mouseover', e => {
 // Inizializza
 tryAddFromQuery();
 loadData();
+
+// Applica dark mode in base a localStorage
+const savedDark = localStorage.getItem("darkMode") === "true";
+darkModeToggle.checked = savedDark;
+document.body.classList.toggle("dark-mode", savedDark);
 
