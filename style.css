@@ -168,3 +168,51 @@ button:hover {
     margin: 3px;
   }
 }
+
+/* header-controls */
+.header-controls button {
+  margin-right: 5px;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+/* sortOptions styling */
+#sortOptions {
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+#sortOptions label {
+  margin-right: 15px;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+/* category section */
+.category-section {
+  margin-bottom: 20px;
+}
+
+/* list style */
+.category-section ul, #learnedKeywordsList {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+/* buttons small next to link */
+.category-section li button {
+  margin-left: 10px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+/* dark mode example */
+.dark-mode {
+  background-color: #222;
+  color: #eee;
+}
+
+/* light mode */
+.light-mode {
+  background-color: #fff;
+  color: #000;
+}
