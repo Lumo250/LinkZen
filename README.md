@@ -59,4 +59,4 @@ Puoi esportare tutti i link salvati come file `.txt` per salvarli o condividerli
 
 ## ✍️ Autore
 
-Realizzato da [Il Tuo Nome] — basato su LinkZen Chrome Extension.
+Realizzato da AG Design — basato su LinkZen Chrome Extension.
