@@ -208,11 +208,15 @@ closeImportOverlay.addEventListener('click', () => {
   importOverlay.classList.add('hidden');
 });
 
-// Importa dati JSON
-importTextarea.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && e.ctrlKey) {
+// Importa dati JSON da file
+document.getElementById('importFileInput').addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
     try {
-      const imported = JSON.parse(importTextarea.value);
+      const imported = JSON.parse(e.target.result);
       if (imported.categories && typeof imported.categories === 'object') {
         undoStackPush();
         data = imported;
@@ -229,7 +233,8 @@ importTextarea.addEventListener('keydown', (e) => {
     } catch {
       alert('Errore parsing JSON.');
     }
-  }
+  };
+  reader.readAsText(file);
 });
 
 // Funzione IA semplice per categorizzazione automatica basata su parole chiave apprese
