@@ -111,6 +111,7 @@
     if (addurl) {
       try {
         const decodedUrl = decodeURIComponent(addurl);
+        // Aggiungo il link senza fetch titolo (per sicurezza e velocità)
         addLink(decodedUrl, "");
         // Pulisco la query string per evitare duplicati
         window.history.replaceState({}, document.title, window.location.pathname);
