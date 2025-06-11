@@ -208,6 +208,16 @@ closeImportOverlay.addEventListener('click', () => {
   importOverlay.classList.add('hidden');
 });
 
+
+
+importButton.addEventListener('click', () => {
+  importOverlay.classList.remove('hidden');
+});
+
+closeImportOverlay.addEventListener('click', () => {
+  importOverlay.classList.add('hidden');
+});
+
 // Importa dati JSON da file
 document.getElementById('importFileInput').addEventListener('change', (event) => {
   const file = event.target.files[0];
