@@ -1,116 +1,50 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LinkZen</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 1rem;
-      background: white;
-      color: #222;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    body.dark {
-      background: #121212;
-      color: #eee;
-    }
-    input[type="text"] {
-      width: 70%;
-      padding: 0.3rem;
-      font-size: 1rem;
-    }
-    button {
-      margin-left: 0.3rem;
-      padding: 0.3rem 0.7rem;
-      cursor: pointer;
-      border-radius: 3px;
-      border: 1px solid #444;
-      background: #eee;
-      color: #222;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    button:hover {
-      background: #ccc;
-    }
-    body.dark button {
-      background: #333;
-      color: #eee;
-      border-color: #666;
-    }
-    body.dark button:hover {
-      background: #555;
-    }
-    ul {
-      margin-top: 1rem;
-      padding-left: 1.2rem;
-      max-height: 250px;
-      overflow-y: auto;
-    }
-    li {
-      margin-bottom: 0.4rem;
-    }
-    li a {
-      text-decoration: none;
-      color: inherit;
-      margin-right: 0.8rem;
-    }
-    li a:hover {
-      text-decoration: underline;
-    }
-    #undo-btn, #export-btn {
-      margin-top: 0.5rem;
-      display: none;
-    }
-    #filter-sort {
-      margin-top: 0.7rem;
-    }
-    select {
-      margin-right: 0.5rem;
-      padding: 0.2rem 0.4rem;
-    }
-    label {
-      user-select: none;
-    }
-    #toggle-theme {
-      float: right;
-      margin-top: -1.6rem;
-      cursor: pointer;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LinkZen</title>
+<link rel="stylesheet" href="style.css" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icon48.png" sizes="48x48" />
 </head>
 <body>
-  <h2>LinkZen <small>📌</small></h2>
-  <input id="url-input" type="text" placeholder="Incolla URL qui..." />
-  <button id="save-btn">Salva</button>
-  <input type="checkbox" id="toggle-theme" title="Modalità scura" />
-  
-  <div id="filter-sort">
-    <label for="filter-cat">Categoria:</label>
-    <select id="filter-cat">
-      <option value="all">Tutte</option>
-      <option value="News">News</option>
-      <option value="Shopping">Shopping</option>
-      <option value="Code">Code</option>
-      <option value="Video">Video</option>
-      <option value="Forum">Forum</option>
-      <option value="Documentazione">Documentazione</option>
-      <option value="Altro">Altro</option>
-    </select>
-    <label for="sort-by">Ordina per:</label>
-    <select id="sort-by">
-      <option value="added">Aggiunta (default)</option>
-      <option value="title">Titolo</option>
-      <option value="category">Categoria</option>
-      <option value="url">URL</option>
-    </select>
+  <div id="app" class="light-mode">
+    <header>
+      <h1>LinkZen</h1>
+      <div class="header-controls">
+        <button id="undoButton" title="Annulla ultima azione">↶ Undo</button>
+        <button id="exportButton" title="Esporta dati">⬇️ Esporta</button>
+        <button id="importButton" title="Importa dati">⬆️ Importa</button>
+        <button id="toggleDarkMode" title="Modalità scura">🌙</button>
+        <button id="toggleZoom" title="Zoom testo">🔍</button>
+      </div>
+    </header>
+
+    <section id="category-management">
+      <input id="categoryInput" placeholder="Nuova categoria" aria-label="Nuova categoria" />
+      <button id="addCategoryButton" title="Aggiungi categoria">+ Categoria</button>
+    </section>
+
+    <section id="categoriesContainer" aria-label="Elenco categorie">
+      <!-- Liste di link per ogni categoria qui -->
+    </section>
+
+    <section id="learnedKeywordsSection">
+      <h2>Parole chiave apprese</h2>
+      <ul id="learnedKeywordsList" aria-live="polite"></ul>
+      <button id="clearLearnedKeywords" title="Cancella tutte le parole chiave apprese">🗑️ Pulisci parole chiave</button>
+    </section>
+
+    <!-- Overlay import -->
+    <div id="importOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="importTitle">
+      <div class="overlay-content">
+        <h3 id="importTitle">Importa dati JSON</h3>
+        <input type="file" id="importFileInput" accept=".json" aria-label="Seleziona file JSON da importare" />
+        <button id="closeImportOverlay">Chiudi</button>
+      </div>
+    </div>
   </div>
-
-  <ul id="url-list"></ul>
-
-  <button id="undo-btn">Annulla ultima cancellazione</button>
-  <button id="export-btn">Esporta JSON</button>
 
   <script src="app.js"></script>
 </body>
