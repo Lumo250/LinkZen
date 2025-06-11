@@ -21,6 +21,8 @@
   let undoData = null;
   let isSortedAsc = true;
 
+
+
   // --- Tema ---
   function loadTheme() {
     const dark = localStorage.getItem("darkMode") === "true";
@@ -249,6 +251,26 @@
     alert("👾 LinkZen PWA - Keep your links zen!");
   });
 
+
+
+function tryAddFromQuery() {
+  const params = new URLSearchParams(window.location.search);
+  const addurl = params.get("addurl");
+  const title = params.get("title") || "";
+  if (addurl) {
+    try {
+      const decodedUrl = decodeURIComponent(addurl);
+      const decodedTitle = decodeURIComponent(title);
+      addLink(decodedUrl, decodedTitle);
+      // Pulisce la query string per evitare duplicati
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } catch (e) {
+      console.error("Errore decodifica URL:", e);
+    }
+  }
+}
+
   // Avvio
+  tryAddFromQuery();
   renderLinks();
 })();
