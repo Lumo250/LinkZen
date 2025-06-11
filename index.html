@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LinkZen PWA</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 1rem;
+    background: #fff;
+    color: #222;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  body.dark {
+    background: #222;
+    color: #ddd;
+  }
+  input, button, select {
+    font-size: 1rem;
+    padding: 0.4rem 0.6rem;
+    margin: 0.3rem 0;
+  }
+  ul {
+    padding-left: 1rem;
+  }
+  li {
+    margin: 0.5rem 0;
+  }
+  .category {
+    margin-left: 0.5rem;
+  }
+  #undo-btn {
+    display: none;
+    margin-left: 1rem;
+  }
+  #theme-toggle-label {
+    cursor: pointer;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+
+<h1>LinkZen PWA</h1>
+
+<label id="theme-toggle-label">
+  <input type="checkbox" id="toggle-theme" />
+  Dark Mode
+</label>
+
+<div>
+  <input id="url-input" type="text" placeholder="Incolla o digita URL qui" style="width:70%" />
+  <button id="save-btn">Salva Link</button>
+  <button id="undo-btn">Annulla elimina</button>
+</div>
+
+<ul id="url-list"></ul>
+
+<script src="app.js"></script>
+</body>
+</html>
