@@ -8,27 +8,52 @@ let data = {
   sortBy: 'name' // 'name' or 'date'
 };
 
-// Funzione per leggere parametro URL
-function getUrlParameter(name) {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(name);
+function getQueryParam(name) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name);
 }
 
-// All'avvio
-document.addEventListener('DOMContentLoaded', () => {
-  loadData();
+function addLinkFromQuery() {
+  const url = getQueryParam('addurl');
+  if (!url) return;
 
-  // Controlla se c'è addLink da parametro GET
-  const linkToAdd = getUrlParameter('addLink');
-  if(linkToAdd){
-    addVisitedLinkManually(linkToAdd);
-    alert(`Link ${linkToAdd} aggiunto automaticamente!`);
-    // Rimuovi parametro per evitare duplicati (opzionale)
-    history.replaceState(null, '', window.location.pathname);
+  const title = getQueryParam('addtitle') || url;
+  const favicon = getQueryParam('addfavicon') || '';
+
+  // Categoria semplice da titolo o 'Uncategorized'
+  let category = 'Uncategorized';
+  for (const kw of data.learnedKeywords) {
+    if (title.toLowerCase().includes(kw.toLowerCase())) {
+      category = kw;
+      break;
+    }
   }
 
-  renderAll();
-  
+  if (!data.categories[category]) {
+    data.categories[category] = [];
+  }
+
+  // Evita duplicati
+  const exists = data.categories[category].some(l => l.url === url);
+  if (!exists) {
+    pushUndo();
+    data.categories[category].push({
+      url,
+      title,
+      date: new Date().toISOString(),
+      favicon
+    });
+    saveData();
+    renderAll();
+  }
+
+  // Rimuove la query string
+  window.history.replaceState({}, document.title, window.location.pathname);
+}
+
+// Chiamala subito all’avvio
+addLinkFromQuery();
+
 // LOAD data from localStorage
 function loadData() {
   const saved = localStorage.getItem('linkZenData');
@@ -72,7 +97,6 @@ function renderCategories() {
   container.innerHTML = '';
 
   for (const category of Object.keys(data.categories)) {
-    // crea la sezione categoria
     const section = document.createElement('section');
     section.classList.add('category-section');
 
@@ -80,28 +104,31 @@ function renderCategories() {
     h3.textContent = category;
     section.appendChild(h3);
 
-    // lista link
     const ul = document.createElement('ul');
-
     let links = data.categories[category];
 
-    // Ordinamento
     if (data.sortBy === 'name') {
-      links = links.sort((a, b) => a.url.localeCompare(b.url));
+      links = links.sort((a, b) => a.title.localeCompare(b.title));
     } else if (data.sortBy === 'date') {
       links = links.sort((a, b) => new Date(b.date) - new Date(a.date));
     }
 
     for (const linkObj of links) {
       const li = document.createElement('li');
+
+      const faviconImg = document.createElement('img');
+      faviconImg.className = 'favicon';
+      faviconImg.src = linkObj.favicon || 'default-favicon.png';
+      faviconImg.onerror = () => faviconImg.style.display = 'none';
+      li.appendChild(faviconImg);
+
       const a = document.createElement('a');
       a.href = linkObj.url;
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
-      a.textContent = linkObj.url;
+      a.textContent = linkObj.title;
       li.appendChild(a);
 
-      // bottone rimuovi
       const removeBtn = document.createElement('button');
       removeBtn.textContent = '✖';
       removeBtn.title = 'Rimuovi link';
@@ -235,9 +262,18 @@ function updateSortOptions() {
 }
 
 // EVENTI DOM READY
+
 document.addEventListener('DOMContentLoaded', () => {
   loadData();
   renderAll();
+
+  // Controlla se c'è addLink da parametro GET
+  const linkToAdd = getQueryParam('addLink');
+  if (linkToAdd) {
+    addVisitedLinkManually(linkToAdd);
+    alert(`Link ${linkToAdd} aggiunto automaticamente!`);
+    history.replaceState(null, '', window.location.pathname);
+  }
 
   // bottoni header
   document.getElementById('undoButton').addEventListener('click', undo);
