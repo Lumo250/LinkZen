@@ -8,6 +8,27 @@ let data = {
   sortBy: 'name' // 'name' or 'date'
 };
 
+// Funzione per leggere parametro URL
+function getUrlParameter(name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
+
+// All'avvio
+document.addEventListener('DOMContentLoaded', () => {
+  loadData();
+
+  // Controlla se c'è addLink da parametro GET
+  const linkToAdd = getUrlParameter('addLink');
+  if(linkToAdd){
+    addVisitedLinkManually(linkToAdd);
+    alert(`Link ${linkToAdd} aggiunto automaticamente!`);
+    // Rimuovi parametro per evitare duplicati (opzionale)
+    history.replaceState(null, '', window.location.pathname);
+  }
+
+  renderAll();
+  
 // LOAD data from localStorage
 function loadData() {
   const saved = localStorage.getItem('linkZenData');
