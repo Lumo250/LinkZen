@@ -1,139 +1,64 @@
-// DATA STORAGE STRUCTURE
+// app.js
+
+// Stato globale dati
 let data = {
-  categories: {}, // categoryName: [ { url, date } ]
-  learnedKeywords: [],
+  categories: {
+    "Uncategorized": []
+  },
+  sortBy: 'date', // 'date' o 'name'
   undoStack: [],
-  darkMode: false,
-  zoomEnabled: false,
-  sortBy: 'name' // 'name' or 'date'
+  redoStack: []
 };
-// --- BROADCAST CHANNEL PER COMUNICAZIONE TRA PAGINE ---
-const bc = new BroadcastChannel("linkzen-channel");
 
-// Rispondi ai messaggi
-bc.onmessage = (event) => {
-  const msg = event.data;
-  if (!msg || !msg.type) return;
+const MAX_UNDO = 20;
 
-  if (msg.type === "linkzen-ping") {
-    // Rispondi con un pong per segnalare che LinkZen è aperto
-    bc.postMessage({ type: "linkzen-pong" });
-  }
+// --- Utility ---
 
-  if (msg.type === "linkzen-add") {
-    // msg dovrebbe contenere url e title codificati URI
-    const url = decodeURIComponent(msg.url || "");
-    const title = decodeURIComponent(msg.title || url);
-
-    if (!url) return;
-
-    // Trova categoria da parole chiave apprese
-    let category = "Uncategorized";
-    for (const kw of data.learnedKeywords) {
-      if (title.toLowerCase().includes(kw.toLowerCase())) {
-        category = kw;
-        break;
-      }
-    }
-    if (!data.categories[category]) {
-      data.categories[category] = [];
-    }
-
-    // Evita duplicati
-    const exists = data.categories[category].some(l => l.url === url);
-    if (!exists) {
-      data.categories[category].push({
-        url,
-        title,
-        date: new Date().toISOString(),
-        favicon: "" // Potresti migliorare con favicon se vuoi
-      });
-      saveData();
-      renderAll();
-    }
-  }
-};
-function getQueryParam(name) {
-  const params = new URLSearchParams(window.location.search);
-  return params.get(name);
-}
-
-function addLinkFromQuery() {
-  const url = getQueryParam('addurl');
-  if (!url) return;
-
-  const title = getQueryParam('addtitle') || url;
-  const favicon = getQueryParam('addfavicon') || '';
-
-  // Categoria semplice da titolo o 'Uncategorized'
-  let category = 'Uncategorized';
-  for (const kw of data.learnedKeywords) {
-    if (title.toLowerCase().includes(kw.toLowerCase())) {
-      category = kw;
-      break;
-    }
-  }
-
-  if (!data.categories[category]) {
-    data.categories[category] = [];
-  }
-
-  // Evita duplicati
-  const exists = data.categories[category].some(l => l.url === url);
-  if (!exists) {
-    pushUndo();
-    data.categories[category].push({
-      url,
-      title,
-      date: new Date().toISOString(),
-      favicon
-    });
-    saveData();
-    renderAll();
-  }
-
-  // Rimuove la query string
-  window.history.replaceState({}, document.title, window.location.pathname);
-}
-
-// LOAD data from localStorage
-function loadData() {
-  const saved = localStorage.getItem('linkZenData');
-  if (saved) {
-    data = JSON.parse(saved);
-  }
-}
-
-// SAVE data to localStorage
 function saveData() {
   localStorage.setItem('linkZenData', JSON.stringify(data));
 }
 
-// UNDO management
+function loadData() {
+  const saved = localStorage.getItem('linkZenData');
+  if (saved) {
+    try {
+      data = JSON.parse(saved);
+      if (!data.categories) data.categories = { "Uncategorized": [] };
+      if (!data.sortBy) data.sortBy = 'date';
+      if (!data.undoStack) data.undoStack = [];
+      if (!data.redoStack) data.redoStack = [];
+    } catch {
+      data = { categories: { "Uncategorized": [] }, sortBy: 'date', undoStack: [], redoStack: [] };
+    }
+  }
+}
+
 function pushUndo() {
-  const snapshot = JSON.stringify(data);
-  data.undoStack.push(snapshot);
-  if (data.undoStack.length > 20) data.undoStack.shift(); // max 20 undo
+  if (data.undoStack.length >= MAX_UNDO) data.undoStack.shift();
+  data.undoStack.push(JSON.stringify(data.categories));
+  data.redoStack = [];
 }
 
 function undo() {
-  if (data.undoStack.length === 0) return alert("Nessuna azione da annullare");
-  const last = data.undoStack.pop();
-  data = JSON.parse(last);
-  renderAll();
+  if (data.undoStack.length === 0) return;
+  data.redoStack.push(JSON.stringify(data.categories));
+  const prev = data.undoStack.pop();
+  data.categories = JSON.parse(prev);
   saveData();
+  renderAll();
 }
 
-// RENDER all interface
-function renderAll() {
-  renderCategories();
-  renderLearnedKeywords();
-  updateDarkMode();
-  updateZoom();
-  updateSortOptions();
+function redo() {
+  if (data.redoStack.length === 0) return;
+  data.undoStack.push(JSON.stringify(data.categories));
+  const next = data.redoStack.pop();
+  data.categories = JSON.parse(next);
+  saveData();
+  renderAll();
 }
 
-// RENDER categories and links
+// --- Rendering ---
+
 function renderCategories() {
   const container = document.getElementById('categoriesContainer');
   container.innerHTML = '';
@@ -147,16 +72,17 @@ function renderCategories() {
     section.appendChild(h3);
 
     const ul = document.createElement('ul');
-    let links = data.categories[category];
+    let links = [...data.categories[category]];
 
     if (data.sortBy === 'name') {
-      links = links.sort((a, b) => a.title.localeCompare(b.title));
+      links.sort((a, b) => a.title.localeCompare(b.title));
     } else if (data.sortBy === 'date') {
-      links = links.sort((a, b) => new Date(b.date) - new Date(a.date));
+      links.sort((a, b) => new Date(b.date) - new Date(a.date));
     }
 
     for (const linkObj of links) {
       const li = document.createElement('li');
+      li.classList.add('link-item');
 
       const faviconImg = document.createElement('img');
       faviconImg.className = 'favicon';
@@ -171,6 +97,28 @@ function renderCategories() {
       a.textContent = linkObj.title;
       li.appendChild(a);
 
+      // Select categoria modificabile
+      const select = document.createElement('select');
+      for (const cat of Object.keys(data.categories)) {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        if (cat === category) opt.selected = true;
+        select.appendChild(opt);
+      }
+      select.addEventListener('change', (e) => {
+        const newCat = e.target.value;
+        if (!data.categories[newCat]) data.categories[newCat] = [];
+        pushUndo();
+        data.categories[category] = data.categories[category].filter(l => l.url !== linkObj.url);
+        data.categories[newCat].push(linkObj);
+        if (data.categories[category].length === 0) delete data.categories[category];
+        saveData();
+        renderAll();
+      });
+      li.appendChild(select);
+
+      // Pulsante rimuovi
       const removeBtn = document.createElement('button');
       removeBtn.textContent = '✖';
       removeBtn.title = 'Rimuovi link';
@@ -191,190 +139,262 @@ function renderCategories() {
   }
 }
 
-// RENDER parole chiave apprese
-function renderLearnedKeywords() {
-  const ul = document.getElementById('learnedKeywordsList');
-  ul.innerHTML = '';
-  for (const kw of data.learnedKeywords) {
-    const li = document.createElement('li');
-    li.textContent = kw;
+function renderAll() {
+  renderCategories();
+  // Puoi aggiungere qui altre funzioni di rendering (es: update UI stato undo/redo)
+}
 
-    const removeBtn = document.createElement('button');
-    removeBtn.textContent = '✖';
-    removeBtn.title = 'Rimuovi parola chiave';
-    removeBtn.addEventListener('click', () => {
-      pushUndo();
-      data.learnedKeywords = data.learnedKeywords.filter(k => k !== kw);
-      saveData();
-      renderAll();
-    });
-    li.appendChild(removeBtn);
+// --- Aggiunta link ---
 
-    ul.appendChild(li);
+function addLink(url, title, favicon, category = 'Uncategorized') {
+  if (!data.categories[category]) data.categories[category] = [];
+  // Check duplicati
+  for (const cat of Object.keys(data.categories)) {
+    if (data.categories[cat].some(l => l.url === url)) {
+      alert('Link già presente');
+      return false;
+    }
+  }
+  pushUndo();
+  data.categories[category].push({
+    url,
+    title,
+    favicon,
+    date: new Date().toISOString()
+  });
+  saveData();
+  renderAll();
+  return true;
+}
+
+function addLinkFromQuery() {
+  const params = new URLSearchParams(window.location.search);
+  const addurl = params.get('addurl');
+  const addtitle = params.get('addtitle') || addurl;
+  if (addurl) {
+    // Potresti voler estrarre favicon con API esterna o placeholder
+    addLink(addurl, addtitle, '', 'Uncategorized');
+    // Puliamo la query per non riaggiungere
+    window.history.replaceState({}, document.title, window.location.pathname);
   }
 }
 
+// --- Init ---
+
+function init() {
+  loadData();
+  addLinkFromQuery();
+  renderAll();
+
+  // Bind undo/redo
+  document.getElementById('undoBtn').addEventListener('click', undo);
+  document.getElementById('redoBtn').addEventListener('click', redo);
+
+  // Sort selector
+  document.getElementById('sortSelect').addEventListener('change', (e) => {
+    data.sortBy = e.target.value;
+    saveData();
+    renderAll();
+  });
+}
+
+// Avvia app
+window.addEventListener('DOMContentLoaded', init);
+// --- Gestione Categorie ---
+
 function addCategory(name) {
-  if (!name) return alert('Inserisci il nome della categoria');
-  if (data.categories[name]) return alert('Categoria già esistente');
+  if (!name || data.categories[name]) {
+    alert('Categoria già esistente o nome non valido');
+    return false;
+  }
   pushUndo();
   data.categories[name] = [];
   saveData();
   renderAll();
+  updateCategoryOptions();
+  return true;
 }
 
-function addVisitedLinkManually(url) {
-  if (!url) return;
-  let categoryFound = null;
-  for (const kw of data.learnedKeywords) {
-    if (url.includes(kw)) {
-      categoryFound = kw;
-      break;
-    }
-  }
-  if (!categoryFound) categoryFound = 'Generale';
-
-  if (!data.categories[categoryFound]) data.categories[categoryFound] = [];
-
-  if (data.categories[categoryFound].some(l => l.url === url)) {
-    alert('Link già salvato in questa categoria');
+function removeCategory(name) {
+  if (name === 'Uncategorized') {
+    alert('La categoria "Uncategorized" non può essere rimossa.');
     return;
   }
-
+  if (!data.categories[name]) return;
+  if (data.categories[name].length > 0) {
+    alert('La categoria non è vuota, sposta prima i link.');
+    return;
+  }
   pushUndo();
-  data.categories[categoryFound].push({ url: url, date: new Date().toISOString() });
+  delete data.categories[name];
   saveData();
   renderAll();
+  updateCategoryOptions();
 }
 
-function clearLearnedKeywords() {
-  if (!confirm('Sei sicuro di voler cancellare tutte le parole chiave apprese?')) return;
-  pushUndo();
-  data.learnedKeywords = [];
-  saveData();
-  renderAll();
-}
-
-function updateDarkMode() {
-  const app = document.getElementById('app');
-  if (data.darkMode) {
-    app.classList.add('dark-mode');
-    app.classList.remove('light-mode');
-  } else {
-    app.classList.remove('dark-mode');
-    app.classList.add('light-mode');
-  }
-}
-
-function toggleDarkMode() {
-  data.darkMode = !data.darkMode;
-  saveData();
-  renderAll();
-}
-
-function updateZoom() {
-  const app = document.getElementById('app');
-  if (data.zoomEnabled) {
-    app.style.fontSize = '1.2em';
-  } else {
-    app.style.fontSize = '1em';
-  }
-}
-
-function toggleZoom() {
-  data.zoomEnabled = !data.zoomEnabled;
-  saveData();
-  renderAll();
-}
-
-function updateSortOptions() {
-  const radios = document.querySelectorAll('input[name="sort"]');
-  radios.forEach(radio => {
-    radio.checked = (radio.value === data.sortBy);
-  });
-}
-
-// EVENTI DOM READY
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadData();
-  renderAll();
-  addLinkFromQuery();
-
-  const linkToAdd = getQueryParam('addLink');
-  if (linkToAdd) {
-    addVisitedLinkManually(linkToAdd);
-    alert(`Link ${linkToAdd} aggiunto automaticamente!`);
-    history.replaceState(null, '', window.location.pathname);
-  }
-
-  document.getElementById('undoButton').addEventListener('click', undo);
-
-  document.getElementById('exportButton').addEventListener('click', () => {
-    const dataStr = JSON.stringify(data, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'linkzen_data.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-
-  document.getElementById('importButton').addEventListener('click', () => {
-    document.getElementById('importOverlay').classList.remove('hidden');
-  });
-
-  document.getElementById('closeImportOverlay').addEventListener('click', () => {
-    document.getElementById('importOverlay').classList.add('hidden');
-  });
-
-  document.getElementById('importFileInput').addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const imported = JSON.parse(e.target.result);
-        pushUndo();
-        data = imported;
-        saveData();
-        renderAll();
-        alert('Dati importati con successo');
-      } catch {
-        alert('File JSON non valido');
-      }
-      document.getElementById('importOverlay').classList.add('hidden');
-      e.target.value = '';
-    };
-    reader.readAsText(file);
-  });
-
-  document.getElementById('saveCurrentButton').addEventListener('click', () => {
-    const url = prompt("Inserisci l'URL da salvare:");
-    if (url) addVisitedLinkManually(url.trim());
-  });
-
-  document.getElementById('toggleDarkMode').addEventListener('click', toggleDarkMode);
-  document.getElementById('toggleZoom').addEventListener('click', toggleZoom);
-
-  document.getElementById('addCategoryButton').addEventListener('click', () => {
-    const catInput = document.getElementById('categoryInput');
-    const val = catInput.value.trim();
-    if (val) {
-      addCategory(val);
-      catInput.value = '';
+function updateCategoryOptions() {
+  // Aggiorna le select categorie nella UI (es. select di aggiunta link, filtri)
+  const categorySelects = document.querySelectorAll('.category-select');
+  categorySelects.forEach(sel => {
+    const currentVal = sel.value;
+    sel.innerHTML = '';
+    for (const cat of Object.keys(data.categories)) {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      if (cat === currentVal) opt.selected = true;
+      sel.appendChild(opt);
     }
   });
+}
 
-  document.getElementById('sortOptions').addEventListener('change', e => {
-    if (e.target.name === 'sort') {
-      data.sortBy = e.target.value;
+// --- Esportazione e Importazione ---
+
+function exportData() {
+  const json = JSON.stringify(data.categories, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'linkzen_data.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (typeof imported !== 'object') throw new Error('File non valido');
+      pushUndo();
+      data.categories = imported;
       saveData();
       renderAll();
+      updateCategoryOptions();
+    } catch (err) {
+      alert('Errore nell\'importazione: file JSON non valido');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// --- Zoom del testo ---
+
+let currentZoom = 1;
+
+function setZoom(zoom) {
+  currentZoom = Math.min(Math.max(zoom, 0.5), 3);
+  document.documentElement.style.setProperty('--zoom-scale', currentZoom);
+  localStorage.setItem('linkZenZoom', currentZoom);
+}
+
+function zoomIn() {
+  setZoom(currentZoom + 0.1);
+}
+
+function zoomOut() {
+  setZoom(currentZoom - 0.1);
+}
+
+function resetZoom() {
+  setZoom(1);
+}
+
+function loadZoom() {
+  const saved = localStorage.getItem('linkZenZoom');
+  if (saved) {
+    setZoom(parseFloat(saved));
+  }
+}
+
+// --- Dark Mode ---
+
+function toggleDarkMode(enable) {
+  if (enable === undefined) {
+    enable = !document.body.classList.contains('dark-mode');
+  }
+  if (enable) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+  localStorage.setItem('linkZenDarkMode', enable ? '1' : '0');
+}
+
+function loadDarkMode() {
+  const saved = localStorage.getItem('linkZenDarkMode');
+  if (saved === '1') {
+    toggleDarkMode(true);
+  }
+}
+
+// --- Easter Egg Visivo ---
+
+function setupEasterEgg() {
+  // Semplice esempio: se premi sequenza di tasti "linkzen", cambia sfondo temporaneamente
+  const sequence = ['l','i','n','k','z','e','n'];
+  let pos = 0;
+  window.addEventListener('keydown', e => {
+    if (e.key.toLowerCase() === sequence[pos]) {
+      pos++;
+      if (pos === sequence.length) {
+        pos = 0;
+        triggerEasterEgg();
+      }
+    } else {
+      pos = 0;
     }
   });
+}
 
-  document.getElementById('clearLearnedKeywords').addEventListener('click', clearLearnedKeywords);
+function triggerEasterEgg() {
+  const body = document.body;
+  const originalBg = body.style.backgroundColor;
+  body.style.backgroundColor = '#FFD700'; // oro brillante
+  setTimeout(() => {
+    body.style.backgroundColor = originalBg;
+  }, 2000);
+}
+
+// --- Event listeners per pulsanti ---
+
+function bindUI() {
+  document.getElementById('addCategoryBtn').addEventListener('click', () => {
+    const name = prompt('Nome nuova categoria:');
+    if (name) addCategory(name.trim());
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', exportData);
+
+  document.getElementById('importInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    importData(file);
+    e.target.value = ''; // reset input
+  });
+
+  document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
+  document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
+  document.getElementById('resetZoomBtn').addEventListener('click', resetZoom);
+
+  document.getElementById('darkModeToggle').addEventListener('click', () => {
+    toggleDarkMode();
+  });
+}
+
+// --- Init esteso ---
+
+function extendedInit() {
+  loadZoom();
+  loadDarkMode();
+  setupEasterEgg();
+  bindUI();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  init();
+  extendedInit();
+  updateCategoryOptions();
 });
 
