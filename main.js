@@ -75,10 +75,6 @@ function showUndoButton() {
   }, 10000); // nasconde l'undo dopo 10 secondi
 }
 
-
-
-
-
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
     e.preventDefault();
@@ -136,7 +132,6 @@ themeToggleWrapper = document.getElementById("theme-toggle-wrapper");
   themeToggleWrapper.style.display = "inline-block";
   undoData = null;
 });
-
   
   const darkMode = loadData("darkMode");
   const toggleTheme = document.getElementById("toggle-theme");
