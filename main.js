@@ -366,6 +366,24 @@ function loadUrls() {
       select.appendChild(option);
     });
 
+
+
+
+    
+div.querySelector(".remove-btn").addEventListener("click", () => {
+      const index = urls.findIndex(e => e.url === entry.url);
+      if (index !== -1) {
+        undoData = { entry, index };
+        urls.splice(index, 1);
+        saveData("visitedUrls", urls);
+        loadUrls();
+        showUndoButton();
+      }
+    });
+
+
+
+    
     select.addEventListener("change", () => {
       const newCat = select.value;
       const idx = result.visitedUrls.findIndex(i => i.url === item.url);
