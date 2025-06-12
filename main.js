@@ -124,8 +124,8 @@ const params = new URLSearchParams(window.location.search);
 undoBtn = document.getElementById("undo-btn");
 themeToggleWrapper = document.getElementById("theme-toggle-wrapper");
 
-undoBtn.addEventListener("click", () => {
-  if (!undoData) return;
+// undoBtn.addEventListener("click", () => {
+// if (!undoData) return;
 
   const urls = loadData("visitedUrls") || [];
   urls.splice(undoData.index, 0, undoData.entry);
