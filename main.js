@@ -78,6 +78,31 @@ document.addEventListener("DOMContentLoaded", () => {
   fontScale = loadData("fontScale") || 1;
   applyFontSize(fontScale);
 
+const params = new URLSearchParams(window.location.search);
+  const title = params.get("title");
+  const url = params.get("url");
+
+  if (title && url) {
+    categorizeByLearnedKeywords(title, url, (category, isIA) => {
+      const visitedUrls = loadData("visitedUrls") || [];
+      const exists = visitedUrls.find(u => u.url === url);
+
+      if (!exists) {
+        visitedUrls.unshift({ url, title, category, originalCategory: category });
+        saveData("visitedUrls", visitedUrls);
+        saveData("lastAddedUrl", url);
+        saveData("highlightColor", "green");
+      } else {
+        saveData("lastAddedUrl", url);
+        saveData("highlightColor", "orange");
+      }
+
+      // Rimuove i parametri dalla URL dopo il salvataggio
+      window.history.replaceState({}, document.title, window.location.pathname);
+      loadUrls();
+    });
+  }
+ 
   const darkMode = loadData("darkMode");
   const toggleTheme = document.getElementById("toggle-theme");
   if (darkMode) {
