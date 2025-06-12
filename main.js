@@ -61,20 +61,6 @@ function applyFontSize(scale) {
   if (box) box.style.fontSize = `${scale}em`;
 }
 
-function showUndoButton() {
-  if (!undoBtn) undoBtn = document.getElementById("undo-btn");
-  if (!themeToggleWrapper) themeToggleWrapper = document.getElementById("theme-toggle-wrapper");
-  undoBtn.style.display = "inline-block";
-  themeToggleWrapper.style.display = "none";
-
-  clearTimeout(undoTimeout);
-  undoTimeout = setTimeout(() => {
-    undoBtn.style.display = "none";
-    themeToggleWrapper.style.display = "inline-block";
-    undoData = null;
-  }, 10000); // nasconde l'undo dopo 10 secondi
-}
-
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
     e.preventDefault();
@@ -92,11 +78,12 @@ document.addEventListener("DOMContentLoaded", () => {
   fontScale = loadData("fontScale") || 1;
   applyFontSize(fontScale);
 
+
 const params = new URLSearchParams(window.location.search);
   const title = params.get("title");
   const url = params.get("url");
 
-  if (title && url) {
+ if (title && url) {
     categorizeByLearnedKeywords(title, url, (category, isIA) => {
       const visitedUrls = loadData("visitedUrls") || [];
       const exists = visitedUrls.find(u => u.url === url);
@@ -116,8 +103,8 @@ const params = new URLSearchParams(window.location.search);
       loadUrls();
     });
   }
-});
-  
+
+
   const darkMode = loadData("darkMode");
   const toggleTheme = document.getElementById("toggle-theme");
   if (darkMode) {
@@ -346,7 +333,6 @@ function loadUrls() {
       select.appendChild(option);
     });
 
-    
     select.addEventListener("change", () => {
       const newCat = select.value;
       const idx = result.visitedUrls.findIndex(i => i.url === item.url);
