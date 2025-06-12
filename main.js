@@ -61,6 +61,24 @@ function applyFontSize(scale) {
   if (box) box.style.fontSize = `${scale}em`;
 }
 
+function showUndoButton() {
+  if (!undoBtn) undoBtn = document.getElementById("undo-btn");
+  if (!themeToggleWrapper) themeToggleWrapper = document.getElementById("theme-toggle-wrapper");
+  undoBtn.style.display = "inline-block";
+  themeToggleWrapper.style.display = "none";
+
+  clearTimeout(undoTimeout);
+  undoTimeout = setTimeout(() => {
+    undoBtn.style.display = "none";
+    themeToggleWrapper.style.display = "inline-block";
+    undoData = null;
+  }, 10000); // nasconde l'undo dopo 10 secondi
+}
+
+
+
+
+
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
     e.preventDefault();
