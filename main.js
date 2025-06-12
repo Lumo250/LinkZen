@@ -120,7 +120,24 @@ const params = new URLSearchParams(window.location.search);
       loadUrls();
     });
   }
- 
+
+undoBtn = document.getElementById("undo-btn");
+themeToggleWrapper = document.getElementById("theme-toggle-wrapper");
+
+undoBtn.addEventListener("click", () => {
+  if (!undoData) return;
+
+  const urls = loadData("visitedUrls") || [];
+  urls.splice(undoData.index, 0, undoData.entry);
+  saveData("visitedUrls", urls);
+  loadUrls();
+
+  undoBtn.style.display = "none";
+  themeToggleWrapper.style.display = "inline-block";
+  undoData = null;
+});
+
+  
   const darkMode = loadData("darkMode");
   const toggleTheme = document.getElementById("toggle-theme");
   if (darkMode) {
