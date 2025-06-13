@@ -1,8 +1,4 @@
-// main.js - Versione completa con fix dropdown e tutte le funzioni originali
-
-// ======================
-// 1. INIZIALIZZAZIONE E COSTANTI
-// ======================
+// 1. INIZIALIZZAZIONE
 if (localStorage.getItem("darkMode") === "true") {
   document.documentElement.classList.add("dark-ready");
   document.body.classList?.add("dark");
@@ -12,12 +8,29 @@ let undoData = null;
 let undoTimeout = null;
 let undoBtn, themeToggleWrapper;
 let fontScale = 1;
+let dropdownOpen = false; // Nuova variabile per tracciare lo stato del dropdown
 
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
-// ======================
-// 2. GESTIONE DROPDOWN MIGLIORATA (NUOVA)
-// ======================
+// 2. GESTIONE INPUT MOBILE (NUOVA)
+function setupMobileInput() {
+  const input = document.getElementById('new-category-input');
+  if (!input) return;
+
+  // Disabilita zoom automatico su iOS
+  input.addEventListener('focus', function() {
+    this.style.fontSize = '16px'; // Dimensione fissa per iOS
+    this.setAttribute('readonly', 'readonly'); // Previene zoom
+    setTimeout(() => this.removeAttribute('readonly'), 100);
+  });
+
+  // Ripristina stili dopo la perdita del focus
+  input.addEventListener('blur', function() {
+    this.style.fontSize = '';
+  });
+}
+
+// 3. GESTIONE DROPDOWN MIGLIORATA
 function setupDropdownBehavior() {
   const dropdown = document.getElementById('dropdown-category-list');
   const input = document.getElementById('new-category-input');
@@ -26,24 +39,27 @@ function setupDropdownBehavior() {
   if (!dropdown || !input || !addButton) return;
 
   // Apertura dropdown
-  input.addEventListener('focus', () => {
+  input.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropdownOpen = true;
     dropdown.classList.remove('hidden');
+    input.focus();
   });
 
   // Chiusura dropdown
   const closeDropdown = () => {
-    if (!dropdown.classList.contains('hidden')) {
+    if (dropdownOpen) {
+      dropdownOpen = false;
       dropdown.classList.add('hidden');
     }
   };
 
   // Click esterno
   document.addEventListener('click', (e) => {
-    const isClickInside = input.contains(e.target) || 
-                         dropdown.contains(e.target) || 
-                         addButton.contains(e.target);
-    
-    if (!isClickInside) {
+    if (dropdownOpen && !input.contains(e.target) && 
+        !dropdown.contains(e.target) && 
+        !addButton.contains(e.target)) {
       closeDropdown();
     }
   });
@@ -56,9 +72,7 @@ function setupDropdownBehavior() {
   });
 }
 
-// ======================
-// 3. GESTIONE STORAGE (MODIFICATA PER PWA)
-// ======================
+// 4. GESTIONE STORAGE
 const storage = {
   set: (data) => new Promise(resolve => {
     try {
@@ -86,13 +100,9 @@ const storage = {
       console.error("Storage get error:", error);
       resolve(keys);
     }
-  }),
-
-  remove: (key) => new Promise(resolve => {
-    localStorage.removeItem(key);
-    resolve();
   })
 };
+
 
 // ======================
 // 4. FUNZIONI ORIGINALI (IDENTICHE)
@@ -219,8 +229,9 @@ document.addEventListener("keydown", (e) => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Inizializzazione dropdown (NUOVA)
-  setupDropdownBehavior();
+  // Inizializza le nuove funzionalità
+  setupMobileInput(); // <-- Aggiunto per gestire l'input su mobile
+  setupDropdownBehavior(); // <-- Gestione dropdown migliorata
 
   // Resto dell'inizializzazione originale
   const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
