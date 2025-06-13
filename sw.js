@@ -25,15 +25,12 @@ self.addEventListener('install', (event) => {
 
 // Strategia di caching ottimizzata
 self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  const url = new URL(req.url);
-
-      // Aggiungi questa condizione
-    if (url.search.includes('bookmarklet=')) {
+    const url = new URL(event.request.url);
+    
+    // Non memorizzare nella cache la pagina del bookmarklet
+    if (url.pathname === '/Bookmarklet/' || url.hostname === 'lumo250.github.io') {
         event.respondWith(
-            fetch(req).then(response => {
-                const cache = caches.open(DYNAMIC_CACHE_NAME);
-                cache.put(req, response.clone());
+            fetch(event.request).then(response => {
                 return response;
             }).catch(() => caches.match('/index.html'))
         );
