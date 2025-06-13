@@ -419,7 +419,7 @@ function loadUrls() {
       // Fissiamo il valore dell'URL al momento della creazione del pulsante
       const urlToDelete = item.url;
    
-      del.addEventListener("click", () => {
+      del.addEventListener("click", (e) => {
          const indexToDelete = result.visitedUrls.findIndex(entry => entry.url === urlToDelete);
           if (indexToDelete !== -1) {
           const removed = result.visitedUrls.splice(indexToDelete, 1)[0];
