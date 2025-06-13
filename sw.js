@@ -28,6 +28,18 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
+      // Aggiungi questa condizione
+    if (url.search.includes('bookmarklet=')) {
+        event.respondWith(
+            fetch(req).then(response => {
+                const cache = caches.open(DYNAMIC_CACHE_NAME);
+                cache.put(req, response.clone());
+                return response;
+            }).catch(() => caches.match('/index.html'))
+        );
+        return;
+    }
+  
   // Ignora richieste non GET e chrome-extension://
   if (req.method !== 'GET' || req.url.startsWith('chrome-extension://')) {
     return;
