@@ -288,6 +288,30 @@ function openLinkSafari(url) {
     applyFontSize(fontScale);
   });
 
+  // MODIFICA SOLO LA GESTIONE DEGLI EVENTI:
+  const handleAddCategory = async () => {
+    const input = document.getElementById('new-category-input');
+    const newCategory = input.value.trim();
+    
+    if (!newCategory) return;
+    
+    if (!userCategories.includes(newCategory)) {
+      const updated = [...userCategories, newCategory];
+      await storage.set({ userCategories: updated });
+      input.value = "";
+      
+      // Aggiornamento ottimizzato per iOS
+      requestAnimationFrame(async () => {
+        await updateCategoryDropdown();
+        await loadUrls();
+      });
+    }
+  };
+
+  // Sostituisci tutti gli event listeners con:
+  document.getElementById('add-category-btn').addEventListener('touchstart', handleAddCategory, { passive: true });
+  document.getElementById('add-category-btn').addEventListener('click', handleAddCategory);
+
   // ... [TUTTI GLI ALTRI EVENT LISTENERS ORIGINALI RIMANGONO IDENTICI] ...
 
   // Caricamento iniziale
