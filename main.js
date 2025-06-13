@@ -1,3 +1,5 @@
+// main.js - Versione completa con tutti i fix
+
 // 1. INIZIALIZZAZIONE
 if (localStorage.getItem("darkMode") === "true") {
   document.documentElement.classList.add("dark-ready");
@@ -8,29 +10,27 @@ let undoData = null;
 let undoTimeout = null;
 let undoBtn, themeToggleWrapper;
 let fontScale = 1;
-let dropdownOpen = false; // Nuova variabile per tracciare lo stato del dropdown
+let dropdownOpen = false;
 
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
-// 2. GESTIONE INPUT MOBILE (NUOVA)
+// 2. GESTIONE INPUT MOBILE
 function setupMobileInput() {
   const input = document.getElementById('new-category-input');
   if (!input) return;
 
-  // Disabilita zoom automatico su iOS
   input.addEventListener('focus', function() {
-    this.style.fontSize = '16px'; // Dimensione fissa per iOS
-    this.setAttribute('readonly', 'readonly'); // Previene zoom
+    this.style.fontSize = '16px';
+    this.setAttribute('readonly', 'readonly');
     setTimeout(() => this.removeAttribute('readonly'), 100);
   });
 
-  // Ripristina stili dopo la perdita del focus
   input.addEventListener('blur', function() {
     this.style.fontSize = '';
   });
 }
 
-// 3. GESTIONE DROPDOWN MIGLIORATA
+// 3. GESTIONE DROPDOWN COMPLETA
 function setupDropdownBehavior() {
   const dropdown = document.getElementById('dropdown-category-list');
   const input = document.getElementById('new-category-input');
@@ -40,11 +40,13 @@ function setupDropdownBehavior() {
 
   // Apertura dropdown
   input.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dropdownOpen = true;
-    dropdown.classList.remove('hidden');
-    input.focus();
+    if (!dropdownOpen) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropdownOpen = true;
+      dropdown.classList.remove('hidden');
+      input.focus();
+    }
   });
 
   // Chiusura dropdown
@@ -70,38 +72,70 @@ function setupDropdownBehavior() {
       closeDropdown();
     }
   });
+
+  // 4. FIX PER AGGIUNTA CATEGORIE (NUOVO CODICE)
+  addButton.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const newCategory = input.value.trim();
+    if (!newCategory) return;
+    
+    const { userCategories = [] } = await storage.get({ userCategories: [] });
+    if (!userCategories.includes(newCategory)) {
+      const updated = [...userCategories, newCategory];
+      await storage.set({ userCategories: updated });
+      input.value = "";
+      
+      // Ricarica solo le categorie senza refresh completo
+      await updateCategoryDropdown();
+      await loadUrls();
+    }
+    
+    closeDropdown();
+  });
 }
 
-// 4. GESTIONE STORAGE
-const storage = {
-  set: (data) => new Promise(resolve => {
-    try {
-      Object.keys(data).forEach(key => {
-        localStorage.setItem(key, JSON.stringify(data[key]));
-      });
-      resolve();
-    } catch (error) {
-      console.error("Storage set error:", error);
-      resolve();
-    }
-  }),
+// 5. FUNZIONE PER AGGIORNARE IL DROPDOWN (NUOVA)
+async function updateCategoryDropdown() {
+  const dropdown = document.getElementById('dropdown-category-list');
+  const { userCategories = [] } = await storage.get({ userCategories: [] });
   
-  get: (keys) => new Promise(resolve => {
-    try {
-      const result = {};
-      const keysToGet = Array.isArray(keys) ? keys : Object.keys(keys);
-      
-      keysToGet.forEach(key => {
-        const value = localStorage.getItem(key);
-        result[key] = value ? JSON.parse(value) : keys[key];
+  if (dropdown) {
+    dropdown.innerHTML = "";
+    userCategories.forEach((cat) => {
+      const row = document.createElement("div");
+      row.className = "dropdown-item";
+      row.textContent = cat;
+
+      const remove = document.createElement("span");
+      remove.textContent = "×";
+      remove.className = "remove";
+      remove.style.marginLeft = "6px";
+      remove.style.cursor = "pointer";
+      remove.style.color = "red";
+      remove.addEventListener("click", async () => {
+        const { userCategories: currentCategories = [], visitedUrls = [] } = 
+          await storage.get({ userCategories: [], visitedUrls: [] });
+        
+        const updatedUserCats = currentCategories.filter(c => c !== cat);
+        const updatedUrls = visitedUrls.map(link => {
+          if (link.category === cat) {
+            return { ...link, category: link.originalCategory || "Other" };
+          }
+          return link;
+        });
+
+        await storage.set({ userCategories: updatedUserCats, visitedUrls: updatedUrls });
+        await updateCategoryDropdown();
+        await loadUrls();
       });
-      resolve(result);
-    } catch (error) {
-      console.error("Storage get error:", error);
-      resolve(keys);
-    }
-  })
-};
+
+      row.appendChild(remove);
+      dropdown.appendChild(row);
+    });
+  }
+}
 
 
 // ======================
@@ -268,6 +302,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ... [TUTTI GLI ALTRI EVENT LISTENERS ORIGINALI RIMANGONO IDENTICI] ...
 
   // Caricamento iniziale
+    // Carica iniziale delle categorie
+  await updateCategoryDropdown();
   await loadUrls();
 });
 
