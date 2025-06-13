@@ -1,4 +1,4 @@
-// main.js - Versione completa con tutti i fix
+// main.js - Versione finale con tutti i fix
 
 // 1. INIZIALIZZAZIONE
 if (localStorage.getItem("darkMode") === "true") {
@@ -14,19 +14,21 @@ let dropdownOpen = false;
 
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
-// 2. GESTIONE INPUT MOBILE
-function setupMobileInput() {
+// 2. FIX PER LO ZOOM AUTOMATICO SU iOS
+function preventIOSZoom() {
   const input = document.getElementById('new-category-input');
   if (!input) return;
 
+  // Disabilita completamente lo zoom per questo input
+  input.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    this.style.fontSize = '16px';
+    this.focus({ preventScroll: true });
+  }, { passive: false });
+
   input.addEventListener('focus', function() {
     this.style.fontSize = '16px';
-    this.setAttribute('readonly', 'readonly');
-    setTimeout(() => this.removeAttribute('readonly'), 100);
-  });
-
-  input.addEventListener('blur', function() {
-    this.style.fontSize = '';
+    this.style.transform = 'scale(1)';
   });
 }
 
@@ -35,49 +37,33 @@ function setupDropdownBehavior() {
   const dropdown = document.getElementById('dropdown-category-list');
   const input = document.getElementById('new-category-input');
   const addButton = document.getElementById('add-category-btn');
+  const customCategoryContainer = document.querySelector('.custom-category-container');
 
-  if (!dropdown || !input || !addButton) return;
+  if (!dropdown || !input || !addButton || !customCategoryContainer) return;
 
   // Apertura dropdown
-  input.addEventListener('click', (e) => {
-    if (!dropdownOpen) {
-      e.preventDefault();
-      e.stopPropagation();
-      dropdownOpen = true;
-      dropdown.classList.remove('hidden');
-      input.focus();
-    }
-  });
+  const openDropdown = () => {
+    dropdownOpen = true;
+    dropdown.classList.remove('hidden');
+  };
 
   // Chiusura dropdown
   const closeDropdown = () => {
-    if (dropdownOpen) {
-      dropdownOpen = false;
-      dropdown.classList.add('hidden');
-    }
+    dropdownOpen = false;
+    dropdown.classList.add('hidden');
   };
 
-  // Click esterno
-  document.addEventListener('click', (e) => {
-    if (dropdownOpen && !input.contains(e.target) && 
-        !dropdown.contains(e.target) && 
-        !addButton.contains(e.target)) {
-      closeDropdown();
-    }
-  });
-
-  // Tasto ESC
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeDropdown();
-    }
-  });
-
-  // 4. FIX PER AGGIUNTA CATEGORIE (NUOVO CODICE)
-  addButton.addEventListener('click', async (e) => {
-    e.preventDefault();
+  // Gestione click sull'input
+  input.addEventListener('click', (e) => {
     e.stopPropagation();
-    
+    if (!dropdownOpen) {
+      openDropdown();
+    }
+  });
+
+  // Gestione click sul pulsante Add
+  addButton.addEventListener('click', async (e) => {
+    e.stopPropagation();
     const newCategory = input.value.trim();
     if (!newCategory) return;
     
@@ -86,56 +72,44 @@ function setupDropdownBehavior() {
       const updated = [...userCategories, newCategory];
       await storage.set({ userCategories: updated });
       input.value = "";
-      
-      // Ricarica solo le categorie senza refresh completo
       await updateCategoryDropdown();
       await loadUrls();
     }
-    
     closeDropdown();
+  });
+
+  // Click esterno per chiudere
+  document.addEventListener('click', (e) => {
+    if (dropdownOpen && !customCategoryContainer.contains(e.target)) {
+      closeDropdown();
+    }
+  });
+
+  // Chiusura con ESC
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && dropdownOpen) {
+      closeDropdown();
+    }
   });
 }
 
-// 5. FUNZIONE PER AGGIORNARE IL DROPDOWN (NUOVA)
-async function updateCategoryDropdown() {
-  const dropdown = document.getElementById('dropdown-category-list');
-  const { userCategories = [] } = await storage.get({ userCategories: [] });
-  
-  if (dropdown) {
-    dropdown.innerHTML = "";
-    userCategories.forEach((cat) => {
-      const row = document.createElement("div");
-      row.className = "dropdown-item";
-      row.textContent = cat;
-
-      const remove = document.createElement("span");
-      remove.textContent = "×";
-      remove.className = "remove";
-      remove.style.marginLeft = "6px";
-      remove.style.cursor = "pointer";
-      remove.style.color = "red";
-      remove.addEventListener("click", async () => {
-        const { userCategories: currentCategories = [], visitedUrls = [] } = 
-          await storage.get({ userCategories: [], visitedUrls: [] });
-        
-        const updatedUserCats = currentCategories.filter(c => c !== cat);
-        const updatedUrls = visitedUrls.map(link => {
-          if (link.category === cat) {
-            return { ...link, category: link.originalCategory || "Other" };
-          }
-          return link;
-        });
-
-        await storage.set({ userCategories: updatedUserCats, visitedUrls: updatedUrls });
-        await updateCategoryDropdown();
-        await loadUrls();
-      });
-
-      row.appendChild(remove);
-      dropdown.appendChild(row);
+// 4. STORAGE MANAGEMENT
+const storage = {
+  set: (data) => new Promise(resolve => {
+    Object.keys(data).forEach(key => {
+      localStorage.setItem(key, JSON.stringify(data[key]));
     });
-  }
-}
+    resolve();
+  }),
+  get: (keys) => new Promise(resolve => {
+    const result = {};
+    (Array.isArray(keys) ? keys : Object.keys(keys)).forEach(key => {
+      const value = localStorage.getItem(key);
+      result[key] = value ? JSON.parse(value) : keys[key];
+    });
+    resolve(result);
+  })
+};
 
 
 // ======================
@@ -264,8 +238,23 @@ document.addEventListener("keydown", (e) => {
 
 document.addEventListener("DOMContentLoaded", async () => {
   // Inizializza le nuove funzionalità
-  setupMobileInput(); // <-- Aggiunto per gestire l'input su mobile
+  preventIOSZoom(); // <-- Aggiunto per prevenire lo zoom
   setupDropdownBehavior(); // <-- Gestione dropdown migliorata
+
+
+  // 5. FUNZIONE PER APRIRE LINK (MODIFICATA PER iOS)
+function openLinkSafari(url) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+  }, 100);
+}
 
   // Resto dell'inizializzazione originale
   const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
