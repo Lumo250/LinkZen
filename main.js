@@ -57,6 +57,21 @@ const storage = {
 // ============================================
 // 3. FUNZIONI ORIGINALI (COMPLETAMENTE PRESERVATE)
 // ============================================
+
+// Aggiungi questa funzione all'inizio del file (dopo le dichiarazioni delle variabili)
+function setupGlobalClickHandler() {
+  document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('dropdown-category-list');
+    const categoryContainer = document.querySelector('.custom-category-container');
+    
+    // Chiudi il dropdown se il click è fuori dall'area delle categorie
+    if (dropdown && !dropdown.classList.contains('hidden') && 
+        !categoryContainer.contains(e.target)) {
+      dropdown.classList.add('hidden');
+    }
+  });
+}
+
 function extractKeywords(text) {
   return text
     .toLowerCase()
@@ -180,6 +195,7 @@ document.addEventListener("keydown", (e) => {
 
 document.addEventListener("DOMContentLoaded", async () => {
   // Inizializzazione
+  setupGlobalClickHandler(); // <-- Aggiungi questa linea
   const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
   fontScale = savedScale;
   applyFontSize(fontScale);
@@ -377,7 +393,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   input.addEventListener("focus", () => {
-    dropdown.classList.remove("hidden");
+    const dropdown = document.getElementById('dropdown-category-list');
+      if (dropdown) {
+        dropdown.classList.remove('hidden');
+      }
   });
 
   // Undo
