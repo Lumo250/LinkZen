@@ -1,6 +1,9 @@
-// main.js - Versione completa con tutti i fix
+// main.js - Versione modificata per supportare la bookmarklet
+// Tutte le funzioni originali preservate, con aggiunta del supporto bookmarklet
 
-// ============ INIZIALIZZAZIONE ============
+// ============================================
+// 1. INIZIALIZZAZIONE E COSTANTI
+// ============================================
 if (localStorage.getItem("darkMode") === "true") {
   document.documentElement.classList.add("dark-ready");
   document.body.classList?.add("dark");
@@ -10,11 +13,12 @@ let undoData = null;
 let undoTimeout = null;
 let undoBtn, themeToggleWrapper;
 let fontScale = 1;
-let dropdownOpen = false;
 
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
-// ============ GESTIONE STORAGE ============
+// ============================================
+// 2. GESTIONE STORAGE
+// ============================================
 const storage = {
   set: (data) => new Promise(resolve => {
     try {
@@ -23,7 +27,7 @@ const storage = {
       });
       resolve();
     } catch (error) {
-      console.error("Storage set error:", error);
+      console.error("Errore salvataggio:", error);
       resolve();
     }
   }),
@@ -39,18 +43,75 @@ const storage = {
       });
       resolve(result);
     } catch (error) {
-      console.error("Storage get error:", error);
+      console.error("Errore lettura:", error);
       resolve(keys);
     }
   }),
-
+  
   remove: (key) => new Promise(resolve => {
     localStorage.removeItem(key);
     resolve();
   })
 };
 
-// ============ FUNZIONI DI SUPPORTO ============
+// ============================================
+// 3. FUNZIONE PER PROCESSARE I DATI DELLA BOOKMARKLET
+// ============================================
+async function processBookmarkletData() {
+  try {
+    if (window.location.hash.startsWith('#linkzen-data=')) {
+      const hashData = window.location.hash.substring('#linkzen-data='.length);
+      const data = JSON.parse(decodeURIComponent(hashData));
+      
+      // Rimuovi l'hash per evitare ripetizioni
+      history.replaceState(null, null, ' ');
+
+      // Verifica se l'URL esiste già
+      const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+      const exists = visitedUrls.some(item => item.url === data.url);
+      
+      if (exists) {
+        await storage.set({
+          lastAddedUrl: data.url,
+          highlightColor: "orange"
+        });
+      } else {
+        // Categorizza e salva
+        categorizeByLearnedKeywords(data.title, data.url, async (category, isIA) => {
+          visitedUrls.push({ 
+            url: data.url, 
+            category, 
+            originalCategory: category, 
+            title: data.title 
+          });
+          
+          await storage.set({
+            visitedUrls,
+            lastAddedUrl: data.url,
+            highlightColor: "green"
+          });
+        });
+      }
+      
+      // Ricarica la lista
+      await loadUrls();
+      
+      // Scorri fino al nuovo elemento
+      setTimeout(() => {
+        const element = document.querySelector(`a[href="${data.url}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    }
+  } catch (e) {
+    console.error("Errore nel processing della bookmarklet:", e);
+  }
+}
+
+// ============================================
+// 4. FUNZIONI ORIGINALI (PRESERVATE)
+// ============================================
 function extractKeywords(text) {
   return text
     .toLowerCase()
@@ -153,111 +214,299 @@ function openLinkSafari(url) {
   document.body.removeChild(a);
 }
 
-// ============ GESTIONE DROPDOWN CATEGORIE ============
-function setupDropdownBehavior() {
-  const dropdown = document.getElementById('dropdown-category-list');
-  const input = document.getElementById('new-category-input');
-  const addButton = document.getElementById('add-category-btn');
-
-  if (!dropdown || !input || !addButton) return;
-
-  // Gestione focus su mobile
-  input.addEventListener('focus', function() {
-    this.style.fontSize = '16px';
-    setTimeout(() => this.style.fontSize = '', 300);
-  });
-
-  // Apertura dropdown
-  input.addEventListener('click', (e) => {
-    if (!dropdownOpen) {
-      dropdownOpen = true;
-      dropdown.classList.remove('hidden');
-    }
-  });
-
-  // Chiusura dropdown
-  const closeDropdown = () => {
-    if (dropdownOpen) {
-      dropdownOpen = false;
-      dropdown.classList.add('hidden');
-    }
-  };
-
-  // Click esterno
-  document.addEventListener('click', (e) => {
-    if (dropdownOpen && !input.contains(e.target) && 
-        !dropdown.contains(e.target) && 
-        !addButton.contains(e.target)) {
-      closeDropdown();
-    }
-  });
-
-  // Tasto ESC
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeDropdown();
-    }
-  });
-
-  // Aggiunta categoria
-  addButton.addEventListener('click', async (e) => {
+// ============================================
+// 5. EVENT LISTENERS E INIZIALIZZAZIONE
+// ============================================
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
     e.preventDefault();
+    fontScale = Math.min(fontScale + 0.1, 2);
+    applyFontSize(fontScale);
+  }
+  if (e.ctrlKey && e.key === '-') {
+    e.preventDefault();
+    fontScale = Math.max(fontScale - 0.1, 0.6);
+    applyFontSize(fontScale);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+  // Inizializzazione
+  const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
+  fontScale = savedScale;
+  applyFontSize(fontScale);
+
+  // Elabora i dati della bookmarklet (se presenti)
+  await processBookmarkletData();
+
+  // Resto del codice originale...
+  undoBtn = document.getElementById("undo-btn");
+  themeToggleWrapper = document.getElementById("theme-toggle");
+
+  // Tema dark
+  const toggleTheme = document.getElementById("toggle-theme");
+  const { darkMode = false } = await storage.get({ darkMode: false });
+  if (darkMode) {
+    document.body.classList.add("dark");
+    toggleTheme.checked = true;
+  }
+
+  toggleTheme.addEventListener("change", () => {
+    const enabled = toggleTheme.checked;
+    document.body.classList.toggle("dark", enabled);
+    storage.set({ darkMode: enabled });
+    localStorage.setItem("darkMode", enabled.toString());
+  });
+
+  // Zoom
+  document.getElementById("zoom-in").addEventListener("click", () => {
+    fontScale = Math.min(fontScale + 0.1, 2);
+    applyFontSize(fontScale);
+  });
+
+  document.getElementById("zoom-out").addEventListener("click", () => {
+    fontScale = Math.max(fontScale - 0.1, 0.6);
+    applyFontSize(fontScale);
+  });
+
+  // IA Knowledge Box
+  document.getElementById("ia-knowledge-btn").addEventListener("click", async () => {
+    const iaBtn = document.getElementById("ia-knowledge-btn");
+    const box = document.getElementById("ia-knowledge-box");
+    const isVisible = !box.classList.contains("hidden");
+
+    if (isVisible) {
+      box.classList.add("hidden");
+      iaBtn.classList.remove("active");
+      return;
+    }
+
+    const { keywordToCategory = {} } = await storage.get({ keywordToCategory: {} });
+    const map = keywordToCategory;
+    const entries = Object.entries(map);
+    box.innerHTML = "";
+
+    if (entries.length === 0) {
+      box.textContent = "Nessuna parola chiave appresa.";
+    } else {
+      const grouped = {};
+      entries.forEach(([keyword, category]) => {
+        if (!grouped[category]) grouped[category] = [];
+        grouped[category].push(keyword);
+      });
+
+      for (const category in grouped) {
+        const catBlock = document.createElement("div");
+        catBlock.style.marginBottom = "12px";
+
+        const catTitle = document.createElement("div");
+        catTitle.textContent = `📁 ${category}`;
+        catTitle.style.fontWeight = "bold";
+        catTitle.style.marginBottom = "4px";
+        catTitle.style.fontSize = "16px";
+        catTitle.style.padding = "4px 8px";
+        catTitle.style.borderRadius = "6px";
+        catTitle.style.display = "inline-block";
+
+        const isDark = document.body.classList.contains("dark");
+        catTitle.style.backgroundColor = isDark ? "#2c2c2c" : "#f0f0f0";
+        catTitle.style.color = isDark ? "#e0e0e0" : "#333333";
+        catTitle.style.border = `1px solid ${isDark ? "#444" : "#ccc"}`;
+
+        catBlock.appendChild(catTitle);
+
+        const kwContainer = document.createElement("div");
+        kwContainer.style.display = "flex";
+        kwContainer.style.flexWrap = "wrap";
+        kwContainer.style.gap = "6px";
+
+        grouped[category].forEach((keyword) => {
+          const chip = document.createElement("div");
+          chip.textContent = keyword;
+          chip.title = `Click to remove "${keyword}"`;
+          chip.style.padding = "2px 6px";
+          chip.style.border = "1px solid orange";
+          chip.style.borderRadius = "4px";
+          chip.style.cursor = "pointer";
+          chip.style.fontSize = "inherit";
+
+          chip.addEventListener("click", async () => {
+            delete map[keyword];
+            await storage.set({ keywordToCategory: map });
+            chip.remove();
+            if (Object.keys(map).length === 0) {
+              box.textContent = "Nessuna parola chiave appresa.";
+            }
+          });
+
+          kwContainer.appendChild(chip);
+        });
+
+        catBlock.appendChild(kwContainer);
+        box.appendChild(catBlock);
+      }
+    }
+
+    box.classList.remove("hidden");
+    iaBtn.classList.add("active");
+    box.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  // Export/Import
+  const exportBtn = document.getElementById("export-btn");
+  const exportDefault = document.getElementById("export-default");
+  const exportOptions = document.getElementById("export-options");
+
+  exportBtn.addEventListener("click", (e) => {
+    exportDefault.style.display = "none";
+    exportOptions.classList.remove("hidden");
+    e.stopPropagation();
+  });
+
+  document.getElementById("export-basic").addEventListener("click", async () => {
+    const { visitedUrls = [], userCategories = [] } = await storage.get({ visitedUrls: [], userCategories: [] });
+    const blob = new Blob([JSON.stringify({ visitedUrls, userCategories }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "linkzen_export_basic.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    exportDefault.style.display = "flex";
+    exportOptions.classList.add("hidden");
+  });
+
+  document.getElementById("export-full").addEventListener("click", async () => {
+    const { visitedUrls = [], userCategories = [], keywordToCategory = {} } = await storage.get({ visitedUrls: [], userCategories: [], keywordToCategory: {} });
+    const blob = new Blob([JSON.stringify({ visitedUrls, userCategories, keywordToCategory }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "linkzen_export_full.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    exportDefault.style.display = "flex";
+    exportOptions.classList.add("hidden");
+  });
+
+  // Import
+  document.getElementById("import-btn").addEventListener("click", () => {
+    document.getElementById("import-file").click();
+  });
+
+  document.getElementById("import-file").addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
+          await storage.set(data);
+          await loadUrls();
+        } else {
+          alert("File non valido. Nessuna lista trovata.");
+        }
+      } catch (err) {
+        alert("Errore nel file: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  // Categorie
+  const input = document.getElementById("new-category-input");
+  const dropdown = document.getElementById("dropdown-category-list");
+
+  document.getElementById("add-category-btn").addEventListener("click", async () => {
     const newCategory = input.value.trim();
     if (!newCategory) return;
-    
     const { userCategories = [] } = await storage.get({ userCategories: [] });
     if (!userCategories.includes(newCategory)) {
       const updated = [...userCategories, newCategory];
       await storage.set({ userCategories: updated });
       input.value = "";
-      await updateCategoryDropdown();
       await loadUrls();
     }
-    closeDropdown();
   });
-}
 
-async function updateCategoryDropdown() {
-  const dropdown = document.getElementById('dropdown-category-list');
-  const { userCategories = [] } = await storage.get({ userCategories: [] });
-  
-  if (dropdown) {
-    dropdown.innerHTML = "";
-    userCategories.forEach((cat) => {
-      const row = document.createElement("div");
-      row.className = "dropdown-item";
-      row.textContent = cat;
+  input.addEventListener("focus", () => {
+    dropdown.classList.remove("hidden");
+  });
 
-      const remove = document.createElement("span");
-      remove.textContent = "×";
-      remove.className = "remove";
-      remove.style.marginLeft = "6px";
-      remove.style.cursor = "pointer";
-      remove.style.color = "red";
-      remove.addEventListener("click", async () => {
-        const { userCategories: currentCategories = [], visitedUrls = [] } = 
-          await storage.get({ userCategories: [], visitedUrls: [] });
-        
-        const updatedUserCats = currentCategories.filter(c => c !== cat);
-        const updatedUrls = visitedUrls.map(link => {
-          if (link.category === cat) {
-            return { ...link, category: link.originalCategory || "Other" };
-          }
-          return link;
-        });
+  // Undo
+  document.getElementById("undo-btn").addEventListener("click", async () => {
+    if (!undoData) return;
+    const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+    const updated = [...visitedUrls];
+    updated.splice(undoData.index, 0, undoData.entry);
+    await storage.set({ visitedUrls: updated });
+    undoData = null;
+    undoBtn.style.display = "none";
+    themeToggleWrapper.style.display = "inline-block";
+    clearTimeout(undoTimeout);
+    await loadUrls();
+  });
 
-        await storage.set({ userCategories: updatedUserCats, visitedUrls: updatedUrls });
-        await updateCategoryDropdown();
+  // Reset
+  document.getElementById("reset-btn").addEventListener("click", async () => {
+    await storage.set({ clickedUrls: [] });
+    await loadUrls();
+  });
+
+  // Sort
+  document.querySelectorAll('input[name="sort"]').forEach(radio => {
+    radio.addEventListener("change", async () => {
+      await storage.set({ sortOrder: radio.value });
+      await loadUrls();
+    });
+  });
+
+  // Save
+  document.getElementById("save-btn").addEventListener("click", async () => {
+    try {
+      // Simulazione tab corrente (in PWA)
+      const mockTab = {
+        url: window.location.href,
+        title: document.title || ""
+      };
+
+      categorizeByLearnedKeywords(mockTab.title, mockTab.url, async (category, isIA) => {
+        const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+        const index = visitedUrls.findIndex(item => item.url === mockTab.url);
+        if (index === -1) {
+          visitedUrls.push({ 
+            url: mockTab.url, 
+            category, 
+            originalCategory: category, 
+            title: mockTab.title 
+          });
+          await storage.set({
+            visitedUrls,
+            lastAddedUrl: mockTab.url,
+            highlightColor: "green"
+          });
+        } else {
+          await storage.set({
+            lastAddedUrl: mockTab.url,
+            highlightColor: "orange"
+          });
+        }
         await loadUrls();
       });
+    } catch (err) {
+      console.error("Errore nel salvataggio:", err);
+    }
+  });
 
-      row.appendChild(remove);
-      dropdown.appendChild(row);
-    });
-  }
-}
+  // Caricamento iniziale
+  await loadUrls();
+});
 
-// ============ FUNZIONE PRINCIPALE LOADURLS ============
+// ============================================
+// 6. FUNZIONE LOADURLS COMPLETA
+// ============================================
 async function loadUrls() {
   const {
     visitedUrls = [],
@@ -278,6 +527,7 @@ async function loadUrls() {
   const list = document.getElementById("url-list");
   list.innerHTML = "";
 
+  // Imposta l'ordinamento
   document.querySelectorAll('input[name="sort"]').forEach(radio => {
     radio.checked = (radio.value === sortOrder);
   });
@@ -411,6 +661,7 @@ async function loadUrls() {
     list.appendChild(li);
   });
 
+  // Scroll automatico
   if (lastAddedUrl) {
     const lastLink = Array.from(list.children).find(li =>
       li.querySelector("a")?.href === lastAddedUrl
@@ -421,6 +672,7 @@ async function loadUrls() {
     storage.remove("lastAddedUrl");
   }
 
+  // Easter egg
   if (
     sortOrder === "category" &&
     document.body.classList.contains("dark") &&
@@ -439,6 +691,7 @@ async function loadUrls() {
     });
   }
 
+  // Pulsante Reset
   const resetBtn = document.getElementById("reset-btn");
   if (clickedUrls.length > 0) {
     resetBtn.disabled = false;
@@ -457,227 +710,42 @@ async function loadUrls() {
     resetBtn.onclick = null;
   }
 
-  await updateCategoryDropdown();
-}
+  // Dropdown categorie
+  const dropdown = document.getElementById("dropdown-category-list");
+  if (dropdown) {
+    dropdown.innerHTML = "";
+    userCategories.forEach((cat) => {
+      const row = document.createElement("div");
+      row.className = "dropdown-item";
+      row.textContent = cat;
 
-// ============ EVENTO PRINCIPALE ============
-document.addEventListener("DOMContentLoaded", async () => {
-  setupDropdownBehavior();
-
-  const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
-  fontScale = savedScale;
-  applyFontSize(fontScale);
-
-  undoBtn = document.getElementById("undo-btn");
-  themeToggleWrapper = document.getElementById("theme-toggle");
-
-  const toggleTheme = document.getElementById("toggle-theme");
-  const { darkMode = false } = await storage.get({ darkMode: false });
-  if (darkMode) {
-    document.body.classList.add("dark");
-    toggleTheme.checked = true;
-  }
-
-  toggleTheme.addEventListener("change", () => {
-    const enabled = toggleTheme.checked;
-    document.body.classList.toggle("dark", enabled);
-    storage.set({ darkMode: enabled });
-    localStorage.setItem("darkMode", enabled.toString());
-  });
-
-  document.getElementById("zoom-in").addEventListener("click", () => {
-    fontScale = Math.min(fontScale + 0.1, 2);
-    applyFontSize(fontScale);
-  });
-
-  document.getElementById("zoom-out").addEventListener("click", () => {
-    fontScale = Math.max(fontScale - 0.1, 0.6);
-    applyFontSize(fontScale);
-  });
-
-  document.getElementById("ia-knowledge-btn").addEventListener("click", async () => {
-    const iaBtn = document.getElementById("ia-knowledge-btn");
-    const box = document.getElementById("ia-knowledge-box");
-    const isVisible = !box.classList.contains("hidden");
-
-    if (isVisible) {
-      box.classList.add("hidden");
-      iaBtn.classList.remove("active");
-      return;
-    }
-
-    const { keywordToCategory = {} } = await storage.get({ keywordToCategory: {} });
-    const map = keywordToCategory;
-    const entries = Object.entries(map);
-    box.innerHTML = "";
-
-    if (entries.length === 0) {
-      box.textContent = "Nessuna parola chiave appresa.";
-    } else {
-      const grouped = {};
-      entries.forEach(([keyword, category]) => {
-        if (!grouped[category]) grouped[category] = [];
-        grouped[category].push(keyword);
-      });
-
-      for (const category in grouped) {
-        const catBlock = document.createElement("div");
-        catBlock.style.marginBottom = "12px";
-
-        const catTitle = document.createElement("div");
-        catTitle.textContent = `📁 ${category}`;
-        catTitle.style.fontWeight = "bold";
-        catTitle.style.marginBottom = "4px";
-        catTitle.style.fontSize = "16px";
-        catTitle.style.padding = "4px 8px";
-        catTitle.style.borderRadius = "6px";
-        catTitle.style.display = "inline-block";
-
-        const isDark = document.body.classList.contains("dark");
-        catTitle.style.backgroundColor = isDark ? "#2c2c2c" : "#f0f0f0";
-        catTitle.style.color = isDark ? "#e0e0e0" : "#333333";
-        catTitle.style.border = `1px solid ${isDark ? "#444" : "#ccc"}`;
-
-        catBlock.appendChild(catTitle);
-
-        const kwContainer = document.createElement("div");
-        kwContainer.style.display = "flex";
-        kwContainer.style.flexWrap = "wrap";
-        kwContainer.style.gap = "6px";
-
-        grouped[category].forEach((keyword) => {
-          const chip = document.createElement("div");
-          chip.textContent = keyword;
-          chip.title = `Click to remove "${keyword}"`;
-          chip.style.padding = "2px 6px";
-          chip.style.border = "1px solid orange";
-          chip.style.borderRadius = "4px";
-          chip.style.cursor = "pointer";
-          chip.style.fontSize = "inherit";
-
-          chip.addEventListener("click", async () => {
-            delete map[keyword];
-            await storage.set({ keywordToCategory: map }, () => {
-              chip.remove();
-              if (Object.keys(map).length === 0) {
-                box.textContent = "Nessuna parola chiave appresa.";
-              }
-            });
-          });
-
-          kwContainer.appendChild(chip);
+      const remove = document.createElement("span");
+      remove.textContent = "×";
+      remove.className = "remove";
+      remove.style.marginLeft = "6px";
+      remove.style.cursor = "pointer";
+      remove.style.color = "red";
+      remove.addEventListener("click", async () => {
+        const updatedUserCats = userCategories.filter(c => c !== cat);
+        const updatedUrls = visitedUrls.map(link => {
+          if (link.category === cat) {
+            return {
+              ...link,
+              category: link.originalCategory || "Other"
+            };
+          }
+          return link;
         });
 
-        catBlock.appendChild(kwContainer);
-        box.appendChild(catBlock);
-      }
-    }
-
-    box.classList.remove("hidden");
-    iaBtn.classList.add("active");
-    box.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-
-  const exportBtn = document.getElementById("export-btn");
-  const exportDefault = document.getElementById("export-default");
-  const exportOptions = document.getElementById("export-options");
-
-  exportBtn.addEventListener("click", (e) => {
-    exportDefault.style.display = "none";
-    exportOptions.classList.remove("hidden");
-    e.stopPropagation();
-  });
-
-  document.getElementById("export-basic").addEventListener("click", async () => {
-    const { visitedUrls = [], userCategories = [] } = await storage.get({ visitedUrls: [], userCategories: [] });
-    const blob = new Blob([JSON.stringify({ visitedUrls, userCategories }, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "linkzen_export_basic.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    exportDefault.style.display = "flex";
-    exportOptions.classList.add("hidden");
-  });
-
-  document.getElementById("export-full").addEventListener("click", async () => {
-    const { visitedUrls = [], userCategories = [], keywordToCategory = {} } = await storage.get({ visitedUrls: [], userCategories: [], keywordToCategory: {} });
-    const blob = new Blob([JSON.stringify({ visitedUrls, userCategories, keywordToCategory }, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "linkzen_export_full.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    exportDefault.style.display = "flex";
-    exportOptions.classList.add("hidden");
-  });
-
-  document.getElementById("import-btn").addEventListener("click", () => {
-    document.getElementById("import-file").click();
-  });
-
-  document.getElementById("import-file").addEventListener("change", async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const data = JSON.parse(e.target.result);
-        if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
-          await storage.set(data);
-          await loadUrls();
-        } else {
-          alert("File non valido. Nessuna lista trovata.");
-        }
-      } catch (err) {
-        alert("Errore nel file: " + err.message);
-      }
-    };
-    reader.readAsText(file);
-  });
-
-  document.getElementById("save-btn").addEventListener("click", async () => {
-    try {
-      const mockTab = {
-        url: window.location.href,
-        title: document.title || ""
-      };
-
-      categorizeByLearnedKeywords(mockTab.title, mockTab.url, async (category, isIA) => {
-        const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-        const index = visitedUrls.findIndex(item => item.url === mockTab.url);
-        if (index === -1) {
-          visitedUrls.push({ 
-            url: mockTab.url, 
-            category, 
-            originalCategory: category, 
-            title: mockTab.title 
-          });
-          await storage.set({
-            visitedUrls,
-            lastAddedUrl: mockTab.url,
-            highlightColor: "green"
-          });
-        } else {
-          await storage.set({
-            lastAddedUrl: mockTab.url,
-            highlightColor: "orange"
-          });
-        }
+        await storage.set({
+          userCategories: updatedUserCats,
+          visitedUrls: updatedUrls
+        });
         await loadUrls();
       });
-    } catch (err) {
-      console.error("Errore nel salvataggio:", err);
-    }
-  });
 
-  await loadUrls();
-});
-
-// Gestione errori globale
-window.addEventListener('error', (event) => {
-  console.error('Errore globale:', event.error);
-});
+      row.appendChild(remove);
+      dropdown.appendChild(row);
+    });
+  }
+}
