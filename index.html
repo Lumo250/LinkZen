@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, 
+      maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#4CAF50">
@@ -505,7 +507,28 @@
       background-color: #444;
       color: #eee;
     }
-  </style>
+
+  /* Fix globale per iOS */
+  input, textarea, select {
+    font-size: 16px;
+    transform-origin: left top;
+    touch-action: manipulation;
+  }
+  
+  /* Previene zoom su focus */
+  @media screen and (max-width: 767px) {
+    input[type="text"] {
+      font-size: 16px !important;
+    }
+  }
+  
+  /* Fix dropdown per iOS */
+  .dropdown-list {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+</style>
+    
 </head>
 
 <body id="main-body" class="">
