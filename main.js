@@ -209,8 +209,48 @@ function openLinkSafari(url) {
 // 5. EVENT LISTENERS E INIZIALIZZAZIONE
 // ============================================
 document.addEventListener("DOMContentLoaded", async () => {
-  // Processa eventuali richieste da bookmarklet
-  await processBookmarkletRequest();
+   // Nuovo gestore bookmarklet - DA INSERIRE ALL'INIZIO
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.has('bookmarklet')) {
+        try {
+            const title = decodeURIComponent(urlParams.get('title')||'');
+            const url = decodeURIComponent(urlParams.get('url')||'');
+            
+            if(url) {
+                const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+                const exists = visitedUrls.some(item => item.url === url);
+                
+                if(!exists) {
+                    categorizeByLearnedKeywords(title, url, async (category) => {
+                        visitedUrls.push({
+                            url: url,
+                            title: title,
+                            category: category,
+                            originalCategory: category
+                        });
+                        await storage.set({ 
+                            visitedUrls: visitedUrls,
+                            lastAddedUrl: url,
+                            highlightColor: "green"
+                        });
+                        // Pulisce l'URL dopo l'elaborazione
+                        window.history.replaceState({}, '', window.location.pathname);
+                        await loadUrls();
+                    });
+                } else {
+                    await storage.set({
+                        lastAddedUrl: url,
+                        highlightColor: "orange"
+                    });
+                    window.history.replaceState({}, '', window.location.pathname);
+                    await loadUrls();
+                }
+            }
+        } catch(e) {
+            console.error("Bookmarklet error:",e);
+        }
+    }
+
 
   // Inizializzazione originale
   const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
