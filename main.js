@@ -274,31 +274,7 @@ const params = new URLSearchParams(window.location.search);
     }
   });
 
-
-
-
-document.getElementById("delete-btn").addEventListener("click", (event) => {
-  if (event.target.classList.contains("delete-btn")) {
-    const index = Number(event.target.dataset.index);
-    if (!isNaN(index)) {
-      // Carica i link salvati
-      const urls = loadData("visitedUrls") || [];
-      // Salva l'elemento rimosso per undo (se hai questa funzione)
-      undoData = { index, entry: urls[index] };
-      // Rimuovi il link dall'array
-      urls.splice(index, 1);
-      // Salva di nuovo
-      saveData("visitedUrls", urls);
-      // Nascondi il pulsante undo e mostra se necessario
-      document.getElementById("undo-btn").style.display = "inline-block";
-      // Ricarica la lista con i link aggiornati
-      loadUrls();
-    }
-  }
-});
-  
-
-  
+ 
   loadUrls();
 });
 function loadUrls() {
@@ -435,28 +411,28 @@ function loadUrls() {
 
 
       const del = document.createElement("button");
-del.textContent = "x";
-del.className = "delete-btn";
+      del.textContent = "x";
+      del.className = "delete-btn";
 
-// Fissiamo il valore dell'URL al momento della creazione del pulsante
-const urlToDelete = item.url;
-
-del.addEventListener("click", () => {
-  const indexToDelete = result.visitedUrls.findIndex(entry => entry.url === urlToDelete);
-  if (indexToDelete !== -1) {
-    const removed = result.visitedUrls.splice(indexToDelete, 1)[0];
-    undoData = { entry: removed, index: indexToDelete };
+      // Fissiamo il valore dell'URL al momento della creazione del pulsante
+      const urlToDelete = item.url;
+   
+      del.addEventListener("click", () => {
+         const indexToDelete = result.visitedUrls.findIndex(entry => entry.url === urlToDelete);
+          if (indexToDelete !== -1) {
+          const removed = result.visitedUrls.splice(indexToDelete, 1)[0];
+          undoData = { entry: removed, index: indexToDelete };
 
     // Mostra il pulsante "Undo" e nasconde il toggle del tema
-    themeToggleWrapper.style.display = "none";
-    undoBtn.style.display = "inline-block";
+          themeToggleWrapper.style.display = "none";
+          undoBtn.style.display = "inline-block";
 
-    clearTimeout(undoTimeout);
-    undoTimeout = setTimeout(() => {
-      undoData = null;
-      undoBtn.style.display = "none";
-      themeToggleWrapper.style.display = "inline-block";
-    }, 8000);
+          clearTimeout(undoTimeout);
+          undoTimeout = setTimeout(() => {
+            undoData = null;
+          undoBtn.style.display = "none";
+          themeToggleWrapper.style.display = "inline-block";
+        }, 8000);
 
     // Salva i dati aggiornati e ricarica la lista
     saveData("visitedUrls", result.visitedUrls);
