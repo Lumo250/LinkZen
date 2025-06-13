@@ -209,14 +209,15 @@ function openLinkSafari(url) {
 // 5. EVENT LISTENERS E INIZIALIZZAZIONE
 // ============================================
 document.addEventListener("DOMContentLoaded", async () => {
- // 1. Controlla se ci sono dati dal bookmarklet
-    const urlParams = new URLSearchParams(window.location.search);
-    if(urlParams.has('bookmarklet')) {
+   // Gestione bookmarklet
+    const params = new URL(window.location.href).searchParams;
+    if(params.has('bookmarklet')) {
         try {
-            const title = decodeURIComponent(urlParams.get('title') || '');
-            const url = decodeURIComponent(urlParams.get('url') || '');
+            const title = decodeURIComponent(params.get('title')||'';
+            const url = decodeURIComponent(params.get('url')||'';
             
             if(url) {
+                // Pulisci l'URL
                 history.replaceState({}, '', window.location.pathname);
                 
                 const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
@@ -229,7 +230,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                             originalCategory: category
                         });
                         await storage.set({ 
-                            visitedUrls: visitedUrls,
+                            visitedUrls,
                             lastAddedUrl: url,
                             highlightColor: "green"
                         });
@@ -238,7 +239,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             }
         } catch(e) {
-            console.error("Bookmarklet error:", e);
+            console.error("Bookmarklet error:",e);
         }
     }
 
