@@ -318,9 +318,7 @@ function loadUrls() {
     li.className = "link-row";
     li.dataset.index = index; // ✅ FONDAMENTALE
       
-    const del = document.createElement("button");
-      del.textContent = "O";
-      del.className = "delete-btn";
+
     
     if (item.url === result.lastAddedUrl) {
       li.style.backgroundColor = result.highlightColor === "orange" ? "#e67e22" : "#388e3c";
@@ -383,7 +381,7 @@ function loadUrls() {
 
     a.appendChild(favicon);
     a.appendChild(span);
- a.appendChild(del);
+ 
     
     a.addEventListener("click", (e) => {
       e.preventDefault();
@@ -395,6 +393,11 @@ function loadUrls() {
       window.open(item.url, "_blank");
     });
 
+
+
+      const del = document.createElement("button");
+      del.textContent = "X";
+      del.className = "delete-btn";
    // const del = document.createElement("button");
    // del.textContent = "x";
   //  del.className = "delete-btn";
