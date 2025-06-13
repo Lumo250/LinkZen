@@ -277,7 +277,7 @@ const params = new URLSearchParams(window.location.search);
 
 
 
-document.getElementById("url-list").addEventListener("click", (event) => {
+document.getElementById("delete-btn").addEventListener("click", (event) => {
   if (event.target.classList.contains("delete-btn")) {
     const index = Number(event.target.dataset.index);
     if (!isNaN(index)) {
