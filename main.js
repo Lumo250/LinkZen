@@ -313,7 +313,8 @@ function loadUrls() {
   urls.forEach((item, index) => {
     const li = document.createElement("li");
     li.className = "link-row";
-
+    li.dataset.index = index; // ✅ FONDAMENTALE
+    
     if (item.url === result.lastAddedUrl) {
       li.style.backgroundColor = result.highlightColor === "orange" ? "#e67e22" : "#388e3c";
       li.style.transition = "background-color 6s ease";
