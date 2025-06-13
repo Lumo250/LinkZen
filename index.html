@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
- 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#4CAF50">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon128.png">
   <title>LinkZen</title>
   <style>
     * {
@@ -593,16 +595,22 @@
     </div>
   </div>
 
-  <script src="popup.js"></script>
+  <!-- Script per registrare il Service Worker -->
   <script>
-    // Registra il Service Worker per la PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(registration => console.log('SW registered:', registration))
-          .catch(err => console.log('SW registration failed:', err));
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+          .then(registration => {
+            console.log('Service Worker registrato con successo:', registration.scope);
+          })
+          .catch(error => {
+            console.error('Registrazione Service Worker fallita:', error);
+          });
       });
     }
   </script>
+
+  <!-- Script principale dell'applicazione -->
+  <script src="./main.js"></script>
 </body>
 </html>
