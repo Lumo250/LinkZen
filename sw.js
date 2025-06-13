@@ -25,18 +25,9 @@ self.addEventListener('install', (event) => {
 
 // Strategia di caching ottimizzata
 self.addEventListener('fetch', (event) => {
-    const url = new URL(event.request.url);
-    
-    // Non memorizzare nella cache la pagina del bookmarklet
-    if (url.pathname === '/Bookmarklet/' || url.hostname === 'lumo250.github.io') {
-        event.respondWith(
-            fetch(event.request).then(response => {
-                return response;
-            }).catch(() => caches.match('/index.html'))
-        );
-        return;
-    }
-  
+  const req = event.request;
+  const url = new URL(req.url);
+
   // Ignora richieste non GET e chrome-extension://
   if (req.method !== 'GET' || req.url.startsWith('chrome-extension://')) {
     return;
