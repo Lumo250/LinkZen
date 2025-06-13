@@ -209,36 +209,44 @@ function openLinkSafari(url) {
 // 5. EVENT LISTENERS E INIZIALIZZAZIONE
 // ============================================
 document.addEventListener("DOMContentLoaded", async () => {
-  // Gestione del bookmarklet
-const urlParams = new URLSearchParams(window.location.search);
-if(urlParams.has('bookmarklet')) {
-    const title = decodeURIComponent(urlParams.get('title') || '');
-    const url = decodeURIComponent(urlParams.get('url') || '');
-    
-    if(url) {
-        // Pulisci l'URL
-        history.replaceState({}, '', window.location.pathname);
-        
-        // Aggiungi il link a LinkZen
-        categorizeByLearnedKeywords(title, url, async (category) => {
-            const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-            if(!visitedUrls.some(item => item.url === url)) {
-                visitedUrls.push({
-                    url: url,
-                    title: title,
-                    category: category,
-                    originalCategory: category
-                });
-                await storage.set({ 
-                    visitedUrls: visitedUrls,
-                    lastAddedUrl: url,
-                    highlightColor: "green"
-                });
-                await loadUrls();
+ // 1. Controlla se ci sono dati dal bookmarklet
+    const bookmarkletData = localStorage.getItem('linkzen_bookmarklet_data');
+    if (bookmarkletData) {
+        try {
+            const { title, url, timestamp } = JSON.parse(bookmarkletData);
+            
+            // Verifica che i dati siano recenti (entro 5 secondi)
+            if (Date.now() - timestamp < 5000) {
+                const decodedTitle = decodeURIComponent(title);
+                const decodedUrl = decodeURIComponent(url);
+                
+                // Aggiungi il link a LinkZen
+                const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+                if (!visitedUrls.some(item => item.url === decodedUrl)) {
+                    categorizeByLearnedKeywords(decodedTitle, decodedUrl, async (category) => {
+                        visitedUrls.push({
+                            url: decodedUrl,
+                            title: decodedTitle,
+                            category: category,
+                            originalCategory: category
+                        });
+                        await storage.set({
+                            visitedUrls: visitedUrls,
+                            lastAddedUrl: decodedUrl,
+                            highlightColor: "green"
+                        });
+                        await loadUrls();
+                    });
+                }
             }
-        });
+        } catch(e) {
+            console.error("Error processing bookmarklet data:", e);
+        } finally {
+            // Pulisci i dati dopo l'uso
+            localStorage.removeItem('linkzen_bookmarklet_data');
+        }
     }
-}
+
 
   // Inizializzazione originale
   const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
