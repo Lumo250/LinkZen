@@ -319,7 +319,7 @@ function loadUrls() {
     li.dataset.index = index; // ✅ FONDAMENTALE
       
     const del = document.createElement("button");
-      del.textContent = "x";
+      del.textContent = "O";
       del.className = "delete-btn";
     
     if (item.url === result.lastAddedUrl) {
