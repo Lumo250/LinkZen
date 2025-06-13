@@ -415,7 +415,7 @@ function loadUrls() {
       const del = document.createElement("button");
       del.textContent = "x";
       del.className = "delete-btn";
-
+ a.appendChild(del);
       // Fissiamo il valore dell'URL al momento della creazione del pulsante
       // const urlToDelete = item.url;
    
