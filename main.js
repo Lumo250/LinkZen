@@ -274,7 +274,27 @@ const params = new URLSearchParams(window.location.search);
     }
   });
 
- 
+
+document.getElementById("save-btn").addEventListener("click", () => {
+  const input = document.getElementById("url-input");
+  const url = input.value.trim();
+  if (!url) return;
+
+  const title = url; // o eventualmente cerca di estrarre titolo
+  const newEntry = {
+    url,
+    title,
+    category: "Unsorted",
+    originalCategory: "Unsorted"
+  };
+
+  result.visitedUrls.unshift(newEntry);
+  saveData("visitedUrls", result.visitedUrls);
+  loadUrls();
+  input.value = "";
+});
+
+  
   loadUrls();
 });
 function loadUrls() {
