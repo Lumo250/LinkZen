@@ -324,14 +324,14 @@ body.dark #zoom-controls button {
     }
 
     .link {
-      flex-grow: 1;
-      max-width: calc(100% - 120px); /* spazio riservato a select + x + margini */
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      color: blue;
-      text-decoration: underline;
-    }
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: blue;
+  text-decoration: underline;
+}
 
     .link.clicked {
       color: gray;
