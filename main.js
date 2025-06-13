@@ -386,9 +386,9 @@ function loadUrls() {
       window.open(item.url, "_blank");
     });
 
-   // const del = document.createElement("button");
-   // del.textContent = "x";
-   // del.className = "delete-btn";
+    const del = document.createElement("button");
+    del.textContent = "x";
+    del.className = "delete-btn";
    // del.addEventListener("click", () => {
    //   const indexToDelete = result.visitedUrls.findIndex(entry => entry.url === item.url);
     //  if (indexToDelete !== -1) {
