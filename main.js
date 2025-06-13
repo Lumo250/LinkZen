@@ -209,14 +209,17 @@ function openLinkSafari(url) {
 // 5. EVENT LISTENERS E INIZIALIZZAZIONE
 // ============================================
 document.addEventListener("DOMContentLoaded", async () => {
-   // Nuovo gestore bookmarklet - DA INSERIRE ALL'INIZIO
+  // Controlla se siamo stati aperti da un bookmarklet
     const urlParams = new URLSearchParams(window.location.search);
     if(urlParams.has('bookmarklet')) {
         try {
-            const title = decodeURIComponent(urlParams.get('title')||'');
-            const url = decodeURIComponent(urlParams.get('url')||'');
+            const title = decodeURIComponent(urlParams.get('title') || '');
+            const url = decodeURIComponent(urlParams.get('url') || '');
             
             if(url) {
+                // Pulisci l'URL immediatamente
+                history.replaceState({}, '', window.location.pathname);
+                
                 const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
                 const exists = visitedUrls.some(item => item.url === url);
                 
@@ -233,8 +236,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                             lastAddedUrl: url,
                             highlightColor: "green"
                         });
-                        // Pulisce l'URL dopo l'elaborazione
-                        window.history.replaceState({}, '', window.location.pathname);
                         await loadUrls();
                     });
                 } else {
@@ -242,15 +243,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                         lastAddedUrl: url,
                         highlightColor: "orange"
                     });
-                    window.history.replaceState({}, '', window.location.pathname);
                     await loadUrls();
                 }
             }
         } catch(e) {
-            console.error("Bookmarklet error:",e);
+            console.error("Bookmarklet error:", e);
         }
     }
-
 
   // Inizializzazione originale
   const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
