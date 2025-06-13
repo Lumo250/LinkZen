@@ -3,6 +3,25 @@
 // ============================================
 // 1. INIZIALIZZAZIONE E COSTANTI
 // ============================================
+
+// Nuova funzione per processare il bookmarklet
+function processaBookmarklet() {
+    const params = new URLSearchParams(window.location.search);
+    if(!params.has('bookmarklet')) return;
+    
+    const titolo = decodeURIComponent(params.get('titolo') || '');
+    const url = decodeURIComponent(params.get('url') || '');
+    
+    if(!url) return;
+    
+    // Pulisce l'URL dopo aver letto i parametri
+    history.replaceState({}, '', window.location.pathname);
+    
+    return { titolo, url };
+}
+
+
+
 if (localStorage.getItem("darkMode") === "true") {
   document.documentElement.classList.add("dark-ready");
   document.body.classList?.add("dark");
@@ -209,48 +228,25 @@ function openLinkSafari(url) {
 // 5. EVENT LISTENERS E INIZIALIZZAZIONE
 // ============================================
 document.addEventListener("DOMContentLoaded", async () => {
- // Gestione Bookmarklet - DA INSERIRE PRIMA DI TUTTO
-    const urlParams = new URLSearchParams(window.location.search);
-   if(urlParams.has('bookmarklet')) {
-        try {
-            const title = decodeURIComponent(urlParams.get('title') || '');
-            const url = decodeURIComponent(urlParams.get('url') || '');
-            
-            if(url) {
-                // Pulisci immediatamente l'URL dalla barra degli indirizzi
-                history.replaceState({}, document.title, window.location.pathname);
-                
-                const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-                const exists = visitedUrls.some(item => item.url === url);
-                
-                if(!exists) {
-                    categorizeByLearnedKeywords(title, url, async (category) => {
-                        visitedUrls.push({
-                            url: url,
-                            title: title,
-                            category: category,
-                            originalCategory: category
-                        });
-                        await storage.set({
-                            visitedUrls: visitedUrls,
-                            lastAddedUrl: url,
-                            highlightColor: "green"
-                        });
-                        await loadUrls();
-                    });
-                } else {
-                    await storage.set({
-                        lastAddedUrl: url,
-                        highlightColor: "orange"
-                    });
-                    await loadUrls();
-                }
-            }
-        } catch(e) {
-            console.error("Errore elaborazione bookmarklet:", e);
+    // Processa il bookmarklet se presente
+    const bookmarkletData = processaBookmarklet();
+    if(bookmarkletData) {
+        const { titolo, url } = bookmarkletData;
+        const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+        
+        if(!visitedUrls.some(item => item.url === url)) {
+            categorizeByLearnedKeywords(titolo, url, async (category) => {
+                visitedUrls.push({
+                    url: url,
+                    title: titolo,
+                    category: category,
+                    originalCategory: category
+                });
+                await storage.set({ visitedUrls });
+                await loadUrls();
+            });
         }
     }
-
     
 
   // Inizializzazione originale
