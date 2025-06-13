@@ -210,29 +210,27 @@ function openLinkSafari(url) {
 // ============================================
 document.addEventListener("DOMContentLoaded", async () => {
  // 1. Controlla se ci sono dati dal bookmarklet
-    const bookmarkletData = localStorage.getItem('linkzen_bookmarklet_data');
-    if (bookmarkletData) {
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.has('bookmarklet')) {
         try {
-            const { title, url, timestamp } = JSON.parse(bookmarkletData);
+            const title = decodeURIComponent(urlParams.get('title') || '');
+            const url = decodeURIComponent(urlParams.get('url') || '');
             
-            // Verifica che i dati siano recenti (entro 5 secondi)
-            if (Date.now() - timestamp < 5000) {
-                const decodedTitle = decodeURIComponent(title);
-                const decodedUrl = decodeURIComponent(url);
+            if(url) {
+                history.replaceState({}, '', window.location.pathname);
                 
-                // Aggiungi il link a LinkZen
                 const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-                if (!visitedUrls.some(item => item.url === decodedUrl)) {
-                    categorizeByLearnedKeywords(decodedTitle, decodedUrl, async (category) => {
+                if(!visitedUrls.some(item => item.url === url)) {
+                    categorizeByLearnedKeywords(title, url, async (category) => {
                         visitedUrls.push({
-                            url: decodedUrl,
-                            title: decodedTitle,
+                            url: url,
+                            title: title,
                             category: category,
                             originalCategory: category
                         });
-                        await storage.set({
+                        await storage.set({ 
                             visitedUrls: visitedUrls,
-                            lastAddedUrl: decodedUrl,
+                            lastAddedUrl: url,
                             highlightColor: "green"
                         });
                         await loadUrls();
@@ -240,10 +238,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             }
         } catch(e) {
-            console.error("Error processing bookmarklet data:", e);
-        } finally {
-            // Pulisci i dati dopo l'uso
-            localStorage.removeItem('linkzen_bookmarklet_data');
+            console.error("Bookmarklet error:", e);
         }
     }
 
