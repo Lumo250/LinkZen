@@ -1,5 +1,4 @@
-// main.js - Versione modificata per supportare la bookmarklet
-// Tutte le funzioni originali preservate, con aggiunta del supporto bookmarklet
+// main.js - Versione completa con supporto bookmarklet per Safari iOS
 
 // ============================================
 // 1. INIZIALIZZAZIONE E COSTANTI
@@ -55,62 +54,54 @@ const storage = {
 };
 
 // ============================================
-// 3. FUNZIONE PER PROCESSARE I DATI DELLA BOOKMARKLET
+// 3. GESTIONE BOOKMARKLET (NUOVA FUNZIONE)
 // ============================================
-async function processBookmarkletData() {
+async function processBookmarkletRequest() {
   try {
-    if (window.location.hash.startsWith('#linkzen-data=')) {
-      const hashData = window.location.hash.substring('#linkzen-data='.length);
-      const data = JSON.parse(decodeURIComponent(hashData));
-      
-      // Rimuovi l'hash per evitare ripetizioni
-      history.replaceState(null, null, ' ');
+    const urlParams = new URLSearchParams(window.location.search);
+    const title = urlParams.get('title');
+    const url = urlParams.get('url');
+    
+    if (!url) return;
 
-      // Verifica se l'URL esiste già
-      const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-      const exists = visitedUrls.some(item => item.url === data.url);
-      
-      if (exists) {
-        await storage.set({
-          lastAddedUrl: data.url,
-          highlightColor: "orange"
-        });
-      } else {
-        // Categorizza e salva
-        categorizeByLearnedKeywords(data.title, data.url, async (category, isIA) => {
-          visitedUrls.push({ 
-            url: data.url, 
-            category, 
-            originalCategory: category, 
-            title: data.title 
-          });
-          
-          await storage.set({
-            visitedUrls,
-            lastAddedUrl: data.url,
-            highlightColor: "green"
-          });
-        });
-      }
-      
-      // Ricarica la lista
+    // Pulisci l'URL dopo aver letto i parametri
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+    const alreadyExists = visitedUrls.some(item => item.url === url);
+
+    if (alreadyExists) {
+      await storage.set({
+        lastAddedUrl: url,
+        highlightColor: "orange"
+      });
       await loadUrls();
-      
-      // Scorri fino al nuovo elemento
-      setTimeout(() => {
-        const element = document.querySelector(`a[href="${data.url}"]`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 300);
+      return;
     }
+
+    categorizeByLearnedKeywords(decodeURIComponent(title), decodeURIComponent(url), async (category, isIA) => {
+      visitedUrls.push({
+        url: decodeURIComponent(url),
+        title: decodeURIComponent(title),
+        category: category,
+        originalCategory: category
+      });
+
+      await storage.set({
+        visitedUrls: visitedUrls,
+        lastAddedUrl: url,
+        highlightColor: "green"
+      });
+
+      await loadUrls();
+    });
   } catch (e) {
-    console.error("Errore nel processing della bookmarklet:", e);
+    console.error("Errore elaborazione bookmarklet:", e);
   }
 }
 
 // ============================================
-// 4. FUNZIONI ORIGINALI (PRESERVATE)
+// 4. FUNZIONI ORIGINALI (INALTERATE)
 // ============================================
 function extractKeywords(text) {
   return text
@@ -217,29 +208,15 @@ function openLinkSafari(url) {
 // ============================================
 // 5. EVENT LISTENERS E INIZIALIZZAZIONE
 // ============================================
-document.addEventListener("keydown", (e) => {
-  if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
-    e.preventDefault();
-    fontScale = Math.min(fontScale + 0.1, 2);
-    applyFontSize(fontScale);
-  }
-  if (e.ctrlKey && e.key === '-') {
-    e.preventDefault();
-    fontScale = Math.max(fontScale - 0.1, 0.6);
-    applyFontSize(fontScale);
-  }
-});
-
 document.addEventListener("DOMContentLoaded", async () => {
-  // Inizializzazione
+  // Processa eventuali richieste da bookmarklet
+  await processBookmarkletRequest();
+
+  // Inizializzazione originale
   const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
   fontScale = savedScale;
   applyFontSize(fontScale);
 
-  // Elabora i dati della bookmarklet (se presenti)
-  await processBookmarkletData();
-
-  // Resto del codice originale...
   undoBtn = document.getElementById("undo-btn");
   themeToggleWrapper = document.getElementById("theme-toggle");
 
@@ -466,7 +443,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Save
   document.getElementById("save-btn").addEventListener("click", async () => {
     try {
-      // Simulazione tab corrente (in PWA)
       const mockTab = {
         url: window.location.href,
         title: document.title || ""
@@ -527,7 +503,6 @@ async function loadUrls() {
   const list = document.getElementById("url-list");
   list.innerHTML = "";
 
-  // Imposta l'ordinamento
   document.querySelectorAll('input[name="sort"]').forEach(radio => {
     radio.checked = (radio.value === sortOrder);
   });
@@ -661,7 +636,6 @@ async function loadUrls() {
     list.appendChild(li);
   });
 
-  // Scroll automatico
   if (lastAddedUrl) {
     const lastLink = Array.from(list.children).find(li =>
       li.querySelector("a")?.href === lastAddedUrl
@@ -672,7 +646,6 @@ async function loadUrls() {
     storage.remove("lastAddedUrl");
   }
 
-  // Easter egg
   if (
     sortOrder === "category" &&
     document.body.classList.contains("dark") &&
@@ -691,7 +664,6 @@ async function loadUrls() {
     });
   }
 
-  // Pulsante Reset
   const resetBtn = document.getElementById("reset-btn");
   if (clickedUrls.length > 0) {
     resetBtn.disabled = false;
@@ -710,7 +682,6 @@ async function loadUrls() {
     resetBtn.onclick = null;
   }
 
-  // Dropdown categorie
   const dropdown = document.getElementById("dropdown-category-list");
   if (dropdown) {
     dropdown.innerHTML = "";
