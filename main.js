@@ -386,15 +386,27 @@ function loadUrls() {
       window.open(item.url, "_blank");
     });
 
-    const del = document.createElement("button");
-    del.textContent = "x";
-    del.className = "delete-btn";
-    del.addEventListener("click", () => {
-      const indexToDelete = result.visitedUrls.findIndex(entry => entry.url === item.url);
-      if (indexToDelete !== -1) {
-        const removed = result.visitedUrls.splice(indexToDelete, 1)[0];
-        undoData = { entry: removed, index: indexToDelete };
+   // const del = document.createElement("button");
+   // del.textContent = "x";
+   // del.className = "delete-btn";
+   // del.addEventListener("click", () => {
+   //   const indexToDelete = result.visitedUrls.findIndex(entry => entry.url === item.url);
+    //  if (indexToDelete !== -1) {
+    //    const removed = result.visitedUrls.splice(indexToDelete, 1)[0];
+    //    undoData = { entry: removed, index: indexToDelete };
 
+
+del.addEventListener("click", (() => {
+  const urlToDelete = item.url;
+  return () => {
+    const indexToDelete = result.visitedUrls.findIndex(entry => entry.url === urlToDelete);
+    if (indexToDelete !== -1) {
+      const removed = result.visitedUrls.splice(indexToDelete, 1)[0];
+      undoData = { entry: removed, index: indexToDelete };
+
+
+      
+    
         themeToggleWrapper.style.display = "none";
         undoBtn.style.display = "inline-block";
 
