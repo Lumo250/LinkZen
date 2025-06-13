@@ -294,14 +294,14 @@ body.dark #zoom-controls button {
       margin: 4px 0 0 0;
     }
 
-    li.link-row {
-      display: flex;
-      align-items: center;
-      flex-wrap: nowrap;
-      overflow: hidden;
-      padding: 3px 0;
-      margin: 0;
-    }
+li.link-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  padding: 3px 0;
+  margin: 0;
+}
 
     .index {
       width: 28px;
@@ -323,15 +323,17 @@ body.dark #zoom-controls button {
       flex-shrink: 0;
     }
 
-    .link {
+.link {
   flex-grow: 1;
-  min-width: 0;
+  min-width: 0; /* ✅ necessario per Safari */
+  max-width: calc(100% - 120px); /* ✅ evita che copra il bottone e il select */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: blue;
   text-decoration: underline;
 }
+
 
     .link.clicked {
       color: gray;
