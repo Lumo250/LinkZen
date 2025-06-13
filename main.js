@@ -1,6 +1,6 @@
-// main.js - Versione finale con tutti i fix
+// main.js - Versione completa con tutti i fix
 
-// 1. INIZIALIZZAZIONE
+// ============ INIZIALIZZAZIONE ============
 if (localStorage.getItem("darkMode") === "true") {
   document.documentElement.classList.add("dark-ready");
   document.body.classList?.add("dark");
@@ -14,107 +14,43 @@ let dropdownOpen = false;
 
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
-// 2. FIX PER LO ZOOM AUTOMATICO SU iOS
-function preventIOSZoom() {
-  const input = document.getElementById('new-category-input');
-  if (!input) return;
-
-  // Disabilita completamente lo zoom per questo input
-  input.addEventListener('touchstart', function(e) {
-    e.preventDefault();
-    this.style.fontSize = '16px';
-    this.focus({ preventScroll: true });
-  }, { passive: false });
-
-  input.addEventListener('focus', function() {
-    this.style.fontSize = '16px';
-    this.style.transform = 'scale(1)';
-  });
-}
-
-// 3. GESTIONE DROPDOWN COMPLETA
-function setupDropdownBehavior() {
-  const dropdown = document.getElementById('dropdown-category-list');
-  const input = document.getElementById('new-category-input');
-  const addButton = document.getElementById('add-category-btn');
-  const customCategoryContainer = document.querySelector('.custom-category-container');
-
-  if (!dropdown || !input || !addButton || !customCategoryContainer) return;
-
-  // Apertura dropdown
-  const openDropdown = () => {
-    dropdownOpen = true;
-    dropdown.classList.remove('hidden');
-  };
-
-  // Chiusura dropdown
-  const closeDropdown = () => {
-    dropdownOpen = false;
-    dropdown.classList.add('hidden');
-  };
-
-  // Gestione click sull'input
-  input.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!dropdownOpen) {
-      openDropdown();
-    }
-  });
-
-  // Gestione click sul pulsante Add
-  addButton.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    const newCategory = input.value.trim();
-    if (!newCategory) return;
-    
-    const { userCategories = [] } = await storage.get({ userCategories: [] });
-    if (!userCategories.includes(newCategory)) {
-      const updated = [...userCategories, newCategory];
-      await storage.set({ userCategories: updated });
-      input.value = "";
-      await updateCategoryDropdown();
-      await loadUrls();
-    }
-    closeDropdown();
-  });
-
-  // Click esterno per chiudere
-  document.addEventListener('click', (e) => {
-    if (dropdownOpen && !customCategoryContainer.contains(e.target)) {
-      closeDropdown();
-    }
-  });
-
-  // Chiusura con ESC
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && dropdownOpen) {
-      closeDropdown();
-    }
-  });
-}
-
-// 4. STORAGE MANAGEMENT
+// ============ GESTIONE STORAGE ============
 const storage = {
   set: (data) => new Promise(resolve => {
-    Object.keys(data).forEach(key => {
-      localStorage.setItem(key, JSON.stringify(data[key]));
-    });
-    resolve();
+    try {
+      Object.keys(data).forEach(key => {
+        localStorage.setItem(key, JSON.stringify(data[key]));
+      });
+      resolve();
+    } catch (error) {
+      console.error("Storage set error:", error);
+      resolve();
+    }
   }),
+  
   get: (keys) => new Promise(resolve => {
-    const result = {};
-    (Array.isArray(keys) ? keys : Object.keys(keys)).forEach(key => {
-      const value = localStorage.getItem(key);
-      result[key] = value ? JSON.parse(value) : keys[key];
-    });
-    resolve(result);
+    try {
+      const result = {};
+      const keysToGet = Array.isArray(keys) ? keys : Object.keys(keys);
+      
+      keysToGet.forEach(key => {
+        const value = localStorage.getItem(key);
+        result[key] = value ? JSON.parse(value) : keys[key];
+      });
+      resolve(result);
+    } catch (error) {
+      console.error("Storage get error:", error);
+      resolve(keys);
+    }
+  }),
+
+  remove: (key) => new Promise(resolve => {
+    localStorage.removeItem(key);
+    resolve();
   })
 };
 
-
-// ======================
-// 4. FUNZIONI ORIGINALI (IDENTICHE)
-// ======================
+// ============ FUNZIONI DI SUPPORTO ============
 function extractKeywords(text) {
   return text
     .toLowerCase()
@@ -206,9 +142,6 @@ function applyFontSize(scale) {
   }
 }
 
-// ======================
-// 5. APERTURA LINK (MODIFICATA PER PWA)
-// ======================
 function openLinkSafari(url) {
   const a = document.createElement('a');
   a.href = url;
@@ -220,109 +153,111 @@ function openLinkSafari(url) {
   document.body.removeChild(a);
 }
 
-// ======================
-// 6. EVENT LISTENERS E LOGICA PRINCIPALE
-// ======================
-document.addEventListener("keydown", (e) => {
-  if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
+// ============ GESTIONE DROPDOWN CATEGORIE ============
+function setupDropdownBehavior() {
+  const dropdown = document.getElementById('dropdown-category-list');
+  const input = document.getElementById('new-category-input');
+  const addButton = document.getElementById('add-category-btn');
+
+  if (!dropdown || !input || !addButton) return;
+
+  // Gestione focus su mobile
+  input.addEventListener('focus', function() {
+    this.style.fontSize = '16px';
+    setTimeout(() => this.style.fontSize = '', 300);
+  });
+
+  // Apertura dropdown
+  input.addEventListener('click', (e) => {
+    if (!dropdownOpen) {
+      dropdownOpen = true;
+      dropdown.classList.remove('hidden');
+    }
+  });
+
+  // Chiusura dropdown
+  const closeDropdown = () => {
+    if (dropdownOpen) {
+      dropdownOpen = false;
+      dropdown.classList.add('hidden');
+    }
+  };
+
+  // Click esterno
+  document.addEventListener('click', (e) => {
+    if (dropdownOpen && !input.contains(e.target) && 
+        !dropdown.contains(e.target) && 
+        !addButton.contains(e.target)) {
+      closeDropdown();
+    }
+  });
+
+  // Tasto ESC
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeDropdown();
+    }
+  });
+
+  // Aggiunta categoria
+  addButton.addEventListener('click', async (e) => {
     e.preventDefault();
-    fontScale = Math.min(fontScale + 0.1, 2);
-    applyFontSize(fontScale);
-  }
-  if (e.ctrlKey && e.key === '-') {
-    e.preventDefault();
-    fontScale = Math.max(fontScale - 0.1, 0.6);
-    applyFontSize(fontScale);
-  }
-});
-
-document.addEventListener("DOMContentLoaded", async () => {
-  // Inizializza le nuove funzionalità
-  preventIOSZoom(); // <-- Aggiunto per prevenire lo zoom
-  setupDropdownBehavior(); // <-- Gestione dropdown migliorata
-
-
-  // 5. FUNZIONE PER APRIRE LINK (MODIFICATA PER iOS)
-function openLinkSafari(url) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    document.body.removeChild(a);
-  }, 100);
-}
-
-  // Resto dell'inizializzazione originale
-  const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
-  fontScale = savedScale;
-  applyFontSize(fontScale);
-
-  undoBtn = document.getElementById("undo-btn");
-  themeToggleWrapper = document.getElementById("theme-toggle");
-
-  const toggleTheme = document.getElementById("toggle-theme");
-  const { darkMode = false } = await storage.get({ darkMode: false });
-  if (darkMode) {
-    document.body.classList.add("dark");
-    toggleTheme.checked = true;
-  }
-
-  toggleTheme.addEventListener("change", () => {
-    const enabled = toggleTheme.checked;
-    document.body.classList.toggle("dark", enabled);
-    storage.set({ darkMode: enabled });
-    localStorage.setItem("darkMode", enabled.toString());
-  });
-
-  document.getElementById("zoom-in").addEventListener("click", () => {
-    fontScale = Math.min(fontScale + 0.1, 2);
-    applyFontSize(fontScale);
-  });
-
-  document.getElementById("zoom-out").addEventListener("click", () => {
-    fontScale = Math.max(fontScale - 0.1, 0.6);
-    applyFontSize(fontScale);
-  });
-
-  // MODIFICA SOLO LA GESTIONE DEGLI EVENTI:
-  const handleAddCategory = async () => {
-    const input = document.getElementById('new-category-input');
     const newCategory = input.value.trim();
-    
     if (!newCategory) return;
     
+    const { userCategories = [] } = await storage.get({ userCategories: [] });
     if (!userCategories.includes(newCategory)) {
       const updated = [...userCategories, newCategory];
       await storage.set({ userCategories: updated });
       input.value = "";
-      
-      // Aggiornamento ottimizzato per iOS
-      requestAnimationFrame(async () => {
+      await updateCategoryDropdown();
+      await loadUrls();
+    }
+    closeDropdown();
+  });
+}
+
+async function updateCategoryDropdown() {
+  const dropdown = document.getElementById('dropdown-category-list');
+  const { userCategories = [] } = await storage.get({ userCategories: [] });
+  
+  if (dropdown) {
+    dropdown.innerHTML = "";
+    userCategories.forEach((cat) => {
+      const row = document.createElement("div");
+      row.className = "dropdown-item";
+      row.textContent = cat;
+
+      const remove = document.createElement("span");
+      remove.textContent = "×";
+      remove.className = "remove";
+      remove.style.marginLeft = "6px";
+      remove.style.cursor = "pointer";
+      remove.style.color = "red";
+      remove.addEventListener("click", async () => {
+        const { userCategories: currentCategories = [], visitedUrls = [] } = 
+          await storage.get({ userCategories: [], visitedUrls: [] });
+        
+        const updatedUserCats = currentCategories.filter(c => c !== cat);
+        const updatedUrls = visitedUrls.map(link => {
+          if (link.category === cat) {
+            return { ...link, category: link.originalCategory || "Other" };
+          }
+          return link;
+        });
+
+        await storage.set({ userCategories: updatedUserCats, visitedUrls: updatedUrls });
         await updateCategoryDropdown();
         await loadUrls();
       });
-    }
-  };
 
-  // Sostituisci tutti gli event listeners con:
-  document.getElementById('add-category-btn').addEventListener('touchstart', handleAddCategory, { passive: true });
-  document.getElementById('add-category-btn').addEventListener('click', handleAddCategory);
+      row.appendChild(remove);
+      dropdown.appendChild(row);
+    });
+  }
+}
 
-  // ... [TUTTI GLI ALTRI EVENT LISTENERS ORIGINALI RIMANGONO IDENTICI] ...
-
-  // Caricamento iniziale
-    // Carica iniziale delle categorie
-  await updateCategoryDropdown();
-  await loadUrls();
-});
-
-// ======================
-// 7. LOADURLS (FUNZIONE COMPLETA ORIGINALE)
-// ======================
+// ============ FUNZIONE PRINCIPALE LOADURLS ============
 async function loadUrls() {
   const {
     visitedUrls = [],
@@ -522,41 +457,227 @@ async function loadUrls() {
     resetBtn.onclick = null;
   }
 
-  const dropdown = document.getElementById("dropdown-category-list");
-  if (dropdown) {
-    dropdown.innerHTML = "";
-    userCategories.forEach((cat) => {
-      const row = document.createElement("div");
-      row.className = "dropdown-item";
-      row.textContent = cat;
+  await updateCategoryDropdown();
+}
 
-      const remove = document.createElement("span");
-      remove.textContent = "×";
-      remove.className = "remove";
-      remove.style.marginLeft = "6px";
-      remove.style.cursor = "pointer";
-      remove.style.color = "red";
-      remove.addEventListener("click", async () => {
-        const updatedUserCats = userCategories.filter(c => c !== cat);
-        const updatedUrls = visitedUrls.map(link => {
-          if (link.category === cat) {
-            return {
-              ...link,
-              category: link.originalCategory || "Other"
-            };
-          }
-          return link;
-        });
+// ============ EVENTO PRINCIPALE ============
+document.addEventListener("DOMContentLoaded", async () => {
+  setupDropdownBehavior();
 
-        await storage.set({
-          userCategories: updatedUserCats,
-          visitedUrls: updatedUrls
-        });
-        await loadUrls();
+  const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
+  fontScale = savedScale;
+  applyFontSize(fontScale);
+
+  undoBtn = document.getElementById("undo-btn");
+  themeToggleWrapper = document.getElementById("theme-toggle");
+
+  const toggleTheme = document.getElementById("toggle-theme");
+  const { darkMode = false } = await storage.get({ darkMode: false });
+  if (darkMode) {
+    document.body.classList.add("dark");
+    toggleTheme.checked = true;
+  }
+
+  toggleTheme.addEventListener("change", () => {
+    const enabled = toggleTheme.checked;
+    document.body.classList.toggle("dark", enabled);
+    storage.set({ darkMode: enabled });
+    localStorage.setItem("darkMode", enabled.toString());
+  });
+
+  document.getElementById("zoom-in").addEventListener("click", () => {
+    fontScale = Math.min(fontScale + 0.1, 2);
+    applyFontSize(fontScale);
+  });
+
+  document.getElementById("zoom-out").addEventListener("click", () => {
+    fontScale = Math.max(fontScale - 0.1, 0.6);
+    applyFontSize(fontScale);
+  });
+
+  document.getElementById("ia-knowledge-btn").addEventListener("click", async () => {
+    const iaBtn = document.getElementById("ia-knowledge-btn");
+    const box = document.getElementById("ia-knowledge-box");
+    const isVisible = !box.classList.contains("hidden");
+
+    if (isVisible) {
+      box.classList.add("hidden");
+      iaBtn.classList.remove("active");
+      return;
+    }
+
+    const { keywordToCategory = {} } = await storage.get({ keywordToCategory: {} });
+    const map = keywordToCategory;
+    const entries = Object.entries(map);
+    box.innerHTML = "";
+
+    if (entries.length === 0) {
+      box.textContent = "Nessuna parola chiave appresa.";
+    } else {
+      const grouped = {};
+      entries.forEach(([keyword, category]) => {
+        if (!grouped[category]) grouped[category] = [];
+        grouped[category].push(keyword);
       });
 
-      row.appendChild(remove);
-      dropdown.appendChild(row);
-    });
-  }
-}
+      for (const category in grouped) {
+        const catBlock = document.createElement("div");
+        catBlock.style.marginBottom = "12px";
+
+        const catTitle = document.createElement("div");
+        catTitle.textContent = `📁 ${category}`;
+        catTitle.style.fontWeight = "bold";
+        catTitle.style.marginBottom = "4px";
+        catTitle.style.fontSize = "16px";
+        catTitle.style.padding = "4px 8px";
+        catTitle.style.borderRadius = "6px";
+        catTitle.style.display = "inline-block";
+
+        const isDark = document.body.classList.contains("dark");
+        catTitle.style.backgroundColor = isDark ? "#2c2c2c" : "#f0f0f0";
+        catTitle.style.color = isDark ? "#e0e0e0" : "#333333";
+        catTitle.style.border = `1px solid ${isDark ? "#444" : "#ccc"}`;
+
+        catBlock.appendChild(catTitle);
+
+        const kwContainer = document.createElement("div");
+        kwContainer.style.display = "flex";
+        kwContainer.style.flexWrap = "wrap";
+        kwContainer.style.gap = "6px";
+
+        grouped[category].forEach((keyword) => {
+          const chip = document.createElement("div");
+          chip.textContent = keyword;
+          chip.title = `Click to remove "${keyword}"`;
+          chip.style.padding = "2px 6px";
+          chip.style.border = "1px solid orange";
+          chip.style.borderRadius = "4px";
+          chip.style.cursor = "pointer";
+          chip.style.fontSize = "inherit";
+
+          chip.addEventListener("click", async () => {
+            delete map[keyword];
+            await storage.set({ keywordToCategory: map }, () => {
+              chip.remove();
+              if (Object.keys(map).length === 0) {
+                box.textContent = "Nessuna parola chiave appresa.";
+              }
+            });
+          });
+
+          kwContainer.appendChild(chip);
+        });
+
+        catBlock.appendChild(kwContainer);
+        box.appendChild(catBlock);
+      }
+    }
+
+    box.classList.remove("hidden");
+    iaBtn.classList.add("active");
+    box.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  const exportBtn = document.getElementById("export-btn");
+  const exportDefault = document.getElementById("export-default");
+  const exportOptions = document.getElementById("export-options");
+
+  exportBtn.addEventListener("click", (e) => {
+    exportDefault.style.display = "none";
+    exportOptions.classList.remove("hidden");
+    e.stopPropagation();
+  });
+
+  document.getElementById("export-basic").addEventListener("click", async () => {
+    const { visitedUrls = [], userCategories = [] } = await storage.get({ visitedUrls: [], userCategories: [] });
+    const blob = new Blob([JSON.stringify({ visitedUrls, userCategories }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "linkzen_export_basic.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    exportDefault.style.display = "flex";
+    exportOptions.classList.add("hidden");
+  });
+
+  document.getElementById("export-full").addEventListener("click", async () => {
+    const { visitedUrls = [], userCategories = [], keywordToCategory = {} } = await storage.get({ visitedUrls: [], userCategories: [], keywordToCategory: {} });
+    const blob = new Blob([JSON.stringify({ visitedUrls, userCategories, keywordToCategory }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "linkzen_export_full.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    exportDefault.style.display = "flex";
+    exportOptions.classList.add("hidden");
+  });
+
+  document.getElementById("import-btn").addEventListener("click", () => {
+    document.getElementById("import-file").click();
+  });
+
+  document.getElementById("import-file").addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
+          await storage.set(data);
+          await loadUrls();
+        } else {
+          alert("File non valido. Nessuna lista trovata.");
+        }
+      } catch (err) {
+        alert("Errore nel file: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById("save-btn").addEventListener("click", async () => {
+    try {
+      const mockTab = {
+        url: window.location.href,
+        title: document.title || ""
+      };
+
+      categorizeByLearnedKeywords(mockTab.title, mockTab.url, async (category, isIA) => {
+        const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+        const index = visitedUrls.findIndex(item => item.url === mockTab.url);
+        if (index === -1) {
+          visitedUrls.push({ 
+            url: mockTab.url, 
+            category, 
+            originalCategory: category, 
+            title: mockTab.title 
+          });
+          await storage.set({
+            visitedUrls,
+            lastAddedUrl: mockTab.url,
+            highlightColor: "green"
+          });
+        } else {
+          await storage.set({
+            lastAddedUrl: mockTab.url,
+            highlightColor: "orange"
+          });
+        }
+        await loadUrls();
+      });
+    } catch (err) {
+      console.error("Errore nel salvataggio:", err);
+    }
+  });
+
+  await loadUrls();
+});
+
+// Gestione errori globale
+window.addEventListener('error', (event) => {
+  console.error('Errore globale:', event.error);
+});
