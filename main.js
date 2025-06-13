@@ -1,6 +1,10 @@
-// popup.js - Versione PWA (Sostituisce chrome.storage e chrome.tabs con API web)
+// =============================================
+// main.js - Versione PWA completa di LinkZen
+// Mantiene TUTTE le funzioni originali
+// =============================================
 
-// Configurazione iniziale
+// 1. INIZIALIZZAZIONE
+// --------------------------------------------------
 if (localStorage.getItem("darkMode") === "true") {
   document.documentElement.classList.add("dark-ready");
   document.body.classList?.add("dark");
@@ -13,28 +17,31 @@ let fontScale = 1;
 
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
-// Storage PWA (sostituisce chrome.storage.local)
+// 2. GESTIONE STORAGE (compatibile con PWA)
+// --------------------------------------------------
 const storage = {
-  set: async (data) => {
+  set: (data) => new Promise(resolve => {
     Object.keys(data).forEach(key => {
       localStorage.setItem(key, JSON.stringify(data[key]));
     });
-  },
-  get: async (keys) => {
+    resolve();
+  }),
+  get: (keys) => new Promise(resolve => {
     const result = {};
-    const keysToGet = Array.isArray(keys) ? keys : Object.keys(keys);
-    for (const key of keysToGet) {
+    (Array.isArray(keys) ? keys : Object.keys(keys)).forEach(key => {
       const value = localStorage.getItem(key);
       result[key] = value ? JSON.parse(value) : keys[key];
-    }
-    return result;
-  },
-  remove: async (key) => {
+    });
+    resolve(result);
+  }),
+  remove: (key) => new Promise(resolve => {
     localStorage.removeItem(key);
-  }
+    resolve();
+  })
 };
 
-// Funzioni di supporto (invariate)
+// 3. FUNZIONI ORIGINALI (IDENTICHE)
+// --------------------------------------------------
 function extractKeywords(text) {
   return text
     .toLowerCase()
@@ -44,7 +51,7 @@ function extractKeywords(text) {
 }
 
 function categorizeByLearnedKeywords(title, url, callback) {
-  storage.get({ keywordToCategory: {} }).then(data => {
+  storage.get({ keywordToCategory: {} }).then((data) => {
     const text = (title + " " + url).toLowerCase();
     for (const keyword in data.keywordToCategory) {
       if (text.includes(keyword)) {
@@ -81,7 +88,7 @@ function learnFromManualOverride(entry, newCategory) {
   const finalWords = Array.from(new Set(filteredWords)).slice(0, 8);
   if (finalWords.length === 0) return;
 
-  storage.get({ keywordToCategory: {} }).then(data => {
+  storage.get({ keywordToCategory: {} }).then((data) => {
     const updatedMap = { ...data.keywordToCategory };
     finalWords.forEach(word => {
       updatedMap[word] = newCategory;
@@ -125,7 +132,8 @@ function applyFontSize(scale) {
   }
 }
 
-// Event Listeners
+// 4. EVENT LISTENERS (IDENTICI ALL'ORIGINALE)
+// --------------------------------------------------
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
     e.preventDefault();
@@ -149,7 +157,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   undoBtn = document.getElementById("undo-btn");
   themeToggleWrapper = document.getElementById("theme-toggle");
 
-  // Gestione tema dark
+  // Tema dark
   const toggleTheme = document.getElementById("toggle-theme");
   const { darkMode = false } = await storage.get({ darkMode: false });
   if (darkMode) {
@@ -164,7 +172,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     localStorage.setItem("darkMode", enabled.toString());
   });
 
-  // Zoom controlli
+  // Zoom
   document.getElementById("zoom-in").addEventListener("click", () => {
     fontScale = Math.min(fontScale + 0.1, 2);
     applyFontSize(fontScale);
@@ -283,8 +291,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.getElementById("export-full").addEventListener("click", async () => {
-    const { visitedUrls = [], userCategories = [], keywordToCategory = {} } = 
-      await storage.get({ visitedUrls: [], userCategories: [], keywordToCategory: {} });
+    const { visitedUrls = [], userCategories = [], keywordToCategory = {} } = await storage.get({ visitedUrls: [], userCategories: [], keywordToCategory: {} });
     const blob = new Blob([JSON.stringify({ visitedUrls, userCategories, keywordToCategory }, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -322,7 +329,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     reader.readAsText(file);
   });
 
-  // Categorie personalizzate
+  // Categorie
   const input = document.getElementById("new-category-input");
   const dropdown = document.getElementById("dropdown-category-list");
 
@@ -356,13 +363,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadUrls();
   });
 
-  // Reset clicked URLs
+  // Reset
   document.getElementById("reset-btn").addEventListener("click", async () => {
     await storage.set({ clickedUrls: [] });
     await loadUrls();
   });
 
-  // Sort options
+  // Sort
   document.querySelectorAll('input[name="sort"]').forEach(radio => {
     radio.addEventListener("change", async () => {
       await storage.set({ sortOrder: radio.value });
@@ -370,26 +377,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Save current tab
+  // Save
   document.getElementById("save-btn").addEventListener("click", async () => {
     try {
-      // Simulazione della tab attiva (in una PWA non abbiamo chrome.tabs)
-      const url = window.location.href; // Esempio: usa l'URL corrente
-      const title = document.title || "";
+      // Simulazione tab corrente (in PWA)
+      const mockTab = {
+        url: window.location.href,
+        title: document.title || ""
+      };
 
-      categorizeByLearnedKeywords(title, url, async (category, isIA) => {
+      categorizeByLearnedKeywords(mockTab.title, mockTab.url, async (category, isIA) => {
         const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-        const index = visitedUrls.findIndex(item => item.url === url);
+        const index = visitedUrls.findIndex(item => item.url === mockTab.url);
         if (index === -1) {
-          visitedUrls.push({ url, category, originalCategory: category, title });
+          visitedUrls.push({ 
+            url: mockTab.url, 
+            category, 
+            originalCategory: category, 
+            title: mockTab.title 
+          });
           await storage.set({
             visitedUrls,
-            lastAddedUrl: url,
+            lastAddedUrl: mockTab.url,
             highlightColor: "green"
           });
         } else {
           await storage.set({
-            lastAddedUrl: url,
+            lastAddedUrl: mockTab.url,
             highlightColor: "orange"
           });
         }
@@ -404,7 +418,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadUrls();
 });
 
-// Funzione principale per caricare gli URL
+// 5. FUNZIONE PRINCIPALE LOADURLS (IDENTICA)
+// --------------------------------------------------
 async function loadUrls() {
   const {
     visitedUrls = [],
@@ -425,7 +440,7 @@ async function loadUrls() {
   const list = document.getElementById("url-list");
   list.innerHTML = "";
 
-  // Imposta l'ordinamento selezionato
+  // Imposta l'ordinamento
   document.querySelectorAll('input[name="sort"]').forEach(radio => {
     radio.checked = (radio.value === sortOrder);
   });
@@ -477,9 +492,11 @@ async function loadUrls() {
       const idx = visitedUrls.findIndex(i => i.url === item.url);
       if (idx !== -1) {
         visitedUrls[idx].category = newCat;
+
         if (defaultCategories.includes(newCat)) {
           learnFromManualOverride(visitedUrls[idx], newCat);
         }
+
         await storage.set({ visitedUrls });
         await loadUrls();
       }
@@ -558,7 +575,7 @@ async function loadUrls() {
     list.appendChild(li);
   });
 
-  // Scroll automatico se nuovo link aggiunto
+  // Scroll automatico
   if (lastAddedUrl) {
     const lastLink = Array.from(list.children).find(li =>
       li.querySelector("a")?.href === lastAddedUrl
@@ -569,7 +586,7 @@ async function loadUrls() {
     storage.remove("lastAddedUrl");
   }
 
-  // Easter egg (invariato)
+  // Easter egg
   if (
     sortOrder === "category" &&
     document.body.classList.contains("dark") &&
