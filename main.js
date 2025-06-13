@@ -209,19 +209,21 @@ function openLinkSafari(url) {
 // 5. EVENT LISTENERS E INIZIALIZZAZIONE
 // ============================================
 document.addEventListener("DOMContentLoaded", async () => {
-   // Gestione bookmarklet
-    const params = new URL(window.location.href).searchParams;
-    if(params.has('bookmarklet')) {
+ // Controlla se siamo stati aperti da un bookmarklet
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.has('bookmarklet')) {
         try {
-            const title = decodeURIComponent(params.get('title')||'';
-            const url = decodeURIComponent(params.get('url')||'';
+            const title = decodeURIComponent(urlParams.get('title') || '');
+            const url = decodeURIComponent(urlParams.get('url') || '');
             
             if(url) {
-                // Pulisci l'URL
+                // Pulisci l'URL immediatamente
                 history.replaceState({}, '', window.location.pathname);
                 
                 const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-                if(!visitedUrls.some(item => item.url === url)) {
+                const exists = visitedUrls.some(item => item.url === url);
+                
+                if(!exists) {
                     categorizeByLearnedKeywords(title, url, async (category) => {
                         visitedUrls.push({
                             url: url,
@@ -230,19 +232,25 @@ document.addEventListener("DOMContentLoaded", async () => {
                             originalCategory: category
                         });
                         await storage.set({ 
-                            visitedUrls,
+                            visitedUrls: visitedUrls,
                             lastAddedUrl: url,
                             highlightColor: "green"
                         });
                         await loadUrls();
                     });
+                } else {
+                    await storage.set({
+                        lastAddedUrl: url,
+                        highlightColor: "orange"
+                    });
+                    await loadUrls();
                 }
             }
         } catch(e) {
-            console.error("Bookmarklet error:",e);
+            console.error("Bookmarklet error:", e);
         }
     }
-
+    
 
   // Inizializzazione originale
   const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
