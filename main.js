@@ -74,10 +74,10 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+
 document.addEventListener("DOMContentLoaded", () => {
   fontScale = loadData("fontScale") || 1;
   applyFontSize(fontScale);
-
 
 const params = new URLSearchParams(window.location.search);
   const title = params.get("title");
@@ -100,6 +100,7 @@ const params = new URLSearchParams(window.location.search);
 
       // Rimuove i parametri dalla URL dopo il salvataggio
       window.history.replaceState({}, document.title, window.location.pathname);
+      
       loadUrls();
     });
   }
