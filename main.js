@@ -386,9 +386,9 @@ function loadUrls() {
       window.open(item.url, "_blank");
     });
 
-    const del = document.createElement("button");
-    del.textContent = "x";
-    del.className = "delete-btn";
+   // const del = document.createElement("button");
+   // del.textContent = "x";
+  //  del.className = "delete-btn";
    // del.addEventListener("click", () => {
    //   const indexToDelete = result.visitedUrls.findIndex(entry => entry.url === item.url);
     //  if (indexToDelete !== -1) {
@@ -396,31 +396,63 @@ function loadUrls() {
     //    undoData = { entry: removed, index: indexToDelete };
 
 
-del.addEventListener("click", (() => {
-  const urlToDelete = item.url;
-  return () => {
-    const indexToDelete = result.visitedUrls.findIndex(entry => entry.url === urlToDelete);
-    if (indexToDelete !== -1) {
-      const removed = result.visitedUrls.splice(indexToDelete, 1)[0];
-      undoData = { entry: removed, index: indexToDelete };
+//del.addEventListener("click", (() => {
+//  const urlToDelete = item.url;
+//  return () => {
+//    const indexToDelete = result.visitedUrls.findIndex(entry => entry.url === urlToDelete);
+//    if (indexToDelete !== -1) {
+//      const removed = result.visitedUrls.splice(indexToDelete, 1)[0];
+ //     undoData = { entry: removed, index: indexToDelete };
 
 
+
+
+
+      const del = document.createElement("button");
+del.textContent = "x";
+del.className = "delete-btn";
+
+// Fissiamo il valore dell'URL al momento della creazione del pulsante
+const urlToDelete = item.url;
+
+del.addEventListener("click", () => {
+  const indexToDelete = result.visitedUrls.findIndex(entry => entry.url === urlToDelete);
+  if (indexToDelete !== -1) {
+    const removed = result.visitedUrls.splice(indexToDelete, 1)[0];
+    undoData = { entry: removed, index: indexToDelete };
+
+    // Mostra il pulsante "Undo" e nasconde il toggle del tema
+    themeToggleWrapper.style.display = "none";
+    undoBtn.style.display = "inline-block";
+
+    clearTimeout(undoTimeout);
+    undoTimeout = setTimeout(() => {
+      undoData = null;
+      undoBtn.style.display = "none";
+      themeToggleWrapper.style.display = "inline-block";
+    }, 8000);
+
+    // Salva i dati aggiornati e ricarica la lista
+    saveData("visitedUrls", result.visitedUrls);
+    loadUrls();
+  }
+});
       
     
-        themeToggleWrapper.style.display = "none";
-        undoBtn.style.display = "inline-block";
+//        themeToggleWrapper.style.display = "none";
+ //       undoBtn.style.display = "inline-block";
 
-        clearTimeout(undoTimeout);
-        undoTimeout = setTimeout(() => {
-          undoData = null;
-          undoBtn.style.display = "none";
-          themeToggleWrapper.style.display = "inline-block";
-        }, 8000);
+  //      clearTimeout(undoTimeout);
+  //      undoTimeout = setTimeout(() => {
+  //        undoData = null;
+  //        undoBtn.style.display = "none";
+   //       themeToggleWrapper.style.display = "inline-block";
+  //      }, 8000);
 
-        saveData("visitedUrls", result.visitedUrls);
-        loadUrls();
-      }
-    });
+   //     saveData("visitedUrls", result.visitedUrls);
+//        loadUrls();
+//      }
+//   });
 
     li.appendChild(select);
     li.appendChild(a);
