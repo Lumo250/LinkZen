@@ -317,6 +317,10 @@ function loadUrls() {
     const li = document.createElement("li");
     li.className = "link-row";
     li.dataset.index = index; // ✅ FONDAMENTALE
+      
+    const del = document.createElement("button");
+      del.textContent = "x";
+      del.className = "delete-btn";
     
     if (item.url === result.lastAddedUrl) {
       li.style.backgroundColor = result.highlightColor === "orange" ? "#e67e22" : "#388e3c";
@@ -379,7 +383,8 @@ function loadUrls() {
 
     a.appendChild(favicon);
     a.appendChild(span);
-
+ a.appendChild(del);
+    
     a.addEventListener("click", (e) => {
       e.preventDefault();
       if (!result.clickedUrls.includes(item.url)) {
@@ -412,14 +417,12 @@ function loadUrls() {
 
 
 
-      const del = document.createElement("button");
-      del.textContent = "x";
-      del.className = "delete-btn";
- a.appendChild(del);
+
+
       // Fissiamo il valore dell'URL al momento della creazione del pulsante
       // const urlToDelete = item.url;
    
-      del.addEventListener("click", (e) => {
+      del.addEventListener("click", () => {
          const indexToDelete = result.visitedUrls.findIndex(entry => entry.url === urlToDelete);
           if (indexToDelete !== -1) {
           const removed = result.visitedUrls.splice(indexToDelete, 1)[0];
