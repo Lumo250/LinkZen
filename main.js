@@ -274,6 +274,31 @@ const params = new URLSearchParams(window.location.search);
     }
   });
 
+
+
+
+document.getElementById("url-list").addEventListener("click", (event) => {
+  if (event.target.classList.contains("delete-btn")) {
+    const index = Number(event.target.dataset.index);
+    if (!isNaN(index)) {
+      // Carica i link salvati
+      const urls = loadData("visitedUrls") || [];
+      // Salva l'elemento rimosso per undo (se hai questa funzione)
+      undoData = { index, entry: urls[index] };
+      // Rimuovi il link dall'array
+      urls.splice(index, 1);
+      // Salva di nuovo
+      saveData("visitedUrls", urls);
+      // Nascondi il pulsante undo e mostra se necessario
+      document.getElementById("undo-btn").style.display = "inline-block";
+      // Ricarica la lista con i link aggiornati
+      loadUrls();
+    }
+  }
+});
+  
+
+  
   loadUrls();
 });
 function loadUrls() {
