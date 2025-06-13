@@ -16,6 +16,21 @@ let fontScale = 1;
 
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
+// 2. NUOVA FUNZIONE PER GESTIONE DROPDOWN
+function setupGlobalClickHandler() {
+  document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('dropdown-category-list');
+    const categoryContainer = document.querySelector('.custom-category-container');
+    
+    if (dropdown && !dropdown.classList.contains('hidden') && 
+        !categoryContainer.contains(e.target)) {
+      dropdown.classList.add('hidden');
+    }
+  });
+}
+
+
+
 // ============================================
 // 2. GESTIONE STORAGE (sostituisce chrome.storage)
 // ============================================
@@ -57,20 +72,6 @@ const storage = {
 // ============================================
 // 3. FUNZIONI ORIGINALI (COMPLETAMENTE PRESERVATE)
 // ============================================
-
-// Aggiungi questa funzione all'inizio del file (dopo le dichiarazioni delle variabili)
-function setupGlobalClickHandler() {
-  document.addEventListener('click', (e) => {
-    const dropdown = document.getElementById('dropdown-category-list');
-    const categoryContainer = document.querySelector('.custom-category-container');
-    
-    // Chiudi il dropdown se il click è fuori dall'area delle categorie
-    if (dropdown && !dropdown.classList.contains('hidden') && 
-        !categoryContainer.contains(e.target)) {
-      dropdown.classList.add('hidden');
-    }
-  });
-}
 
 function extractKeywords(text) {
   return text
@@ -381,6 +382,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const dropdown = document.getElementById("dropdown-category-list");
 
   document.getElementById("add-category-btn").addEventListener("click", async () => {
+    const input = document.getElementById("new-category-input");
+  const dropdown = document.getElementById("dropdown-category-list");
+
+  document.getElementById("add-category-btn").addEventListener("click", async () => {
     const newCategory = input.value.trim();
     if (!newCategory) return;
     const { userCategories = [] } = await storage.get({ userCategories: [] });
@@ -393,11 +398,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   input.addEventListener("focus", () => {
-    const dropdown = document.getElementById('dropdown-category-list');
-      if (dropdown) {
-        dropdown.classList.remove('hidden');
-      }
+    dropdown.classList.remove("hidden");
   });
+
 
   // Undo
   document.getElementById("undo-btn").addEventListener("click", async () => {
