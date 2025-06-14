@@ -34,6 +34,35 @@ let fontScale = 1;
 
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
+// Configurazione
+const TAB_TIMEOUT = 30000; // 30 secondi di validità
+
+// Funzione di tracciamento
+function trackOpenedTab(url) {
+  const tabs = JSON.parse(localStorage.getItem('linkzen_open_tabs') || '{}');
+  tabs[url] = Date.now();
+  localStorage.setItem('linkzen_open_tabs', JSON.stringify(tabs));
+  
+  // Pulizia automatica
+  setTimeout(() => {
+    const tabs = JSON.parse(localStorage.getItem('linkzen_open_tabs') || '{}');
+    if (tabs[url] && Date.now() - tabs[url] > TAB_TIMEOUT) {
+      delete tabs[url];
+      localStorage.setItem('linkzen_open_tabs', JSON.stringify(tabs));
+    }
+  }, TAB_TIMEOUT + 1000);
+}
+
+// Funzione di verifica
+function isTabOpen(url) {
+  const tabs = JSON.parse(localStorage.getItem('linkzen_open_tabs') || '{}');
+  return tabs[url] && (Date.now() - tabs[url] < TAB_TIMEOUT);
+
+
+
+
+
+
 // ============================================
 // 2. GESTIONE STORAGE
 // ============================================
@@ -213,23 +242,32 @@ function applyFontSize(scale) {
   }
 }
 
+// Modifica la funzione openLinkSafari
 function openLinkSafari(url) {
-  // Tentativo di riutilizzare finestra
-  const win = window.open('', '_blank');
-  if (win && win.location.href === url) {
-    win.focus();
-  } else {
-    // Fallback standard
-    const a = document.createElement('a');
-    a.href = url;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  if (isTabOpen(url)) {
+    showTabSwitchHint(url);
+    return false;
   }
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.onload = () => trackOpenedTab(url);
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  
+  return true;
 }
+
+// Aggiungi al click handler
+a.addEventListener('click', async (e) => {
+  e.preventDefault();
+  
+  if (!openLinkSafari(url)) {
+    // Mostra istruzioni per switch manuale
+    return;
+  }
 
 // ============================================
 // 5. EVENT LISTENERS E INIZIALIZZAZIONE
