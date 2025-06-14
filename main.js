@@ -1,26 +1,21 @@
-// main.js - Versione completa con supporto bookmarklet per Safari iOS
-
+// main.js - Versione completa con gestione robusta dei dropdown
 // ============================================
 // 1. INIZIALIZZAZIONE E COSTANTI
 // ============================================
 
-// Nuova funzione per processare il bookmarklet
-// function processaBookmarklet() {
-//    const params = new URLSearchParams(window.location.search);
-//    if(!params.has('bookmarklet')) return;
+function processaBookmarklet() {
+    const params = new URLSearchParams(window.location.search);
+    if(!params.has('bookmarklet')) return;
     
-//    const titolo = decodeURIComponent(params.get('titolo') || '');
-//    const url = decodeURIComponent(params.get('url') || '');
+    const titolo = decodeURIComponent(params.get('titolo') || '');
+    const url = decodeURIComponent(params.get('url') || '');
     
-//    if(!url) return;
+    if(!url) return;
     
-    // Pulisce l'URL dopo aver letto i parametri
-//    history.replaceState({}, '', window.location.pathname);
+    history.replaceState({}, '', window.location.pathname);
     
-//    return { titolo, url };
-// }
-
-
+    return { titolo, url };
+}
 
 if (localStorage.getItem("darkMode") === "true") {
   document.documentElement.classList.add("dark-ready");
@@ -35,8 +30,49 @@ let fontScale = 1;
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
 // ============================================
-// 2. GESTIONE STORAGE
+// 2. UTILITY FUNCTIONS
 // ============================================
+
+function setupCloseOnClickOutside(element, trigger, options = {}) {
+  if (!element || !trigger) return;
+
+  const {
+    onOpen = () => {},
+    onClose = () => {},
+    openClass = 'hidden',
+    closeDelay = 0
+  } = options;
+
+  const closeHandler = (e) => {
+    if (!element.contains(e.target) && !trigger.contains(e.target)) {
+      if (typeof openClass === 'string') {
+        element.classList.add(openClass);
+      }
+      onClose();
+      document.removeEventListener('click', closeHandler);
+    }
+  };
+
+  const openHandler = (e) => {
+    e.stopPropagation();
+    if (typeof openClass === 'string') {
+      if (element.classList.contains(openClass)) {
+        element.classList.remove(openClass);
+        onOpen();
+        setTimeout(() => {
+          document.addEventListener('click', closeHandler);
+        }, closeDelay);
+      }
+    }
+  };
+
+  trigger.addEventListener('click', openHandler);
+}
+
+// ============================================
+// 3. GESTIONE STORAGE
+// ============================================
+
 const storage = {
   set: (data) => new Promise(resolve => {
     try {
@@ -73,55 +109,9 @@ const storage = {
 };
 
 // ============================================
-// 3. GESTIONE BOOKMARKLET (NUOVA FUNZIONE)
+// 4. FUNZIONI CORE
 // ============================================
-async function processBookmarkletRequest() {
-  try {
-    const urlParams = new URLSearchParams(window.location.search);
-    const title = urlParams.get('title');
-    const url = urlParams.get('url');
-    
-    if (!url) return;
 
-    // Pulisci l'URL dopo aver letto i parametri
-    window.history.replaceState({}, document.title, window.location.pathname);
-
-    const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-    const alreadyExists = visitedUrls.some(item => item.url === url);
-
-    if (alreadyExists) {
-      await storage.set({
-        lastAddedUrl: url,
-        highlightColor: "orange"
-      });
-      await loadUrls();
-      return;
-    }
-
-    categorizeByLearnedKeywords(decodeURIComponent(title), decodeURIComponent(url), async (category, isIA) => {
-      visitedUrls.push({
-        url: decodeURIComponent(url),
-        title: decodeURIComponent(title),
-        category: category,
-        originalCategory: category
-      });
-
-      await storage.set({
-        visitedUrls: visitedUrls,
-        lastAddedUrl: url,
-        highlightColor: "green"
-      });
-
-      await loadUrls();
-    });
-  } catch (e) {
-    console.error("Errore elaborazione bookmarklet:", e);
-  }
-}
-
-// ============================================
-// 4. FUNZIONI ORIGINALI (INALTERATE)
-// ============================================
 function extractKeywords(text) {
   return text
     .toLowerCase()
@@ -225,29 +215,50 @@ function openLinkSafari(url) {
 }
 
 // ============================================
-// 5. EVENT LISTENERS E INIZIALIZZAZIONE
+// 5. INITIALIZATION
 // ============================================
+
 document.addEventListener("DOMContentLoaded", async () => {
-    // Processa il bookmarklet se presente
-    const bookmarkletData = processaBookmarklet();
-    if(bookmarkletData) {
-        const { titolo, url } = bookmarkletData;
-        const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-        
-        if(!visitedUrls.some(item => item.url === url)) {
-            categorizeByLearnedKeywords(titolo, url, async (category) => {
-                visitedUrls.push({
-                    url: url,
-                    title: titolo,
-                    category: category,
-                    originalCategory: category
-                });
-                await storage.set({ visitedUrls });
-                await loadUrls();
-            });
-        }
+  // Setup dropdown e pulsanti
+  setupCloseOnClickOutside(
+    document.getElementById('dropdown-category-list'),
+    document.getElementById('new-category-input'),
+    { openClass: 'hidden' }
+  );
+
+  setupCloseOnClickOutside(
+    document.getElementById('export-options'),
+    document.getElementById('export-btn'),
+    { 
+      openClass: 'hidden',
+      onOpen: () => {
+        document.getElementById('export-default').style.display = 'none';
+      },
+      onClose: () => {
+        document.getElementById('export-default').style.display = 'flex';
+      }
     }
+  );
+
+  // Processa il bookmarklet se presente
+  const bookmarkletData = processaBookmarklet();
+  if(bookmarkletData) {
+    const { titolo, url } = bookmarkletData;
+    const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
     
+    if(!visitedUrls.some(item => item.url === url)) {
+      categorizeByLearnedKeywords(titolo, url, async (category) => {
+        visitedUrls.push({
+          url: url,
+          title: titolo,
+          category: category,
+          originalCategory: category
+        });
+        await storage.set({ visitedUrls });
+        await loadUrls();
+      });
+    }
+  }
 
   // Inizializzazione originale
   const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
@@ -366,64 +377,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     box.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-// Chiudi dropdown quando si clicca fuori
-  const dropdown = document.getElementById('dropdown-category-list');
-  const categoryInput = document.getElementById('new-category-input');
-
-  // Chiudi dropdown quando si clicca fuori
-  document.addEventListener('click', (e) => {
-    const isClickInside = categoryInput.contains(e.target) || dropdown.contains(e.target);
-    if (!isClickInside && !dropdown.classList.contains('hidden')) {
-      dropdown.classList.add('hidden');
-    }
-  });
-
-  // Apertura normale al focus
-  categoryInput.addEventListener('focus', () => {
-    dropdown.classList.remove('hidden');
-  });
-});
-    
-// Aggiungi questo listener all'inizio del DOMContentLoaded
-document.addEventListener('click', (event) => {
-  const exportContainer = document.getElementById('export-container');
-  const exportBtn = document.getElementById('export-btn');
-  
-  if (!exportContainer.contains(event.target) && event.target !== exportBtn) {
-    document.getElementById('export-default').style.display = 'flex';
-    document.getElementById('export-options').classList.add('hidden');
-  }
-});
-
-// Modifica l'evento click dell'exportBtn
-exportBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  const exportDefault = document.getElementById('export-default');
-  const exportOptions = document.getElementById('export-options');
-  
-  if (exportOptions.classList.contains('hidden')) {
-    exportDefault.style.display = 'none';
-    exportOptions.classList.remove('hidden');
-  } else {
-    exportDefault.style.display = 'flex';
-    exportOptions.classList.add('hidden');
-  }
-});
-
-
-
-    
   // Export/Import
-//  const exportBtn = document.getElementById("export-btn");
-//  const exportDefault = document.getElementById("export-default");
-//  const exportOptions = document.getElementById("export-options");
-
- // exportBtn.addEventListener("click", (e) => {
- //   exportDefault.style.display = "none";
- //   exportOptions.classList.remove("hidden");
- //   e.stopPropagation();
- // });
-
   document.getElementById("export-basic").addEventListener("click", async () => {
     const { visitedUrls = [], userCategories = [] } = await storage.get({ visitedUrls: [], userCategories: [] });
     const blob = new Blob([JSON.stringify({ visitedUrls, userCategories }, null, 2)], { type: "application/json" });
@@ -433,8 +387,6 @@ exportBtn.addEventListener('click', (e) => {
     a.download = "linkzen_export_basic.json";
     a.click();
     URL.revokeObjectURL(url);
-    exportDefault.style.display = "flex";
-    exportOptions.classList.add("hidden");
   });
 
   document.getElementById("export-full").addEventListener("click", async () => {
@@ -446,8 +398,6 @@ exportBtn.addEventListener('click', (e) => {
     a.download = "linkzen_export_full.json";
     a.click();
     URL.revokeObjectURL(url);
-    exportDefault.style.display = "flex";
-    exportOptions.classList.add("hidden");
   });
 
   // Import
@@ -490,10 +440,6 @@ exportBtn.addEventListener('click', (e) => {
       input.value = "";
       await loadUrls();
     }
-  });
-
-  input.addEventListener("focus", () => {
-    dropdown.classList.remove("hidden");
   });
 
   // Undo
@@ -565,8 +511,9 @@ exportBtn.addEventListener('click', (e) => {
 });
 
 // ============================================
-// 6. FUNZIONE LOADURLS COMPLETA
+// 6. LOAD URLS FUNCTION
 // ============================================
+
 async function loadUrls() {
   const {
     visitedUrls = [],
