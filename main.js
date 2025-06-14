@@ -1,33 +1,57 @@
-// main.js - Versione corretta con gestione avanzata dropdown
+// main.js - Versione definitiva con gestione avanzata dropdown e dark mode
 // ============================================
 // 1. INIZIALIZZAZIONE E COSTANTI
 // ============================================
 
-function processaBookmarklet() {
-    const params = new URLSearchParams(window.location.search);
-    if(!params.has('bookmarklet')) return;
-    
-    const titolo = decodeURIComponent(params.get('titolo') || '');
-    const url = decodeURIComponent(params.get('url') || '');
-    
-    if(!url) return;
-    
-    history.replaceState({}, '', window.location.pathname);
-    
-    return { titolo, url };
+class Dropdown {
+  constructor(containerId, triggerId, options = {}) {
+    this.container = document.getElementById(containerId);
+    this.trigger = document.getElementById(triggerId);
+    this.ignoreClass = options.ignoreClass || 'no-close';
+    this.isOpen = false;
+
+    this.init();
+  }
+
+  init() {
+    this.trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggle();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (this.isOpen && !this.isClickInside(e.target)) {
+        this.close();
+      }
+    });
+
+    this.container.addEventListener('click', (e) => {
+      if (e.target.classList.contains(this.ignoreClass)) {
+        e.stopPropagation();
+      }
+    });
+  }
+
+  isClickInside(target) {
+    return this.container.contains(target) || 
+           target === this.trigger ||
+           target.closest(`.${this.ignoreClass}`);
+  }
+
+  toggle() {
+    this.isOpen ? this.close() : this.open();
+  }
+
+  open() {
+    this.container.classList.remove('hidden');
+    this.isOpen = true;
+  }
+
+  close() {
+    this.container.classList.add('hidden');
+    this.isOpen = false;
+  }
 }
-
-if (localStorage.getItem("darkMode") === "true") {
-  document.documentElement.classList.add("dark-ready");
-  document.body.classList?.add("dark");
-}
-
-let undoData = null;
-let undoTimeout = null;
-let undoBtn, themeToggleWrapper;
-let fontScale = 1;
-
-const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
 // ============================================
 // 2. GESTIONE STORAGE
@@ -72,6 +96,16 @@ const storage = {
 // 3. FUNZIONI CORE
 // ============================================
 
+function processaBookmarklet() {
+  const params = new URLSearchParams(window.location.search);
+  if(!params.has('bookmarklet')) return null;
+  
+  return {
+    titolo: decodeURIComponent(params.get('titolo') || '',
+    url: decodeURIComponent(params.get('url') || ''
+  };
+}
+
 function extractKeywords(text) {
   return text
     .toLowerCase()
@@ -93,180 +127,32 @@ function categorizeByLearnedKeywords(title, url, callback) {
   });
 }
 
-function learnFromManualOverride(entry, newCategory) {
-  if (newCategory === "Other") return;
-
-  const titleWords = extractKeywords(entry.title);
-  const extraStopwords = ["about", "login", "accedi", "index", "html", "page", "home", "email"];
-  const noiseWords = ["product", "video", "media", "main", "category", "default", "online"];
-  const combinedStopwords = new Set([...stopwords, ...extraStopwords, ...noiseWords]);
-
-  const filteredWords = titleWords
-    .filter(word =>
-      word.length >= 4 &&
-      !combinedStopwords.has(word) &&
-      !/^\d+$/.test(word)
-    );
-
-  try {
-    const hostname = new URL(entry.url).hostname.replace(/^www\./, "");
-    if (hostname.length >= 5) {
-      filteredWords.unshift(hostname);
-    }
-  } catch (e) {}
-
-  const finalWords = Array.from(new Set(filteredWords)).slice(0, 8);
-
-  if (finalWords.length === 0) return;
-
-  storage.get({ keywordToCategory: {} }).then((data) => {
-    const updatedMap = { ...data.keywordToCategory };
-    finalWords.forEach(word => {
-      updatedMap[word] = newCategory;
-    });
-    storage.set({ keywordToCategory: updatedMap });
-  });
-}
-
-function createIATooltip() {
-  const tooltip = document.createElement("span");
-  tooltip.textContent = "IA";
-  tooltip.style.background = "#ccc";
-  tooltip.style.color = "#333";
-  tooltip.style.fontSize = "10px";
-  tooltip.style.padding = "2px 4px";
-  tooltip.style.borderRadius = "4px";
-  tooltip.style.marginLeft = "6px";
-  tooltip.style.opacity = "1";
-  tooltip.style.transition = "opacity 0.5s ease";
-  setTimeout(() => {
-    tooltip.style.opacity = "0";
-    setTimeout(() => tooltip.remove(), 1000);
-  }, 3000);
-  return tooltip;
-}
-
-function appendIATooltipIfNeeded(container, isIA) {
-  if (isIA) {
-    const tooltip = createIATooltip();
-    container.appendChild(tooltip);
-  }
-}
-
-function applyFontSize(scale) {
-  document.body.style.fontSize = `${scale}em`;
-  storage.set({ fontScale: scale });
-
-  const box = document.getElementById("ia-knowledge-box");
-  if (box) {
-    box.style.fontSize = `${scale}em`;
-  }
-}
-
-function openLinkSafari(url) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
 // ============================================
-// 4. GESTIONE DROPDOWN E PULSANTI (NUOVA VERSIONE)
-// ============================================
-
-function setupCategoryDropdown() {
-  const input = document.getElementById('new-category-input');
-  const dropdown = document.getElementById('dropdown-category-list');
-  const addBtn = document.getElementById('add-category-btn');
-
-  // Apertura dropdown
-  const openDropdown = () => {
-    dropdown.classList.remove('hidden');
-    document.addEventListener('click', clickOutsideHandler);
-  };
-
-  // Chiusura dropdown
-  const closeDropdown = () => {
-    dropdown.classList.add('hidden');
-    document.removeEventListener('click', clickOutsideHandler);
-  };
-
-  // Gestione click esterni
-  const clickOutsideHandler = (e) => {
-    const isInput = e.target === input;
-    const isAddBtn = e.target === addBtn;
-    const isDropdown = dropdown.contains(e.target);
-    const isRemoveBtn = e.target.classList.contains('remove');
-
-    if (!isInput && !isAddBtn && !isDropdown && !isRemoveBtn) {
-      closeDropdown();
-    }
-  };
-
-  // Event listeners
-  input.addEventListener('focus', openDropdown);
-  input.addEventListener('click', openDropdown);
-  addBtn.addEventListener('click', () => {
-    if (!dropdown.classList.contains('hidden')) {
-      closeDropdown();
-    }
-  });
-
-  // Special handling per i pulsanti di cancellazione
-  dropdown.addEventListener('click', (e) => {
-    if (e.target.classList.contains('remove')) {
-      e.stopPropagation();
-    }
-  });
-}
-
-function setupExportDropdown() {
-  const exportBtn = document.getElementById('export-btn');
-  const exportDefault = document.getElementById('export-default');
-  const exportOptions = document.getElementById('export-options');
-
-  // Apertura dropdown
-  exportBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    exportDefault.style.display = 'none';
-    exportOptions.classList.remove('hidden');
-    document.addEventListener('click', closeExportHandler);
-  });
-
-  // Chiusura dropdown
-  const closeExportHandler = (e) => {
-    const isExportBtn = e.target === exportBtn;
-    const isExportOption = exportOptions.contains(e.target);
-
-    if (!isExportBtn && !isExportOption) {
-      exportDefault.style.display = 'flex';
-      exportOptions.classList.add('hidden');
-      document.removeEventListener('click', closeExportHandler);
-    }
-  };
-
-  // Chiusura dopo selezione
-  document.getElementById('export-basic').addEventListener('click', () => {
-    document.removeEventListener('click', closeExportHandler);
-  });
-  
-  document.getElementById('export-full').addEventListener('click', () => {
-    document.removeEventListener('click', closeExportHandler);
-  });
-}
-
-// ============================================
-// 5. INITIALIZATION
+// 4. INIZIALIZZAZIONE
 // ============================================
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Setup dropdown e pulsanti
-  setupCategoryDropdown();
-  setupExportDropdown();
+  // Inizializza dropdown
+  new Dropdown('dropdown-category-list', 'new-category-input', {
+    ignoreClass: 'remove'
+  });
+
+  new Dropdown('export-options', 'export-btn');
+
+  // Dark Mode
+  const toggleTheme = document.getElementById("toggle-theme");
+  const { darkMode = false } = await storage.get({ darkMode: false });
+  
+  if (darkMode) {
+    document.body.classList.add("dark");
+    toggleTheme.checked = true;
+  }
+
+  toggleTheme.addEventListener("change", () => {
+    const enabled = toggleTheme.checked;
+    document.body.classList.toggle("dark", enabled);
+    storage.set({ darkMode: enabled });
+  });
 
   // Processa il bookmarklet se presente
   const bookmarkletData = processaBookmarklet();
