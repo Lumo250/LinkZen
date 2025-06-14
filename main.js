@@ -449,7 +449,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     dropdown.classList.remove("hidden");
   });
 
+
 document.addEventListener("click", (event) => {
+  const input = document.getElementById("new-category-input");
+  const dropdown = document.getElementById("dropdown-category-list");
+
+  if (!input || !dropdown) return;
+
   const isClickInsideInput = input.contains(event.target);
   const isClickInsideDropdown = dropdown.contains(event.target);
 
@@ -457,6 +463,11 @@ document.addEventListener("click", (event) => {
     dropdown.classList.add("hidden");
   }
 });
+
+
+
+
+    
 
     
   // Undo
