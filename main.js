@@ -175,29 +175,44 @@ function openLinkSafari(url) {
 }
 
 // ============================================
-// 4. GESTIONE DROPDOWN E PULSANTI
+// 4. GESTIONE DROPDOWN E PULSANTI (NUOVA VERSIONE)
 // ============================================
 
-function setupDropdowns() {
-  // Gestione avanzata dropdown categorie
-  const categoryInput = document.getElementById('new-category-input');
+function setupCategoryDropdown() {
+  const input = document.getElementById('new-category-input');
   const dropdown = document.getElementById('dropdown-category-list');
-  const addButton = document.getElementById('add-category-btn');
+  const addBtn = document.getElementById('add-category-btn');
 
   // Apertura dropdown
-  categoryInput.addEventListener('focus', () => {
+  const openDropdown = () => {
     dropdown.classList.remove('hidden');
-  });
+    document.addEventListener('click', clickOutsideHandler);
+  };
 
-  // Chiusura quando si clicca fuori
-  document.addEventListener('click', (e) => {
-    const isClickOnInput = e.target === categoryInput;
-    const isClickOnAddButton = e.target === addButton;
-    const isClickInDropdown = dropdown.contains(e.target);
-    const isClickOnRemove = e.target.classList.contains('remove');
+  // Chiusura dropdown
+  const closeDropdown = () => {
+    dropdown.classList.add('hidden');
+    document.removeEventListener('click', clickOutsideHandler);
+  };
 
-    if (!isClickOnInput && !isClickOnAddButton && !isClickInDropdown && !isClickOnRemove && !dropdown.classList.contains('hidden')) {
-      dropdown.classList.add('hidden');
+  // Gestione click esterni
+  const clickOutsideHandler = (e) => {
+    const isInput = e.target === input;
+    const isAddBtn = e.target === addBtn;
+    const isDropdown = dropdown.contains(e.target);
+    const isRemoveBtn = e.target.classList.contains('remove');
+
+    if (!isInput && !isAddBtn && !isDropdown && !isRemoveBtn) {
+      closeDropdown();
+    }
+  };
+
+  // Event listeners
+  input.addEventListener('focus', openDropdown);
+  input.addEventListener('click', openDropdown);
+  addBtn.addEventListener('click', () => {
+    if (!dropdown.classList.contains('hidden')) {
+      closeDropdown();
     }
   });
 
@@ -207,28 +222,40 @@ function setupDropdowns() {
       e.stopPropagation();
     }
   });
+}
 
-  // Gestione pulsanti export
+function setupExportDropdown() {
   const exportBtn = document.getElementById('export-btn');
   const exportDefault = document.getElementById('export-default');
   const exportOptions = document.getElementById('export-options');
 
-  // Apertura opzioni export
+  // Apertura dropdown
   exportBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     exportDefault.style.display = 'none';
     exportOptions.classList.remove('hidden');
+    document.addEventListener('click', closeExportHandler);
   });
 
-  // Chiusura quando si clicca fuori
-  document.addEventListener('click', (e) => {
-    const isClickOnExportBtn = e.target === exportBtn;
-    const isClickInExportOptions = exportOptions.contains(e.target);
+  // Chiusura dropdown
+  const closeExportHandler = (e) => {
+    const isExportBtn = e.target === exportBtn;
+    const isExportOption = exportOptions.contains(e.target);
 
-    if (!isClickOnExportBtn && !isClickInExportOptions && !exportOptions.classList.contains('hidden')) {
+    if (!isExportBtn && !isExportOption) {
       exportDefault.style.display = 'flex';
       exportOptions.classList.add('hidden');
+      document.removeEventListener('click', closeExportHandler);
     }
+  };
+
+  // Chiusura dopo selezione
+  document.getElementById('export-basic').addEventListener('click', () => {
+    document.removeEventListener('click', closeExportHandler);
+  });
+  
+  document.getElementById('export-full').addEventListener('click', () => {
+    document.removeEventListener('click', closeExportHandler);
   });
 }
 
@@ -238,7 +265,8 @@ function setupDropdowns() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   // Setup dropdown e pulsanti
-  setupDropdowns();
+  setupCategoryDropdown();
+  setupExportDropdown();
 
   // Processa il bookmarklet se presente
   const bookmarkletData = processaBookmarklet();
@@ -387,8 +415,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     a.download = "linkzen_export_basic.json";
     a.click();
     URL.revokeObjectURL(url);
-    document.getElementById('export-default').style.display = 'flex';
-    document.getElementById('export-options').classList.add('hidden');
   });
 
   document.getElementById("export-full").addEventListener("click", async () => {
@@ -400,8 +426,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     a.download = "linkzen_export_full.json";
     a.click();
     URL.revokeObjectURL(url);
-    document.getElementById('export-default').style.display = 'flex';
-    document.getElementById('export-options').classList.add('hidden');
   });
 
   // Import
