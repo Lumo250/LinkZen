@@ -449,6 +449,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     dropdown.classList.remove("hidden");
   });
 
+document.addEventListener("click", (event) => {
+  const isClickInsideInput = input.contains(event.target);
+  const isClickInsideDropdown = dropdown.contains(event.target);
+
+  if (!isClickInsideInput && !isClickInsideDropdown) {
+    dropdown.classList.add("hidden");
+  }
+});
+
+    
   // Undo
   document.getElementById("undo-btn").addEventListener("click", async () => {
     if (!undoData) return;
