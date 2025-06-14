@@ -34,6 +34,8 @@ let fontScale = 1;
 
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
+
+
 // Configurazione
 const TAB_TIMEOUT = 30000; // 30 secondi di validità
 
@@ -59,7 +61,18 @@ function isTabOpen(url) {
   return tabs[url] && (Date.now() - tabs[url] < TAB_TIMEOUT);
 
 
+let fontScale = 1;
+const TAB_TIMEOUT = 30000; // Aggiungi questa costante
 
+// Aggiungi qui la funzione
+function isTabOpen(url) {
+  try {
+    const tabs = JSON.parse(localStorage.getItem('linkzen_open_tabs') || '{}');
+    return tabs[url] && (Date.now() - tabs[url] < TAB_TIMEOUT);
+  } catch {
+    return false; // Fallback per errori iOS
+  }
+}
 
 
 
@@ -293,7 +306,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
     
-
+  // Aggiungi questo blocco
+  setInterval(() => {
+    const tabs = JSON.parse(localStorage.getItem('linkzen_open_tabs') || '{}');
+    const now = Date.now();
+    Object.keys(tabs).forEach(url => {
+      if (now - tabs[url] > TAB_TIMEOUT) delete tabs[url];
+    });
+    localStorage.setItem('linkzen_open_tabs', JSON.stringify(tabs));
+  }, 60000); // Esegui ogni 60 secondi
+    
   // Inizializzazione originale
   const { fontScale: savedScale = 1 } = await storage.get({ fontScale: 1 });
   fontScale = savedScale;
