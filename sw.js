@@ -20,101 +20,101 @@ self.addEventListener('install', (event) => {
       })
       .catch(err => console.error('Cache install error:', err))
   );
-  self.skipWaiting(); // Forza l'attivazione immediata
+  self.skipWaiting();
 });
 
 // Strategia di caching ottimizzata
 self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  const url = new URL(req.url);
+  const { request } = event;
+  const url = new URL(request.url);
 
- // Aggiungi questa condizione
-    if (url.search.includes('bookmarklet=')) {
-        event.respondWith(
-            fetch(req).then(response => {
-                const cache = caches.open(DYNAMIC_CACHE_NAME);
-                cache.put(req, response.clone());
-                return response;
-            }).catch(() => caches.match('/index.html'))
-        );
-        return;
-    }
+  // Gestione richieste bookmarklet
+  if (url.search.includes('bookmarklet=')) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          const responseClone = response.clone();
+          caches.open(DYNAMIC_CACHE_NAME)
+            .then(cache => cache.put(request, responseClone));
+          return response;
+        })
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
 
-    // Ignora richieste non GET e chrome-extension://
-  if (req.method !== 'GET' || req.url.startsWith('chrome-extension://')) {
+  // Ignora richieste non GET e chrome-extension://
+  if (request.method !== 'GET' || request.url.startsWith('chrome-extension://')) {
     return;
   }
 
   // Gestione speciale per le favicon
   if (url.href.includes('s2/favicons')) {
     event.respondWith(
-      caches.open(DYNAMIC_CACHE_NAME).then(async (cache) => {
-        const cached = await cache.match(req);
-        if (cached) return cached;
-        
-        const response = await fetch(req);
-        if (response.ok) cache.put(req, response.clone());
-        return response;
-      })
+      caches.open(DYNAMIC_CACHE_NAME)
+        .then(async (cache) => {
+          const cached = await cache.match(request);
+          if (cached) return cached;
+          
+          const response = await fetch(request);
+          if (response.ok) {
+            cache.put(request, response.clone());
+          }
+          return response;
+        })
     );
     return;
   }
 
-  // Gestione speciale per richieste con parametri (bookmarklet)
-  if (url.search.includes('bookmarklet=') || url.search.includes('title=')) {
+  // Strategia Cache-First con validazione per HTML
+  if (request.headers.get('accept').includes('text/html')) {
     event.respondWith(
-      fetch(req).then(async (fetchRes) => {
-        const cache = await caches.open(DYNAMIC_CACHE_NAME);
-        cache.put(req, fetchRes.clone());
-        return fetchRes;
-      }).catch(() => caches.match('/index.html'))
+      caches.match(request)
+        .then(async (cachedResponse) => {
+          try {
+            const fetchResponse = await fetch(request);
+            const cache = await caches.open(DYNAMIC_CACHE_NAME);
+            cache.put(request, fetchResponse.clone());
+            return fetchResponse;
+          } catch (e) {
+            return cachedResponse || caches.match('/index.html');
+          }
+        })
     );
     return;
   }
 
-  // Strategia Cache-First con validazione
+  // Per altre risorse: Cache-First
   event.respondWith(
-    caches.match(req).then(async (cachedRes) => {
-      // Always make network request for HTML to check for updates
-      if (req.headers.get('accept').includes('text/html')) {
-        try {
-          const fetchRes = await fetch(req);
-          const cache = await caches.open(DYNAMIC_CACHE_NAME);
-          cache.put(req, fetchRes.clone());
-          return fetchRes;
-        } catch (e) {
-          return cachedRes || caches.match('/index.html');
-        }
-      }
-      
-      // For other resources, return cached if available
-      if (cachedRes) return cachedRes;
-      
-      return fetch(req).then(async (fetchRes) => {
-        if (fetchRes.ok) {
-          const cache = await caches.open(DYNAMIC_CACHE_NAME);
-          cache.put(req, fetchRes.clone());
-        }
-        return fetchRes;
-      }).catch(() => {
-        if (req.headers.get('accept').includes('text/html')) {
-          return caches.match('/index.html');
-        }
-      });
-    })
+    caches.match(request)
+      .then(async (cachedResponse) => {
+        if (cachedResponse) return cachedResponse;
+        
+        return fetch(request)
+          .then(async (fetchResponse) => {
+            if (fetchResponse.ok) {
+              const cache = await caches.open(DYNAMIC_CACHE_NAME);
+              cache.put(request, fetchResponse.clone());
+            }
+            return fetchResponse;
+          })
+          .catch(() => {
+            if (request.headers.get('accept').includes('text/html')) {
+              return caches.match('/index.html');
+            }
+          });
+      })
   );
 });
 
 // Pulizia cache vecchie
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
+    caches.keys()
+      .then((keys) => Promise.all(
         keys.filter(key => key !== CACHE_NAME && key !== DYNAMIC_CACHE_NAME)
           .map(key => caches.delete(key))
-      );
-    }).then(() => {
-      return self.clients.claim(); // Prendi il controllo immediato di tutti i client
-    })
+      )
+      .then(() => self.clients.claim())
   );
 });
