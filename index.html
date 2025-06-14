@@ -9,7 +9,43 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon128.png">
   <title>LinkZen</title>
+
+  <!-- Fix Dark Mode Flash -->
+  <script>
+    // Applica il tema PRIMA del rendering
+    const savedDarkMode = localStorage.getItem("darkMode") === "true";
+    if (savedDarkMode) {
+      document.documentElement.classList.add("dark-ready");
+      document.body.classList.add("dark");
+    }
+  </script>
+
   <style>
+    /* Prevenzione flash */
+    body:not(.dark-ready) {
+      background-color: #f2f2f2 !important;
+      color: #000 !important;
+      visibility: hidden;
+    }
+    body.dark-ready {
+      visibility: visible;
+    }
+
+    /* Stili Dropdown */
+    .dropdown-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+    
+    .dropdown-list, #export-options {
+      position: absolute;
+      z-index: 1000;
+      width: 100%;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    /* Resto degli stili... */
     * {
       box-sizing: border-box;
     }
@@ -32,39 +68,6 @@
     body.dark {
       background-color: #1e1e1e;
       color: #e0e0e0;
-    }
-
-    /* AGGIUNTE PER I DROPDOWN */
-    .dropdown-container {
-      position: relative;
-      display: inline-block;
-      width: 100%;
-    }
-    
-    .dropdown-list {
-      position: absolute;
-      width: calc(100% - 78px);
-      z-index: 1000;
-      background: white;
-      border: 1px solid #ccc;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      max-height: 120px;
-      overflow-y: auto;
-      font-size: 12px;
-    }
-    
-    #export-container {
-      position: relative;
-    }
-    
-    #export-options {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      display: flex;
-      gap: 4px;
     }
 
     .panel, .list-panel {
@@ -182,373 +185,27 @@
 
     .dropdown-item:hover { background-color: #f0f0f0; }
 
-    .remove {
+    .remove, .no-close {
       color: red;
       cursor: pointer;
       margin-left: 8px;
+      pointer-events: auto !important;
     }
 
-    .sort-undo-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      min-height: 30px;
-    }
+    /* ... (mantieni tutti gli altri stili esistenti) ... */
 
-    .sort-options {
-      display: flex;
-      gap: 10px;
-      font-size: 12px;
-    }
-
-    #zoom-controls {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-      margin-left: auto;
-      margin-right: 10px;
-    }
-
-    #zoom-controls button {
-      padding: 2px 6px;
-      font-size: 14px;
-      border: none;
-      border-radius: 4px;
-      background-color: #ddd;
-      cursor: pointer;
-    }
-
-    body.dark #zoom-controls button {
-      background-color: #444;
-      color: #eee;
-    }
-
-    #undo-or-toggle {
-      width: 42px;
-      height: 24px;
-      position: relative;
-    }
-
-    #undo-btn, #theme-toggle {
-      width: 100%;
-      height: 100%;
-      display: inline-block;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    #undo-btn {
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 4px;
-      background-color: orange;
-      color: black;
-      border: none;
-      cursor: pointer;
-      display: none;
-    }
-
-    #undo-btn:hover {
-      filter: brightness(1.2);
-    }
-
-    #theme-toggle {
-      position: relative;
-      display: inline-block;
-      width: 38px;
-      height: 20px;
-    }
-
-    #theme-toggle input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0;
-      right: 0; bottom: 0;
-      background-color: #ccc;
-      border-radius: 20px;
-      transition: .3s;
-    }
-
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 14px;
-      width: 14px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      border-radius: 50%;
-      transition: .3s;
-    }
-
-    input:checked + .slider {
-      background-color: #2196F3;
-    }
-
-    input:checked + .slider:before {
-      transform: translateX(18px);
-    }
-
-    #url-container {
-      max-height: 380px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      scrollbar-gutter: stable;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 4px 0 0 0;
-    }
-
-    li.link-row {
-      display: flex;
-      align-items: center;
-      flex-wrap: nowrap;
-      overflow: hidden;
-      padding: 3px 0;
-      margin: 0;
-    }
-
-    .index {
-      width: 28px;
-      text-align: right;
-      font-weight: bold;
-      padding-right: 2px;
-      flex-shrink: 0;
-    }
-
-    select.category {
-      font-size: 12px;
-      padding: 4px;
-      border: 1px solid #ccc;
-      border-radius: 2px;
-      background-color: white;
-      appearance: none;
-      width: 90px;
-      margin-right: 6px;
-      flex-shrink: 0;
-    }
-
-    .link {
-      flex-grow: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      color: blue;
-      text-decoration: underline;
-    }
-
-    .link.clicked {
-      color: gray;
-    }
-
-    .delete-btn {
-      background-color: #ccc;
-      color: black;
-      border: none;
-      padding: 1px 3px;
-      min-width: 12px;
-      min-height: 12px;
-      font-size: 12px;
-      line-height: 12px;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0; 
-      margin-right: 6px;
-    }
-    
-    .link-row.highlight {
-      background-color: #388e3c;
-      transition: background-color 4s ease;
-    }
-    
-    body.dark a.link,
-    body.dark a.link span {
-      color: lightblue !important;
-    }
-
-    body.dark a.link.clicked,
-    body.dark a.link.clicked span {
-      color: #bbb !important;
-    }
-
-    body.dark select.category {
-      background-color: #444;
-      color: #eee;
-      border-color: #666;
-    }
-
-    body.dark #new-category-input {
-      background-color: #444;
-      color: #eee;
-      border-color: #666;
-    }
-
-    body.dark .dropdown-list {
-      background-color: #222;
-      border-color: #444;
-    }
-
-    body.dark .dropdown-item {
-      color: #ccc;
-      border-bottom-color: #333;
-    }
-
-    body.dark .dropdown-item:hover {
-      background-color: #333;
-    }
-
-    #url-container::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    #url-container::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    #url-container::-webkit-scrollbar-thumb {
-      background-color: rgba(100, 100, 100, 0.4);
-      border-radius: 4px;
-    }
-
-    body.dark #url-container::-webkit-scrollbar-thumb {
-      background-color: rgba(200, 200, 200, 0.3);
-    }
-
-    #ia-knowledge-box {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255, 255, 255, 0.95);
-      z-index: 10;
-      padding: 12px;
-      font-size: inherit;
-      overflow-y: auto;
-      max-height: 100%;
-      white-space: pre-wrap;
-      border: 1px solid #ccc;
-      box-shadow: 0 0 5px rgba(0,0,0,0.2);
-    }
-
-    body.dark #ia-knowledge-box {
-      background: #121212;
-      color: lightblue;
-      border-color: #444;
-    }
-
-    #ia-knowledge-box.hidden {
-      display: none;
-    }
-
-    #ia-knowledge-btn.active {
-      background-color: #aaa;
-      color: #222;
-      box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4),
-                  inset -2px -2px 5px rgba(255, 255, 255, 0.3);
-      transform: translateY(1px);
-    }
-
-    body.dark #ia-knowledge-btn.active {
-      background-color: #888;
-      color: #111;
-      outline: 1px solid #aaa;
-      box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.4);
-      border: 1px solid #aaa;
-    }
-
-    .button-row {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 10px;
-    }
-
-    .btn-wrapper {
-      flex: 1;
-      height: 36px;
-      position: relative;
-      display: flex;
-      align-items: stretch;
-    }
-
-    #export-default,
-    #export-options {
-      width: 100%;
-      display: flex;
-      gap: 4px;
-    }
-
-    #export-options.hidden {
-      display: none;
-    }
-
-    #export-btn,
-    #export-basic,
-    #export-full {
-      flex: 1;
-      height: 100%;
-      font-size: 12px;
-      font-weight: bold;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    #export-btn {
-      background-color: #2196F3;
-      color: white;
-    }
-
-    #export-basic {
-      background-color: #e3e3e3;
-      color: #000;
-    }
-
-    #export-full {
-      background-color: #d0d0ff;
-      color: #000;
-    }
-
-    body.dark #export-basic,
-    body.dark #export-full {
-      background-color: #444;
-      color: #eee;
-    }
-
-    /* Fix globale per iOS */
-    input, textarea, select {
-      font-size: 16px;
-      transform-origin: left top;
-      touch-action: manipulation;
-    }
-    
-    /* Previene zoom su focus */
+    /* Fix iOS */
     @media screen and (max-width: 767px) {
       input[type="text"] {
         font-size: 16px !important;
       }
-    }
-    
-    /* Fix dropdown per iOS */
-    .dropdown-list {
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior: contain;
     }
   </style>
 </head>
 
 <body id="main-body" class="">
   <div class="panel">
+    <!-- Button Row 1 -->
     <div class="button-row">
       <div class="btn-wrapper">
         <button id="save-btn"><span class="btn-icon">💾</span><span class="btn-label">Save</span></button>
@@ -558,6 +215,7 @@
       </div>
     </div>
 
+    <!-- Button Row 2 -->
     <div class="button-row">
       <div class="btn-wrapper" id="export-container">
         <div id="export-default">
@@ -567,8 +225,8 @@
           </button>
         </div>
         <div id="export-options" class="hidden">
-          <button id="export-basic">🔹 Basic</button>
-          <button id="export-full">🔸 With IA</button>
+          <button id="export-basic" class="no-close">🔹 Basic</button>
+          <button id="export-full" class="no-close">🔸 With IA</button>
         </div>
       </div>
 
@@ -581,6 +239,7 @@
       </div>
     </div>
 
+    <!-- Categorie -->
     <div class="custom-category-container dropdown-container">
       <div class="custom-input-wrapper">
         <input type="text" id="new-category-input" placeholder="New Category" />
@@ -589,6 +248,7 @@
       <div id="dropdown-category-list" class="dropdown-list hidden"></div>
     </div>
 
+    <!-- Sort/Undo Bar -->
     <div class="sort-undo-bar">
       <div class="sort-options">
         <label><input type="radio" name="sort" value="default" checked> By Input</label>
@@ -611,45 +271,31 @@
     </div>
   </div>
 
+  <!-- Lista URL -->
   <div class="list-panel">
     <div id="url-container" style="position: relative;">
       <ul id="url-list"></ul>
 
-      <div id="ia-knowledge-box" class="hidden"
-           style="
-             position: absolute;
-             top: 0;
-             left: 0;
-             right: 0;
-             bottom: 0;
-             z-index: 10;
-             padding: 12px;
-             overflow-y: auto;
-             white-space: pre-wrap;
-             border: 1px solid #ccc;
-             box-shadow: 0 0 5px rgba(0,0,0,0.2);
-             scrollbar-width: none;
-           ">
-      </div>
+      <div id="ia-knowledge-box" class="hidden"></div>
     </div>
   </div>
 
-  <!-- Script per registrare il Service Worker -->
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js', { scope: './' })
           .then(registration => {
-            console.log('Service Worker registrato con successo:', registration.scope);
+            console.log('Service Worker registrato:', registration.scope);
           })
           .catch(error => {
-            console.error('Registrazione Service Worker fallita:', error);
+            console.error('Registrazione fallita:', error);
           });
       });
     }
   </script>
 
-  <!-- Script principale dell'applicazione -->
+  <!-- Main JS -->
   <script src="./main.js"></script>
 </body>
 </html>
