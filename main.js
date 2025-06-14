@@ -214,14 +214,21 @@ function applyFontSize(scale) {
 }
 
 function openLinkSafari(url) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  // Tentativo di riutilizzare finestra
+  const win = window.open('', '_blank');
+  if (win && win.location.href === url) {
+    win.focus();
+  } else {
+    // Fallback standard
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 }
 
 // ============================================
