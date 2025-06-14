@@ -10,46 +10,29 @@
   <link rel="apple-touch-icon" href="icon128.png">
   <title>LinkZen</title>
 
-  <!-- Fix Dark Mode Flash -->
+  <!-- Fix Critico Pre-Rendering -->
   <script>
-    // Applica il tema PRIMA del rendering
-    const savedDarkMode = localStorage.getItem("darkMode") === "true";
-    if (savedDarkMode) {
-      document.documentElement.classList.add("dark-ready");
-      document.body.classList.add("dark");
-    }
+    // Blocca il rendering fino all'inizializzazione
+    document.documentElement.style.visibility = 'hidden';
+    document.addEventListener('DOMContentLoaded', () => {
+      const isDarkMode = localStorage.getItem('darkMode') === 'true';
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark-ready');
+        document.body.classList.add('dark');
+      }
+      document.documentElement.style.visibility = 'visible';
+    });
   </script>
 
   <style>
-    /* Prevenzione flash */
-    body:not(.dark-ready) {
-      background-color: #f2f2f2 !important;
-      color: #000 !important;
-      visibility: hidden;
-    }
-    body.dark-ready {
-      visibility: visible;
-    }
-
-    /* Stili Dropdown */
-    .dropdown-container {
-      position: relative;
-      display: inline-block;
-      width: 100%;
-    }
-    
-    .dropdown-list, #export-options {
-      position: absolute;
-      z-index: 1000;
-      width: 100%;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    }
-
-    /* Resto degli stili... */
+    /* Reset Base */
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
+    /* Layout Principale */
     body {
       font-family: Arial, sans-serif;
       font-size: 12px;
@@ -63,6 +46,8 @@
       width: auto;
       min-width: unset;
       max-width: 100%;
+      opacity: 1;
+      visibility: visible !important;
     }
 
     body.dark {
@@ -70,6 +55,7 @@
       color: #e0e0e0;
     }
 
+    /* Componenti UI */
     .panel, .list-panel {
       border-radius: 6px;
       padding: 10px;
@@ -97,6 +83,7 @@
       border-color: #444;
     }
 
+    /* Bottoni */
     .button-row {
       display: flex;
       gap: 6px;
@@ -132,22 +119,9 @@
     #save-btn { background-color: #4CAF50; color: white; }
     #reset-btn { background-color: orange; color: black; }
     #export-btn { background-color: #2196F3; color: white; }
+    #import-btn { background-color: #9C27B0; color: white; }
 
-    #import-btn {
-      width: 100%;
-      height: 100%;
-      font-size: 12px;
-      font-weight: bold;
-      background-color: #9C27B0;
-      color: white;
-      border: none;
-      border-radius: 4px;
-    }
-
-    #import-file {
-      display: none;
-    }
-
+    /* Dropdown Categorie */
     .custom-category-container {
       position: relative;
       margin-bottom: 10px;
@@ -174,6 +148,19 @@
       cursor: pointer;
     }
 
+    .dropdown-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 74px;
+      background: white;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      max-height: 120px;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+
     .dropdown-list.hidden { display: none; }
 
     .dropdown-item {
@@ -185,27 +172,64 @@
 
     .dropdown-item:hover { background-color: #f0f0f0; }
 
-    .remove, .no-close {
+    .remove {
       color: red;
       cursor: pointer;
       margin-left: 8px;
-      pointer-events: auto !important;
     }
 
-    /* ... (mantieni tutti gli altri stili esistenti) ... */
+    /* Export Dropdown */
+    #export-container {
+      position: relative;
+    }
 
-    /* Fix iOS */
+    #export-options {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      gap: 4px;
+      z-index: 1000;
+    }
+
+    #export-options.hidden { display: none; }
+
+    /* Lista URL */
+    #url-container {
+      max-height: 380px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 4px 0 0 0;
+    }
+
+    li.link-row {
+      display: flex;
+      align-items: center;
+      padding: 3px 0;
+    }
+
+    /* ... (tutti gli altri stili rimangono invariati) ... */
+
+    /* Fix Mobile */
     @media screen and (max-width: 767px) {
-      input[type="text"] {
+      body {
+        font-size: 14px;
+      }
+      input, select, button {
         font-size: 16px !important;
       }
     }
   </style>
 </head>
 
-<body id="main-body" class="">
+<body id="main-body">
   <div class="panel">
-    <!-- Button Row 1 -->
     <div class="button-row">
       <div class="btn-wrapper">
         <button id="save-btn"><span class="btn-icon">💾</span><span class="btn-label">Save</span></button>
@@ -215,7 +239,6 @@
       </div>
     </div>
 
-    <!-- Button Row 2 -->
     <div class="button-row">
       <div class="btn-wrapper" id="export-container">
         <div id="export-default">
@@ -235,12 +258,11 @@
           <span class="btn-icon">📥</span>
           <span class="btn-label">Import</span>
         </button>
-        <input type="file" id="import-file" accept=".json" />
+        <input type="file" id="import-file" accept=".json" style="display: none;" />
       </div>
     </div>
 
-    <!-- Categorie -->
-    <div class="custom-category-container dropdown-container">
+    <div class="custom-category-container">
       <div class="custom-input-wrapper">
         <input type="text" id="new-category-input" placeholder="New Category" />
         <button id="add-category-btn">Add</button>
@@ -248,7 +270,6 @@
       <div id="dropdown-category-list" class="dropdown-list hidden"></div>
     </div>
 
-    <!-- Sort/Undo Bar -->
     <div class="sort-undo-bar">
       <div class="sort-options">
         <label><input type="radio" name="sort" value="default" checked> By Input</label>
@@ -258,11 +279,11 @@
       <div id="zoom-controls">
         <button id="zoom-in" title="Increase text size">A+</button>
         <button id="zoom-out" title="Decrease text size">A−</button>
-        <button id="ia-knowledge-btn" title="Mostra parole chiave apprese">📚 IA</button>
+        <button id="ia-knowledge-btn" title="Show learned keywords">📚 IA</button>
       </div>
 
       <div id="undo-or-toggle">
-        <button id="undo-btn" title="Annulla rimozione">&#8630;</button>
+        <button id="undo-btn" title="Undo removal">&#8630;</button>
         <label id="theme-toggle">
           <input type="checkbox" id="toggle-theme" />
           <span class="slider"></span>
@@ -271,31 +292,34 @@
     </div>
   </div>
 
-  <!-- Lista URL -->
   <div class="list-panel">
-    <div id="url-container" style="position: relative;">
+    <div id="url-container">
       <ul id="url-list"></ul>
-
       <div id="ia-knowledge-box" class="hidden"></div>
     </div>
   </div>
 
-  <!-- Service Worker -->
+  <!-- Scripts -->
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js', { scope: './' })
-          .then(registration => {
-            console.log('Service Worker registrato:', registration.scope);
-          })
-          .catch(error => {
-            console.error('Registrazione fallita:', error);
-          });
-      });
-    }
+    // Fix caricamento progressivo
+    window.addEventListener('DOMContentLoaded', () => {
+      const loadApp = async () => {
+        try {
+          const { default: initApp } = await import('./main.js');
+          await initApp();
+        } catch (error) {
+          console.error("Errore caricamento:", error);
+          document.body.innerHTML = `
+            <div style="padding:20px;color:red">
+              Errore di caricamento. Ricarica la pagina.
+              <button onclick="window.location.reload()">Ricarica</button>
+            </div>
+          `;
+        }
+      };
+      
+      loadApp();
+    });
   </script>
-
-  <!-- Main JS -->
-  <script src="./main.js"></script>
 </body>
 </html>
