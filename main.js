@@ -1,14 +1,13 @@
-// main.js - Versione completa con supporto bookmarklet per Safari iOS
-
-// ============================================
-// 1. INIZIALIZZAZIONE E COSTANTI
-// ============================================
-
   if (localStorage.getItem("darkMode") === "true") {
     document.documentElement.classList.add("dark-ready");
     document.body?.classList?.add("dark");
   }
 
+// main.js - Versione completa con supporto bookmarklet per Safari iOS
+
+// ============================================
+// 1. INIZIALIZZAZIONE E COSTANTI
+// ============================================
 
 let undoData = null;
 let undoTimeout = null;
