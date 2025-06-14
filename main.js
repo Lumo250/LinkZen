@@ -3,6 +3,10 @@
 // ============================================
 // 1. INIZIALIZZAZIONE E COSTANTI
 // ============================================
+if (localStorage.getItem("darkMode") === "true") {
+  document.documentElement.classList.add("dark-ready");
+  document.body.classList?.add("dark");
+}
 
 // Nuova funzione per processare il bookmarklet
 function processaBookmarklet() {
@@ -21,11 +25,6 @@ function processaBookmarklet() {
 }
 
 
-
-if (localStorage.getItem("darkMode") === "true") {
-  document.documentElement.classList.add("dark-ready");
-  document.body.classList?.add("dark");
-}
 
 let undoData = null;
 let undoTimeout = null;
