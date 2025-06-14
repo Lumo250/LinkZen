@@ -1,4 +1,4 @@
-// main.js - Versione completa con gestione robusta dei dropdown
+// main.js - Versione corretta con gestione avanzata dropdown
 // ============================================
 // 1. INIZIALIZZAZIONE E COSTANTI
 // ============================================
@@ -30,47 +30,7 @@ let fontScale = 1;
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
 // ============================================
-// 2. UTILITY FUNCTIONS
-// ============================================
-
-function setupCloseOnClickOutside(element, trigger, options = {}) {
-  if (!element || !trigger) return;
-
-  const {
-    onOpen = () => {},
-    onClose = () => {},
-    openClass = 'hidden',
-    closeDelay = 0
-  } = options;
-
-  const closeHandler = (e) => {
-    if (!element.contains(e.target) && !trigger.contains(e.target)) {
-      if (typeof openClass === 'string') {
-        element.classList.add(openClass);
-      }
-      onClose();
-      document.removeEventListener('click', closeHandler);
-    }
-  };
-
-  const openHandler = (e) => {
-    e.stopPropagation();
-    if (typeof openClass === 'string') {
-      if (element.classList.contains(openClass)) {
-        element.classList.remove(openClass);
-        onOpen();
-        setTimeout(() => {
-          document.addEventListener('click', closeHandler);
-        }, closeDelay);
-      }
-    }
-  };
-
-  trigger.addEventListener('click', openHandler);
-}
-
-// ============================================
-// 3. GESTIONE STORAGE
+// 2. GESTIONE STORAGE
 // ============================================
 
 const storage = {
@@ -109,7 +69,7 @@ const storage = {
 };
 
 // ============================================
-// 4. FUNZIONI CORE
+// 3. FUNZIONI CORE
 // ============================================
 
 function extractKeywords(text) {
@@ -215,30 +175,70 @@ function openLinkSafari(url) {
 }
 
 // ============================================
+// 4. GESTIONE DROPDOWN E PULSANTI
+// ============================================
+
+function setupDropdowns() {
+  // Gestione avanzata dropdown categorie
+  const categoryInput = document.getElementById('new-category-input');
+  const dropdown = document.getElementById('dropdown-category-list');
+  const addButton = document.getElementById('add-category-btn');
+
+  // Apertura dropdown
+  categoryInput.addEventListener('focus', () => {
+    dropdown.classList.remove('hidden');
+  });
+
+  // Chiusura quando si clicca fuori
+  document.addEventListener('click', (e) => {
+    const isClickOnInput = e.target === categoryInput;
+    const isClickOnAddButton = e.target === addButton;
+    const isClickInDropdown = dropdown.contains(e.target);
+    const isClickOnRemove = e.target.classList.contains('remove');
+
+    if (!isClickOnInput && !isClickOnAddButton && !isClickInDropdown && !isClickOnRemove && !dropdown.classList.contains('hidden')) {
+      dropdown.classList.add('hidden');
+    }
+  });
+
+  // Special handling per i pulsanti di cancellazione
+  dropdown.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove')) {
+      e.stopPropagation();
+    }
+  });
+
+  // Gestione pulsanti export
+  const exportBtn = document.getElementById('export-btn');
+  const exportDefault = document.getElementById('export-default');
+  const exportOptions = document.getElementById('export-options');
+
+  // Apertura opzioni export
+  exportBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    exportDefault.style.display = 'none';
+    exportOptions.classList.remove('hidden');
+  });
+
+  // Chiusura quando si clicca fuori
+  document.addEventListener('click', (e) => {
+    const isClickOnExportBtn = e.target === exportBtn;
+    const isClickInExportOptions = exportOptions.contains(e.target);
+
+    if (!isClickOnExportBtn && !isClickInExportOptions && !exportOptions.classList.contains('hidden')) {
+      exportDefault.style.display = 'flex';
+      exportOptions.classList.add('hidden');
+    }
+  });
+}
+
+// ============================================
 // 5. INITIALIZATION
 // ============================================
 
 document.addEventListener("DOMContentLoaded", async () => {
   // Setup dropdown e pulsanti
-  setupCloseOnClickOutside(
-    document.getElementById('dropdown-category-list'),
-    document.getElementById('new-category-input'),
-    { openClass: 'hidden' }
-  );
-
-  setupCloseOnClickOutside(
-    document.getElementById('export-options'),
-    document.getElementById('export-btn'),
-    { 
-      openClass: 'hidden',
-      onOpen: () => {
-        document.getElementById('export-default').style.display = 'none';
-      },
-      onClose: () => {
-        document.getElementById('export-default').style.display = 'flex';
-      }
-    }
-  );
+  setupDropdowns();
 
   // Processa il bookmarklet se presente
   const bookmarkletData = processaBookmarklet();
@@ -387,6 +387,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     a.download = "linkzen_export_basic.json";
     a.click();
     URL.revokeObjectURL(url);
+    document.getElementById('export-default').style.display = 'flex';
+    document.getElementById('export-options').classList.add('hidden');
   });
 
   document.getElementById("export-full").addEventListener("click", async () => {
@@ -398,6 +400,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     a.download = "linkzen_export_full.json";
     a.click();
     URL.revokeObjectURL(url);
+    document.getElementById('export-default').style.display = 'flex';
+    document.getElementById('export-options').classList.add('hidden');
   });
 
   // Import
@@ -426,18 +430,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     reader.readAsText(file);
   });
 
-  // Categorie
-  const input = document.getElementById("new-category-input");
-  const dropdown = document.getElementById("dropdown-category-list");
-
+  // Aggiungi categoria
   document.getElementById("add-category-btn").addEventListener("click", async () => {
-    const newCategory = input.value.trim();
+    const newCategory = document.getElementById("new-category-input").value.trim();
     if (!newCategory) return;
+    
     const { userCategories = [] } = await storage.get({ userCategories: [] });
     if (!userCategories.includes(newCategory)) {
       const updated = [...userCategories, newCategory];
       await storage.set({ userCategories: updated });
-      input.value = "";
+      document.getElementById("new-category-input").value = "";
       await loadUrls();
     }
   });
@@ -727,7 +729,8 @@ async function loadUrls() {
       remove.style.marginLeft = "6px";
       remove.style.cursor = "pointer";
       remove.style.color = "red";
-      remove.addEventListener("click", async () => {
+      remove.addEventListener("click", async (e) => {
+        e.stopPropagation();
         const updatedUserCats = userCategories.filter(c => c !== cat);
         const updatedUrls = visitedUrls.map(link => {
           if (link.category === cat) {
