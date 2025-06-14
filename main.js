@@ -55,25 +55,23 @@ function trackOpenedTab(url) {
   }, TAB_TIMEOUT + 1000);
 }
 
-// Funzione di verifica
-function isTabOpen(url) {
-  const tabs = JSON.parse(localStorage.getItem('linkzen_open_tabs') || '{}');
-  return tabs[url] && (Date.now() - tabs[url] < TAB_TIMEOUT);
-
-
 let fontScale = 1;
 const TAB_TIMEOUT = 30000; // Aggiungi questa costante
 
 // Aggiungi qui la funzione
 function isTabOpen(url) {
+  // Disabilita completamente il tracking su iOS
+  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+    return false;
+  }
+  
   try {
     const tabs = JSON.parse(localStorage.getItem('linkzen_open_tabs') || '{}');
     return tabs[url] && (Date.now() - tabs[url] < TAB_TIMEOUT);
   } catch {
-    return false; // Fallback per errori iOS
+    return false;
   }
 }
-
 
 
 // ============================================
