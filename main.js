@@ -367,13 +367,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
 // Chiudi dropdown quando si clicca fuori
-document.addEventListener('click', (event) => {
   const dropdown = document.getElementById('dropdown-category-list');
-  const input = document.getElementById('new-category-input');
-  
-  if (!input.contains(event.target) && !dropdown.contains(event.target)) {
-    dropdown.classList.add('hidden');
-  }
+  const categoryInput = document.getElementById('new-category-input');
+
+  // Chiudi dropdown quando si clicca fuori
+  document.addEventListener('click', (e) => {
+    const isClickInside = categoryInput.contains(e.target) || dropdown.contains(e.target);
+    if (!isClickInside && !dropdown.classList.contains('hidden')) {
+      dropdown.classList.add('hidden');
+    }
+  });
+
+  // Apertura normale al focus
+  categoryInput.addEventListener('focus', () => {
+    dropdown.classList.remove('hidden');
+  });
 });
     
 // Aggiungi questo listener all'inizio del DOMContentLoaded
