@@ -4,6 +4,19 @@
 // 1. INIZIALIZZAZIONE E COSTANTI
 // ============================================
 
+  if (localStorage.getItem("darkMode") === "true") {
+    document.documentElement.classList.add("dark-ready");
+    document.body?.classList?.add("dark");
+  }
+
+
+let undoData = null;
+let undoTimeout = null;
+let undoBtn, themeToggleWrapper;
+let fontScale = 1;
+
+const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
+
 
 // Nuova funzione per processare il bookmarklet
 function processaBookmarklet() {
@@ -20,15 +33,6 @@ function processaBookmarklet() {
     
     return { titolo, url };
 }
-
-
-
-let undoData = null;
-let undoTimeout = null;
-let undoBtn, themeToggleWrapper;
-let fontScale = 1;
-
-const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
 // ============================================
 // 2. GESTIONE STORAGE
