@@ -5,20 +5,20 @@
 // ============================================
 
 // Nuova funzione per processare il bookmarklet
-function processaBookmarklet() {
-    const params = new URLSearchParams(window.location.search);
-    if(!params.has('bookmarklet')) return;
+// function processaBookmarklet() {
+//    const params = new URLSearchParams(window.location.search);
+//    if(!params.has('bookmarklet')) return;
     
-    const titolo = decodeURIComponent(params.get('titolo') || '');
-    const url = decodeURIComponent(params.get('url') || '');
+//    const titolo = decodeURIComponent(params.get('titolo') || '');
+//    const url = decodeURIComponent(params.get('url') || '');
     
-    if(!url) return;
+//    if(!url) return;
     
     // Pulisce l'URL dopo aver letto i parametri
-    history.replaceState({}, '', window.location.pathname);
+//    history.replaceState({}, '', window.location.pathname);
     
-    return { titolo, url };
-}
+//    return { titolo, url };
+// }
 
 
 
