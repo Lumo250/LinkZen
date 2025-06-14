@@ -16,18 +16,22 @@
       box-sizing: border-box;
     }
 
-    body {
-      font-family: Arial, sans-serif;
-      font-size: 12px;
-      margin: 10px;
-     
-      max-height: 520px;
-      overflow: hidden;
-      line-height: 1.2;
-      background-color: #f2f2f2;
-      color: #000;
-      transition: background-color 0.3s, color 0.3s;
-    }
+body {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  margin: 10px;
+  /* Rimuovi width: 400px; (già fatto) */
+  max-height: 520px;
+  overflow: hidden;
+  line-height: 1.2;
+  background-color: #f2f2f2;
+  color: #000;
+  transition: background-color 0.3s, color 0.3s;
+  /* Aggiungi queste proprietà: */
+  width: auto;
+  min-width: unset;
+  max-width: 100%;
+}
 
     body.dark {
       background-color: #1e1e1e;
