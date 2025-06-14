@@ -366,16 +366,55 @@ document.addEventListener("DOMContentLoaded", async () => {
     box.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  // Export/Import
-  const exportBtn = document.getElementById("export-btn");
-  const exportDefault = document.getElementById("export-default");
-  const exportOptions = document.getElementById("export-options");
+// Chiudi dropdown quando si clicca fuori
+document.addEventListener('click', (event) => {
+  const dropdown = document.getElementById('dropdown-category-list');
+  const input = document.getElementById('new-category-input');
+  
+  if (!input.contains(event.target) && !dropdown.contains(event.target)) {
+    dropdown.classList.add('hidden');
+  }
+});
+    
+// Aggiungi questo listener all'inizio del DOMContentLoaded
+document.addEventListener('click', (event) => {
+  const exportContainer = document.getElementById('export-container');
+  const exportBtn = document.getElementById('export-btn');
+  
+  if (!exportContainer.contains(event.target) && event.target !== exportBtn) {
+    document.getElementById('export-default').style.display = 'flex';
+    document.getElementById('export-options').classList.add('hidden');
+  }
+});
 
-  exportBtn.addEventListener("click", (e) => {
-    exportDefault.style.display = "none";
-    exportOptions.classList.remove("hidden");
-    e.stopPropagation();
-  });
+// Modifica l'evento click dell'exportBtn
+exportBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const exportDefault = document.getElementById('export-default');
+  const exportOptions = document.getElementById('export-options');
+  
+  if (exportOptions.classList.contains('hidden')) {
+    exportDefault.style.display = 'none';
+    exportOptions.classList.remove('hidden');
+  } else {
+    exportDefault.style.display = 'flex';
+    exportOptions.classList.add('hidden');
+  }
+});
+
+
+
+    
+  // Export/Import
+//  const exportBtn = document.getElementById("export-btn");
+//  const exportDefault = document.getElementById("export-default");
+//  const exportOptions = document.getElementById("export-options");
+
+ // exportBtn.addEventListener("click", (e) => {
+ //   exportDefault.style.display = "none";
+ //   exportOptions.classList.remove("hidden");
+ //   e.stopPropagation();
+ // });
 
   document.getElementById("export-basic").addEventListener("click", async () => {
     const { visitedUrls = [], userCategories = [] } = await storage.get({ visitedUrls: [], userCategories: [] });
