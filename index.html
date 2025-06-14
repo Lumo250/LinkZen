@@ -566,6 +566,28 @@ body {
     90% { opacity: 1; }
     100% { opacity: 0; }
   }
+
+  .tab-hint {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2d3748;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-width: 90%;
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  @keyframes slideUp {
+    from { bottom: -50px; opacity: 0; }
+    to { bottom: 20px; opacity: 1; }
+  }
+
+
     
 </style>
     
@@ -673,6 +695,23 @@ body {
     }
   </script>
 
+<script>
+function showTabSwitchHint(url) {
+  const hint = document.createElement('div');
+  hint.className = 'tab-hint';
+  hint.innerHTML = `
+    <p>📌 Pagina già aperta</p>
+    <small>Tocca l'icona schede <span style="font-size:1.2em">⬆️</span> per tornare alla scheda esistente</small>
+  `;
+  document.body.appendChild(hint);
+  
+  setTimeout(() => {
+    hint.style.animation = 'slideUp 0.3s ease-out reverse';
+    setTimeout(() => hint.remove(), 300);
+  }, 3000);
+}
+</script>
+  
   <!-- Script principale dell'applicazione -->
   <script src="./main.js"></script>
 </body>
