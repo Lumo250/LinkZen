@@ -632,15 +632,29 @@ async function loadUrls() {
     a.appendChild(favicon);
     a.appendChild(span);
 
-    a.addEventListener("click", (e) => {
-      e.preventDefault();
-      openLinkSafari(url);
-      
-      if (!clickedUrls.includes(url)) {
-        const newClickedUrls = [...clickedUrls, url];
-        storage.set({ clickedUrls: newClickedUrls }).then(loadUrls);
-      }
-    });
+    // Sostituiscilo con:
+a.addEventListener("click", (e) => {
+  e.preventDefault();
+  
+  // Nuovo tooltip
+  const tooltip = document.createElement('div');
+  tooltip.className = 'linkzen-tooltip';
+  tooltip.innerHTML = `
+    <span style="margin-right:8px">📌</span>
+    Tocca l'icona "Schede" in basso per tornare indietro
+  `;
+  document.body.appendChild(tooltip);
+  
+  setTimeout(() => tooltip.remove(), 3000);
+  
+  // Mantieni la logica esistente
+  openLinkSafari(url);
+  
+  if (!clickedUrls.includes(url)) {
+    const newClickedUrls = [...clickedUrls, url];
+    storage.set({ clickedUrls: newClickedUrls }).then(loadUrls);
+  }
+});
 
     const del = document.createElement("button");
     del.textContent = "X";
