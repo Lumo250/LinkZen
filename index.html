@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, 
-      maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
   <meta charset="UTF-8" />
-
   <meta name="theme-color" content="#4CAF50">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon128.png">
   <title>LinkZen</title>
@@ -17,26 +14,57 @@
       box-sizing: border-box;
     }
 
-body {
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-  margin: 10px;
-  /* Rimuovi width: 400px; (già fatto) */
-  max-height: 520px;
-  overflow: hidden;
-  line-height: 1.2;
-  background-color: #f2f2f2;
-  color: #000;
-  transition: background-color 0.3s, color 0.3s;
-  /* Aggiungi queste proprietà: */
-  width: auto;
-  min-width: unset;
-  max-width: 100%; 
-}
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      margin: 10px;
+      max-height: 520px;
+      overflow: hidden;
+      line-height: 1.2;
+      background-color: #f2f2f2;
+      color: #000;
+      transition: background-color 0.3s, color 0.3s;
+      width: auto;
+      min-width: unset;
+      max-width: 100%;
+    }
 
     body.dark {
       background-color: #1e1e1e;
       color: #e0e0e0;
+    }
+
+    /* AGGIUNTE PER I DROPDOWN */
+    .dropdown-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+    
+    .dropdown-list {
+      position: absolute;
+      width: calc(100% - 78px);
+      z-index: 1000;
+      background: white;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      max-height: 120px;
+      overflow-y: auto;
+      font-size: 12px;
+    }
+    
+    #export-container {
+      position: relative;
+    }
+    
+    #export-options {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      display: flex;
+      gap: 4px;
     }
 
     .panel, .list-panel {
@@ -141,20 +169,6 @@ body {
       font-size: 12px;
       margin-left: 4px;
       cursor: pointer;
-    }
-
-    .dropdown-list {
-      position: absolute;
-      top: 32px;
-      left: 0;
-      right: 74px;
-      background: white;
-      border: 1px solid #ccc;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      max-height: 120px;
-      overflow-y: auto;
-      font-size: 12px;
-      z-index: 1000; /* Assicurati che sia sopra altri elementi */
     }
 
     .dropdown-list.hidden { display: none; }
@@ -342,21 +356,15 @@ body {
       color: black;
       border: none;
       padding: 1px 3px;
-     min-width: 12px;    /* ▲ Larghezza minima garantita */
-     min-height: 12px;   /* ▲ Altezza minima garantita */
-     font-size: 12px;    /* ▼ Dimensione originale del testo */
-     line-height: 12px;  /* ▼ Allineamento verticale */
-     align-items: center;
-     justify-content: center;
-      /* font-weight: bold; /* Testo in grassetto */
-      cursor: pointer;
-    
+      min-width: 12px;
+      min-height: 12px;
+      font-size: 12px;
+      line-height: 12px;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0; 
       margin-right: 6px;
     }
-
-    
-
     
     .link-row.highlight {
       background-color: #388e3c;
@@ -473,13 +481,6 @@ body {
       align-items: stretch;
     }
 
-    #export-container {
-      display: flex;
-      flex: 1;
-      height: 36px;
-      position: relative;
-    }
-
     #export-default,
     #export-options {
       width: 100%;
@@ -524,48 +525,26 @@ body {
       color: #eee;
     }
 
-  /* Fix globale per iOS */
-  input, textarea, select {
-    font-size: 16px;
-    transform-origin: left top;
-    touch-action: manipulation;
-  }
-  
-  /* Previene zoom su focus */
-  @media screen and (max-width: 767px) {
-    input[type="text"] {
-      font-size: 16px !important;
+    /* Fix globale per iOS */
+    input, textarea, select {
+      font-size: 16px;
+      transform-origin: left top;
+      touch-action: manipulation;
     }
-  }
-  
-  /* Fix per i dropdown */
-  .dropdown-container {
-    position: relative;
-    display: inline-block;
-    width: 100%;
-  }
-  
-  .dropdown-list {
-    position: absolute;
-    width: calc(100% - 78px);
-    z-index: 1000;
-  }
-  
-  /* Fix per i pulsanti export */
-  #export-container {
-    position: relative;
-  }
-  
-  #export-options {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-  }
     
-</style>
+    /* Previene zoom su focus */
+    @media screen and (max-width: 767px) {
+      input[type="text"] {
+        font-size: 16px !important;
+      }
+    }
     
+    /* Fix dropdown per iOS */
+    .dropdown-list {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+  </style>
 </head>
 
 <body id="main-body" class="">
@@ -580,19 +559,19 @@ body {
     </div>
 
     <div class="button-row">
-  <div class="btn-wrapper" id="export-container">
-  <div id="export-default">
-    <button id="export-btn">
-      <span class="btn-icon">📤</span>
-      <span class="btn-label">Export</span>
-    </button>
-  </div>
-  <div id="export-options" class="hidden">
-    <button id="export-basic">🔹 Basic</button>
-    <button id="export-full">🔸 With IA</button>
-  </div>
-</div>
-      
+      <div class="btn-wrapper" id="export-container">
+        <div id="export-default">
+          <button id="export-btn">
+            <span class="btn-icon">📤</span>
+            <span class="btn-label">Export</span>
+          </button>
+        </div>
+        <div id="export-options" class="hidden">
+          <button id="export-basic">🔹 Basic</button>
+          <button id="export-full">🔸 With IA</button>
+        </div>
+      </div>
+
       <div class="btn-wrapper">
         <button id="import-btn">
           <span class="btn-icon">📥</span>
@@ -602,13 +581,13 @@ body {
       </div>
     </div>
 
- <div class="custom-category-container dropdown-container">
-  <div class="custom-input-wrapper">
-    <input type="text" id="new-category-input" placeholder="New Category" />
-    <button id="add-category-btn">Add</button>
-  </div>
-  <div id="dropdown-category-list" class="dropdown-list hidden"></div>
-</div>
+    <div class="custom-category-container dropdown-container">
+      <div class="custom-input-wrapper">
+        <input type="text" id="new-category-input" placeholder="New Category" />
+        <button id="add-category-btn">Add</button>
+      </div>
+      <div id="dropdown-category-list" class="dropdown-list hidden"></div>
+    </div>
 
     <div class="sort-undo-bar">
       <div class="sort-options">
