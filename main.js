@@ -643,7 +643,7 @@ async function loadUrls() {
     });
 
     const del = document.createElement("button");
-    del.textContent = "x";
+    del.textContent = "X";
     del.className = "delete-btn";
     del.addEventListener("click", async () => {
       const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
@@ -728,7 +728,7 @@ async function loadUrls() {
       row.textContent = cat;
 
       const remove = document.createElement("span");
-      remove.textContent = "O";
+      remove.textContent = "x";
       remove.className = "remove";
       remove.style.marginLeft = "6px";
       remove.style.cursor = "pointer";
