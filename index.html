@@ -538,11 +538,32 @@ body {
     }
   }
   
-  /* Fix dropdown per iOS */
-  .dropdown-list {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+  /* Fix per i dropdown */
+  .dropdown-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
   }
+  
+  .dropdown-list {
+    position: absolute;
+    width: calc(100% - 78px);
+    z-index: 1000;
+  }
+  
+  /* Fix per i pulsanti export */
+  #export-container {
+    position: relative;
+  }
+  
+  #export-options {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+  }
+    
 </style>
     
 </head>
