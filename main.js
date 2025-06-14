@@ -728,7 +728,7 @@ async function loadUrls() {
       row.textContent = cat;
 
       const remove = document.createElement("span");
-      remove.textContent = "×";
+      remove.textContent = "X";
       remove.className = "remove";
       remove.style.marginLeft = "6px";
       remove.style.cursor = "pointer";
