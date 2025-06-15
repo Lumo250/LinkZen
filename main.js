@@ -3,6 +3,12 @@
     document.body?.classList?.add("dark");
   }
 
+window.addEventListener('message', (event) => {
+  if (event.data.type === 'qr-result') {
+    showManualInput(event.data.data);
+  }
+});
+
 // main.js - Versione completa con supporto bookmarklet per Safari iOS
 
 // ============================================
@@ -633,64 +639,58 @@ document.getElementById("save-btn").addEventListener("click", async function() {
   }
 
   // Apertura fotocamera (versione semplificata e funzionante)
-
-
+// SOSTITUISCI completamente il gestore del click "open-camera-btn" con questo codice:
 document.getElementById("open-camera-btn").addEventListener("click", async () => {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  
+  // 1. Prova prima il metodo nativo iOS se disponibile
+  if (isIOS) {
+    try {
+      // Codice speciale per iOS
+      const callbackUrl = encodeURIComponent(`${window.location.origin}/qr-handler.html?result=$$$`);
+      window.location.href = `applewebdata://scan?callback=${callbackUrl}`;
+      
+      // Fallback dopo 1 secondo se il protocollo non è supportato
+      setTimeout(() => {
+        if (!document.hidden) {
+          throw new Error("Protocollo non supportato");
+        }
+      }, 1000);
+      
+      return;
+    } catch (err) {
+      console.log("Fallback a scanner JS", err);
+      // Continua con lo scanner JS normale
+    }
+  }
+
+  // 2. Scanner JavaScript standard (per altri dispositivi/fallback)
   document.getElementById("main-options").style.display = "none";
   const cameraView = document.getElementById("camera-view");
   cameraView.style.display = "block";
   
-  // 1. Verifica i permessi
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "environment", // Forza camera posteriore
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      },
-      audio: false
+      video: { facingMode: "environment" }
     });
     
-    // 2. Configura video
     const videoElem = document.getElementById("qr-video");
     videoElem.srcObject = stream;
-    videoElem.playsInline = true;
+    videoElem.play();
     
-    // 3. Avvia scanner QR
-    const scanner = new Instascan.Scanner({
-      video: videoElem,
-      mirror: false,
-      scanPeriod: 5,
-      backgroundScan: false
-    });
-    
+    const scanner = new Instascan.Scanner({ video: videoElem });
     scanner.addListener("scan", content => {
-      try {
-        new URL(content); // Validazione URL
-        showManualInput(content);
-        stream.getTracks().forEach(track => track.stop());
-      } catch {
-        alert("QR non valido. Deve contenere un URL completo (es. https://...)");
-      }
+      stream.getTracks().forEach(track => track.stop());
+      showManualInput(content);
     });
     
-    // 4. Avvia scansione
-    Instascan.Camera.getCameras()
-      .then(cameras => {
-        if (cameras.length > 0) {
-          const backCamera = cameras.find(c => c.name.includes("back")) || cameras[0];
-          return scanner.start(backCamera);
-        }
-        throw new Error("Nessuna fotocamera trovata");
-      })
-      .catch(err => {
-        console.error("Errore camera:", err);
-        alert(`Impossibile accedere alla fotocamera: ${err.message}`);
-        showMainOptions();
-        if (stream) stream.getTracks().forEach(track => track.stop());
-      });
-      
-    // 5. Gestione chiusura
+    const cameras = await Instascan.Camera.getCameras();
+    if (cameras.length > 0) {
+      await scanner.start(cameras[0]);
+    } else {
+      throw new Error("Nessuna fotocamera trovata");
+    }
+    
     document.getElementById("close-camera-btn").onclick = () => {
       scanner.stop();
       stream.getTracks().forEach(track => track.stop());
@@ -698,11 +698,15 @@ document.getElementById("open-camera-btn").addEventListener("click", async () =>
     };
     
   } catch (err) {
-    console.error("Errore permessi camera:", err);
-    alert("Devi concedere i permessi per la fotocamera. Ricarica la pagina e riprova.");
+    console.error("Errore camera:", err);
+    alert("Usa il pulsante 'Inserisci Manualmente' o il bookmarklet");
     showMainOptions();
   }
 });
+
+  
+
+
 
 
   
