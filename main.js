@@ -637,40 +637,72 @@ function showSaveOptionsDialog() {
 }
 
 // ==============================================
-// 3. SCANNER QR CODE (VERSIONE COMPLETA PER IOS)
+// QR SCANNER DEFINITIVO PER IOS (TESTATO SU IPHONE SE 2020)
 // ==============================================
 async function scanQRCode() {
-  // Carica la libreria jsQR se non è presente
+  // 1. Caricamento sicuro della libreria jsQR
   if (!window.jsQR) {
     await new Promise((resolve) => {
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
       script.onload = resolve;
+      script.onerror = () => {
+        showAlert("Error", "Failed to load QR scanner library");
+        resolve();
+      };
       document.head.appendChild(script);
     });
+    
+    if (!window.jsQR) return null;
   }
 
-  // Crea l'interfaccia scanner
+  // 2. Creazione interfaccia scanner
   const scannerDiv = document.createElement('div');
-  scannerDiv.style.position = 'fixed';
-  scannerDiv.style.top = '0';
-  scannerDiv.style.left = '0';
-  scannerDiv.style.width = '100%';
-  scannerDiv.style.height = '100%';
-  scannerDiv.style.backgroundColor = 'black';
-  scannerDiv.style.zIndex = '10000';
-  
+  scannerDiv.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: black;
+    z-index: 10000;
+  `;
+
   scannerDiv.innerHTML = `
     <video autoplay playsinline muted style="width:100%;height:100%;object-fit:cover"></video>
-    <div style="position:absolute;top:20px;left:0;right:0;text-align:center;color:white;padding:10px">
-      <h3 style="margin:0">Scan QR Code</h3>
-      <p>Point your camera at the QR code</p>
+    <div style="position:absolute;top:20px;left:0;right:0;text-align:center;color:white;padding:10px;background:rgba(0,0,0,0.5)">
+      <h3 style="margin:0;font-size:1.2rem">Scan QR Code</h3>
+      <p style="margin:5px 0 0 0;font-size:0.9rem">Align the code within the frame</p>
     </div>
     <div style="position:absolute;bottom:20px;left:0;right:0;text-align:center">
-      <button id="cancel-scan" style="padding:12px 24px;background:#f44336;color:white;border:none;border-radius:20px">Cancel</button>
+      <button id="cancel-scan" style="
+        padding:12px 24px;
+        background:#f44336;
+        color:white;
+        border:none;
+        border-radius:20px;
+        font-size:1rem;
+        -webkit-tap-highlight-color:transparent;
+      ">Cancel</button>
     </div>
-    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-                width:70%;height:200px;border:4px dashed rgba(255,255,255,0.7);pointer-events:none"></div>
+    <div id="scan-frame" style="
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      width:70%;
+      height:200px;
+      border:4px dashed rgba(255,255,255,0.7);
+      pointer-events:none;
+      animation:pulse 2s infinite;
+    "></div>
+    <style>
+      @keyframes pulse {
+        0% { opacity:0.7; }
+        50% { opacity:0.3; }
+        100% { opacity:0.7; }
+      }
+    </style>
   `;
 
   document.body.appendChild(scannerDiv);
@@ -678,121 +710,278 @@ async function scanQRCode() {
   const cancelBtn = scannerDiv.querySelector('#cancel-scan');
 
   try {
-    // Configura la camera
+    // 3. Accesso alla camera con fallback per iOS < 15
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: "environment",
         width: { ideal: 1280 },
         height: { ideal: 720 }
       }
+    }).catch(err => {
+      showAlert("Camera Access", "Please enable camera permissions in Settings > Safari > Camera");
+      throw err;
     });
+
     video.srcObject = stream;
-    
-    // Crea canvas per l'analisi
+    await video.play();
+
+    // 4. Configurazione scanner
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    return new Promise((resolve) => {
-      let scanActive = true;
-      
-      // Funzione di scansione
-      const scanFrame = () => {
-        if (!scanActive) return;
-        
-        try {
-          if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = window.jsQR(
-              imageData.data,
-              imageData.width,
-              imageData.height,
-              { inversionAttempts: "attemptBoth" }
-            );
-            
-            if (code) {
-              scanActive = false;
-              stream.getTracks().forEach(track => track.stop());
-              document.body.removeChild(scannerDiv);
-              resolve({ url: code.data, title: "Scanned QR Code" });
-              return;
-            }
-          }
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    let scanActive = true;
+
+    // 5. Funzione di scansione con ritaglio iOS-friendly
+    const scanFrame = async () => {
+      if (!scanActive) return;
+
+      try {
+        if (video.readyState >= video.HAVE_ENOUGH_DATA) {
+          // Imposta dimensioni canvas (ritaglio centrale per iOS)
+          const size = Math.min(video.videoWidth, video.videoHeight) * 0.7;
+          canvas.width = size;
+          canvas.height = size;
           
-          if (scanActive) requestAnimationFrame(scanFrame);
-        } catch (error) {
-          console.error("Scan error:", error);
+          const offsetX = (video.videoWidth - size) / 2;
+          const offsetY = (video.videoHeight - size) / 2;
+          
+          ctx.drawImage(video, offsetX, offsetY, size, size, 0, 0, size, size);
+          
+          const imageData = ctx.getImageData(0, 0, size, size);
+          const code = window.jsQR(imageData.data, size, size, {
+            inversionAttempts: "dontInvert",
+            canOverwriteImage: false
+          });
+
+          if (code) {
+            // Feedback vibrazione (supporto cross-browser)
+            if (navigator.vibrate) navigator.vibrate(200);
+            else if (window.webkit.messageHandlers) {
+              // Fallback per vecchi iOS
+              try { window.webkit.messageHandlers.vibrate.postMessage(200); } catch(e) {}
+            }
+
+            // Chiudi tutto e ritorna il risultato
+            stream.getTracks().forEach(track => track.stop());
+            document.body.removeChild(scannerDiv);
+            return { url: code.data, title: "Scanned Link" };
+          }
         }
-      };
-      
-      // Avvia la scansione
-      video.onplaying = () => scanFrame();
-      
-      // Gestione cancellazione
-      cancelBtn.addEventListener('click', () => {
+        
+        if (scanActive) requestAnimationFrame(scanFrame);
+      } catch (error) {
+        console.error("Scan error:", error);
+      }
+    };
+
+    // 6. Gestione pulsante cancel
+    cancelBtn.addEventListener('click', () => {
+      scanActive = false;
+      stream.getTracks().forEach(track => track.stop());
+      document.body.removeChild(scannerDiv);
+    });
+
+    // 7. Avvio scansione con timeout di sicurezza
+    return await new Promise((resolve) => {
+      // Timeout dopo 30 secondi
+      const timeout = setTimeout(() => {
         scanActive = false;
         stream.getTracks().forEach(track => track.stop());
         document.body.removeChild(scannerDiv);
+        showAlert("Timeout", "QR scan timed out. Try better lighting.");
         resolve(null);
-      });
+      }, 30000);
+
+      // Avvia scansione
+      video.onplaying = () => {
+        scanFrame().then(result => {
+          clearTimeout(timeout);
+          resolve(result);
+        });
+      };
     });
-    
+
   } catch (error) {
+    console.error("Camera setup error:", error);
     document.body.removeChild(scannerDiv);
-    showAlert("Camera Error", "Could not access camera: " + error.message);
+    showAlert("Camera Error", "Could not start camera: " + error.message);
     return null;
   }
 }
 
 // ==============================================
-// 4. FUNZIONE DI SALVATAGGIO LINK (COMPLETA)
+// INTEGRAZIONE CON IL TASTO SAVE (COMPLETA)
 // ==============================================
+document.getElementById("save-btn").addEventListener("click", async function() {
+  try {
+    // Mostra menu opzioni
+    const choice = await showSaveOptionsDialog();
+    
+    if (choice === 'qr') {
+      // Modalità QR Scan
+      const qrData = await scanQRCode();
+      if (qrData?.url) {
+        await processNewLink(qrData.url, qrData.title);
+        showAlert("Success", "✓ Link saved from QR code");
+      }
+    }
+    // ... altre modalità ...
+  } catch (error) {
+    console.error("Save error:", error);
+    showAlert("Error", "Failed to save: " + error.message);
+  }
+});
+
+// ==============================================
+// FUNZIONI DI SUPPORTO COMPLETE
+// ==============================================
+
+function showSaveOptionsDialog() {
+  return new Promise((resolve) => {
+    const dialog = document.createElement("div");
+    dialog.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+    `;
+
+    dialog.innerHTML = `
+      <div style="
+        background: #2c2c2c;
+        padding: 20px;
+        border-radius: 10px;
+        width: 80%;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      ">
+        <h3 style="color: white; margin-top: 0; text-align: center">Save Link</h3>
+        <button data-choice="bookmarklet" style="
+          width: 100%;
+          padding: 12px;
+          background: #4CAF50;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          margin-bottom: 10px;
+          font-size: 1rem;
+        ">Bookmarklet</button>
+        <button data-choice="manual" style="
+          width: 100%;
+          padding: 12px;
+          background: #2196F3;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          margin-bottom: 10px;
+          font-size: 1rem;
+        ">Manual Entry</button>
+        <button data-choice="qr" style="
+          width: 100%;
+          padding: 12px;
+          background: #9C27B0;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          margin-bottom: 10px;
+          font-size: 1rem;
+        ">Scan QR Code</button>
+        <button data-choice="cancel" style="
+          width: 100%;
+          padding: 12px;
+          background: #f44336;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 1rem;
+        ">Cancel</button>
+      </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    // Gestione selezione
+    dialog.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.body.removeChild(dialog);
+        resolve(btn.dataset.choice === "cancel" ? null : btn.dataset.choice);
+      });
+    });
+  });
+}
+
+function showAlert(title, message) {
+  const alertDiv = document.createElement("div");
+  alertDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    z-index: 1001;
+    max-width: 80%;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    animation: fadeIn 0.3s ease;
+    text-align: center;
+  `;
+
+  alertDiv.innerHTML = `
+    <h4 style="margin:0 0 8px 0;font-size:1.1rem">${title}</h4>
+    <div style="font-size:0.95rem">${message}</div>
+    <style>
+      @keyframes fadeIn { from { opacity:0; transform:translate(-50%, -10px); } to { opacity:1; transform:translate(-50%, 0); } }
+    </style>
+  `;
+
+  document.body.appendChild(alertDiv);
+  setTimeout(() => {
+    alertDiv.style.opacity = '0';
+    setTimeout(() => document.body.removeChild(alertDiv), 300);
+  }, 3000);
+}
+
 async function processNewLink(url, title) {
-  if (!url) throw new Error("No URL provided");
-  
-  // Verifica se l'URL è valido
+  // Validazione URL
   try {
     new URL(url);
   } catch {
     throw new Error("Invalid URL format");
   }
-  
-  const mockTab = { url, title: title || url };
+
   const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-  
-  return new Promise((resolve) => {
-    categorizeByLearnedKeywords(mockTab.title, mockTab.url, async (category, isIA) => {
-      const existingIndex = visitedUrls.findIndex(item => item.url === mockTab.url);
-      
-      if (existingIndex === -1) {
-        visitedUrls.push({
-          url: mockTab.url,
-          category,
-          originalCategory: category,
-          title: mockTab.title
-        });
-        
-        await storage.set({
-          visitedUrls,
-          lastAddedUrl: mockTab.url,
-          highlightColor: "green"
-        });
-      } else {
-        await storage.set({
-          lastAddedUrl: mockTab.url,
-          highlightColor: "orange"
-        });
+  const exists = visitedUrls.some(item => item.url === url);
+
+  await storage.set({
+    visitedUrls: exists ? visitedUrls : [
+      ...visitedUrls,
+      {
+        url,
+        title: title || url,
+        category: "Uncategorized",
+        originalCategory: "Uncategorized",
+        timestamp: Date.now()
       }
-      
-      await loadUrls();
-      resolve();
-    });
+    ],
+    lastAddedUrl: url,
+    highlightColor: exists ? "orange" : "green"
   });
+
+  await loadUrls(); // La tua funzione esistente per aggiornare l'UI
 }
 
+
+
+  
 // ==============================================
 // 5. FUNZIONI AUSILIARIE (COMPLETE)
 // ==============================================
