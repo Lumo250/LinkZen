@@ -457,8 +457,10 @@ document.addEventListener("click", (event) => {
 
   const isClickInsideInput = input.contains(event.target);
   const isClickInsideDropdown = dropdown.contains(event.target);
+  const isDeleteButton = event.target.closest(".delete-category-btn");
 
-  if (!isClickInsideInput && !isClickInsideDropdown) {
+  // Se non hai cliccato in input, né nel dropdown, né su una X, nascondi
+  if (!isClickInsideInput && !isClickInsideDropdown && !isDeleteButton) {
     dropdown.classList.add("hidden");
   }
 });
