@@ -428,10 +428,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     reader.readAsText(file);
   });
 
-// Categorie - Versione con ><
+// Categorie - Versione migliorata con [x] e dropdown persistente
 const input = document.getElementById("new-category-input");
 const dropdown = document.getElementById("dropdown-category-list");
 
+// Funzione per caricare le categorie
 async function loadDropdownCategories() {
   const { userCategories = [] } = await storage.get({ userCategories: [] });
   dropdown.innerHTML = "";
@@ -439,50 +440,62 @@ async function loadDropdownCategories() {
   userCategories.forEach((cat) => {
     const row = document.createElement("div");
     row.className = "dropdown-item";
-    row.textContent = cat;
-
-    const remove = document.createElement("span");
-    remove.textContent = "><";  // Qui il cambiamento
-    remove.className = "remove";
-    remove.style.marginLeft = "6px";
-    remove.style.cursor = "pointer";
-    remove.style.color = "red";
     
+    // Nome categoria
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = cat;
+    row.appendChild(nameSpan);
+    
+    // Pulsante [x]
+    const remove = document.createElement("span");
+    remove.innerHTML = "<span style='margin-left: 6px; color: red; cursor: pointer'>[x]</span>";
+    remove.className = "remove";
+    remove.title = "Elimina categoria";
     row.appendChild(remove);
+    
     dropdown.appendChild(row);
   });
 }
 
-document.getElementById("add-category-btn").addEventListener("click", async () => {
+// Aggiungi categoria
+document.getElementById("add-category-btn").addEventListener("click", async (e) => {
+  e.stopPropagation(); // Impedisce la chiusura del dropdown
+  
   const newCategory = input.value.trim();
   if (!newCategory) return;
+  
   const { userCategories = [] } = await storage.get({ userCategories: [] });
   if (!userCategories.includes(newCategory)) {
     const updated = [...userCategories, newCategory];
     await storage.set({ userCategories: updated });
     input.value = "";
-    await loadDropdownCategories();
+    await loadDropdownCategories(); // Aggiorna il dropdown
+    
+    // Mantieni il focus sull'input per continuare a inserire
+    input.focus();
   }
 });
 
+// Mostra dropdown
 input.addEventListener("focus", async () => {
   dropdown.classList.remove("hidden");
   await loadDropdownCategories();
 });
 
+// Gestione click esterno
 document.addEventListener("click", (event) => {
   if (!input || !dropdown) return;
 
-  const isRemoveButton = event.target.classList.contains("remove") || 
-                        event.target.parentElement.classList.contains("remove");
-
-  if (input.contains(event.target) || 
-      (dropdown.contains(event.target) && !isRemoveButton)) {
-    return;
+  const clickedRemove = event.target.closest(".remove");
+  const clickedInside = input.contains(event.target) || dropdown.contains(event.target);
+  
+  if (clickedInside && !clickedRemove) {
+    return; // Non chiudere se click interno (tranne che su [x])
   }
   dropdown.classList.add("hidden");
 });
 
+// Gestione cancellazione
 dropdown.addEventListener("click", async (event) => {
   const removeBtn = event.target.closest(".remove");
   if (!removeBtn) return;
@@ -490,7 +503,7 @@ dropdown.addEventListener("click", async (event) => {
   event.stopPropagation();
   
   const catRow = removeBtn.closest(".dropdown-item");
-  const cat = catRow.textContent.replace("><", "").trim();  // Qui il cambiamento
+  const cat = catRow.firstChild.textContent.trim(); // Prende il testo prima del [x]
   
   const { userCategories = [], visitedUrls = [] } = await storage.get({ 
     userCategories: [], 
@@ -515,7 +528,6 @@ dropdown.addEventListener("click", async (event) => {
   
   await loadDropdownCategories();
 });
-
     
 
     
