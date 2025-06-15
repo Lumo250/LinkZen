@@ -1055,53 +1055,12 @@ function showAlert(title, message, showCopyButton = false) {
     <div style="font-size:15px; line-height:1.5; color:#E2E8F0">${message}</div>
   `;
 
-  // Aggiungi pulsante copia se richiesto
-  if (showCopyButton) {
-    const copyButton = document.createElement("button");
-    copyButton.innerHTML = `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:5px">
-        <path d="M8 17.929H6c-1.105 0-2-.912-2-2.036V5.036C4 3.91 4.895 3 6 3h8c1.105 0 2 .911 2 2.036v1.866m-6 .17h8c1.105 0 2 .91 2 2.035v10.857C20 21.09 19.105 22 18 22h-8c-1.105 0-2-.911-2-2.036V9.107c0-1.124.895-2.036 2-2.036z"/>
-      </svg>
-      Copy
-    `;
-    copyButton.style.marginTop = "15px";
-    copyButton.style.padding = "6px 12px";
-    copyButton.style.background = "#4A5568";
-    copyButton.style.color = "white";
-    copyButton.style.border = "none";
-    copyButton.style.borderRadius = "4px";
-    copyButton.style.cursor = "pointer";
-    
-    copyButton.addEventListener("click", (e) => {
-      e.stopPropagation(); // Previene la chiusura quando si clicca Copia
-      const textToCopy = message.replace(/<[^>]*>?/gm, '');
-      navigator.clipboard.writeText(textToCopy)
-        .then(() => {
-          copyButton.innerHTML = `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:5px">
-              <path d="M20 6L9 17l-5-5"/>
-            </svg>
-            Copied!
-          `;
-          copyButton.style.background = "#38A169";
-          setTimeout(() => {
-            copyButton.innerHTML = `
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:5px">
-                <path d="M8 17.929H6c-1.105 0-2-.912-2-2.036V5.036C4 3.91 4.895 3 6 3h8c1.105 0 2 .911 2 2.036v1.866m-6 .17h8c1.105 0 2 .91 2 2.035v10.857C20 21.09 19.105 22 18 22h-8c-1.105 0-2-.911-2-2.036V9.107c0-1.124.895-2.036 2-2.036z"/>
-              </svg>
-              Copy
-            `;
-            copyButton.style.background = "#4A5568";
-          }, 2000);
-        });
-    });
-    
-    const buttonContainer = document.createElement("div");
-    buttonContainer.style.display = "flex";
-    buttonContainer.style.justifyContent = "flex-end";
-    buttonContainer.appendChild(copyButton);
-    alertDiv.querySelector("div").appendChild(buttonContainer);
-  }
+
+
+
+
+
+  
 
   // Funzione di chiusura
   const closeAlert = () => {
@@ -1156,7 +1115,11 @@ function showBookmarkletInstructions() {
       -webkit-user-select:all;
     ">${bookmarkletCode}</code>
     
-    <button onclick="copyBookmarklet()" style="
+    <button onclick="
+      navigator.clipboard.writeText(document.getElementById('bookmarklet-code').innerText);
+      this.textContent = '✓ Copied!';
+      setTimeout(() => this.textContent = 'Copy Code', 2000);
+    " style="
       padding:8px 16px;
       background:#4CAF50;
       color:white;
@@ -1165,7 +1128,6 @@ function showBookmarkletInstructions() {
       font-size:14px;
       cursor:pointer;
       margin-top:5px;
-      width:100%;
     ">
       Copy Code
     </button><br>
@@ -1174,20 +1136,6 @@ function showBookmarkletInstructions() {
     3. Paste as URL<br>
     4. Use from any page by tapping the bookmark
   `, true);
-
-  // Funzione dedicata per la copia
-  function copyBookmarklet() {
-    const code = document.getElementById('bookmarklet-code').textContent;
-    navigator.clipboard.writeText(code.trim()).then(() => {
-      const btn = document.querySelector('#bookmarklet-code + button');
-      btn.textContent = '✓ Copied!';
-      btn.style.backgroundColor = '#388E3C';
-      setTimeout(() => {
-        btn.textContent = 'Copy Code';
-        btn.style.backgroundColor = '#4CAF50';
-      }, 2000);
-    });
-  }
 }
   
 // ============================================
