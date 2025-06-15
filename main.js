@@ -443,7 +443,7 @@ async function loadDropdownCategories() {
     row.textContent = cat;
 
     const remove = document.createElement("span");
-    remove.textContent = "x";
+    remove.textContent = "><";
     remove.className = "remove";
     remove.style.marginLeft = "6px";
     remove.style.cursor = "pointer";
