@@ -428,47 +428,98 @@ document.addEventListener("DOMContentLoaded", async () => {
     reader.readAsText(file);
   });
 
-  // Categorie
-  const input = document.getElementById("new-category-input");
-  const dropdown = document.getElementById("dropdown-category-list");
+ // Categorie - Versione migliorata
+const input = document.getElementById("new-category-input");
+const dropdown = document.getElementById("dropdown-category-list");
 
-  document.getElementById("add-category-btn").addEventListener("click", async () => {
-    const newCategory = input.value.trim();
-    if (!newCategory) return;
-    const { userCategories = [] } = await storage.get({ userCategories: [] });
-    if (!userCategories.includes(newCategory)) {
-      const updated = [...userCategories, newCategory];
-      await storage.set({ userCategories: updated });
-      input.value = "";
-      await loadUrls();
-    }
+// Funzione per caricare le categorie nel dropdown
+async function loadDropdownCategories() {
+  const { userCategories = [] } = await storage.get({ userCategories: [] });
+  dropdown.innerHTML = "";
+  
+  userCategories.forEach((cat) => {
+    const row = document.createElement("div");
+    row.className = "dropdown-item";
+    row.textContent = cat;
+
+    const remove = document.createElement("span");
+    remove.textContent = "x";
+    remove.className = "remove";
+    remove.style.marginLeft = "6px";
+    remove.style.cursor = "pointer";
+    remove.style.color = "red";
+    
+    row.appendChild(remove);
+    dropdown.appendChild(row);
   });
+}
 
-  input.addEventListener("focus", () => {
-    dropdown.classList.remove("hidden");
-  });
+// Aggiungi nuova categoria
+document.getElementById("add-category-btn").addEventListener("click", async () => {
+  const newCategory = input.value.trim();
+  if (!newCategory) return;
+  const { userCategories = [] } = await storage.get({ userCategories: [] });
+  if (!userCategories.includes(newCategory)) {
+    const updated = [...userCategories, newCategory];
+    await storage.set({ userCategories: updated });
+    input.value = "";
+    await loadDropdownCategories(); // Aggiorna solo il dropdown
+  }
+});
 
+// Mostra dropdown al focus
+input.addEventListener("focus", async () => {
+  dropdown.classList.remove("hidden");
+  await loadDropdownCategories();
+});
 
+// Gestione click esterno (chiusura dropdown)
 document.addEventListener("click", (event) => {
-  const input = document.getElementById("new-category-input");
-  const dropdown = document.getElementById("dropdown-category-list");
-
   if (!input || !dropdown) return;
 
-  // Verifica se hai cliccato dentro l'input o dentro il dropdown
-  if (
-    input.contains(event.target) ||
-    dropdown.contains(event.target)
-  ) {
-    // Non fare nulla: il click è interno, quindi NON nascondere il dropdown
-    return;
-  }
+  const isRemoveButton = event.target.classList.contains("remove") || 
+                        event.target.parentElement.classList.contains("remove");
 
-  // Se sei arrivato qui, il click è esterno: nascondi il dropdown
+  if (input.contains(event.target) || 
+      (dropdown.contains(event.target) && !isRemoveButton)) {
+    return; // Non chiudere se click interno (tranne che sulle x)
+  }
   dropdown.classList.add("hidden");
 });
 
+// Gestione cancellazione categoria
+dropdown.addEventListener("click", async (event) => {
+  const removeBtn = event.target.closest(".remove");
+  if (!removeBtn) return;
+  
+  event.stopPropagation(); // Impedisce la chiusura del dropdown
+  
+  const catRow = removeBtn.closest(".dropdown-item");
+  const cat = catRow.textContent.replace("x", "").trim();
+  
+  const { userCategories = [], visitedUrls = [] } = await storage.get({ 
+    userCategories: [], 
+    visitedUrls: [] 
+  });
+  
+  const updatedUserCats = userCategories.filter(c => c !== cat);
+  const updatedUrls = visitedUrls.map(link => {
+    if (link.category === cat) {
+      return {
+        ...link,
+        category: link.originalCategory || "Other"
+      };
+    }
+    return link;
+  });
 
+  await storage.set({
+    userCategories: updatedUserCats,
+    visitedUrls: updatedUrls
+  });
+  
+  await loadDropdownCategories(); // Aggiorna la lista
+});
 
     
 
