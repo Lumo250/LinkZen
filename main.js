@@ -19,20 +19,20 @@ const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", 
 
 
 // Nuova funzione per processare il bookmarklet
-function processaBookmarklet() {
-    const params = new URLSearchParams(window.location.search);
-    if(!params.has('bookmarklet')) return;
+// function processaBookmarklet() {
+//    const params = new URLSearchParams(window.location.search);
+//    if(!params.has('bookmarklet')) return;
     
-    const titolo = decodeURIComponent(params.get('titolo') || '');
-    const url = decodeURIComponent(params.get('url') || '');
+//    const titolo = decodeURIComponent(params.get('titolo') || '');
+//    const url = decodeURIComponent(params.get('url') || '');
     
-    if(!url) return;
+//    if(!url) return;
     
     // Pulisce l'URL dopo aver letto i parametri
-    history.replaceState({}, '', window.location.pathname);
+ //   history.replaceState({}, '', window.location.pathname);
     
-    return { titolo, url };
-}
+ //   return { titolo, url };
+// }
 
 // ============================================
 // 2. GESTIONE STORAGE
@@ -75,28 +75,28 @@ const storage = {
 // ============================================
 // 3. GESTIONE BOOKMARKLET (NUOVA FUNZIONE)
 // ============================================
-// async function processBookmarkletRequest() {
-//  try {
- //   const urlParams = new URLSearchParams(window.location.search);
- //   const title = urlParams.get('title');
- //   const url = urlParams.get('url');
+ async function processBookmarkletRequest() {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const title = urlParams.get('title');
+    const url = urlParams.get('url');
     
-  //  if (!url) return;
+    if (!url) return;
 
     // Pulisci l'URL dopo aver letto i parametri
- //   window.history.replaceState({}, document.title, window.location.pathname);
+    window.history.replaceState({}, document.title, window.location.pathname);
 
- //   const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
- //   const alreadyExists = visitedUrls.some(item => item.url === url);
+    const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+    const alreadyExists = visitedUrls.some(item => item.url === url);
 
- //   if (alreadyExists) {
- //     await storage.set({
- //       lastAddedUrl: url,
- //       highlightColor: "orange"
- //     });
- //     await loadUrls();
- //     return;
- //   }
+    if (alreadyExists) {
+      await storage.set({
+        lastAddedUrl: url,
+        highlightColor: "orange"
+      });
+      await loadUrls();
+      return;
+    }
 
     categorizeByLearnedKeywords(decodeURIComponent(title), decodeURIComponent(url), async (category, isIA) => {
       visitedUrls.push({
