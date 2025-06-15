@@ -3,11 +3,6 @@
     document.body?.classList?.add("dark");
   }
 
-window.addEventListener('message', (event) => {
-  if (event.data.type === 'qr-result') {
-    showManualInput(event.data.data);
-  }
-});
 
 // main.js - Versione completa con supporto bookmarklet per Safari iOS
 
@@ -567,207 +562,343 @@ dropdown.addEventListener("click", async (event) => {
 
 
 
-
-
+// ==============================================
+// 1. MAIN SAVE FUNCTION - SOSTITUISCE IL VECCHIO CODICE
+// ==============================================
 document.getElementById("save-btn").addEventListener("click", async function() {
-  // Modal semplificato
-  const modalHTML = `
-  <div id="linkzen-save-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:1000;display:flex;justify-content:center;align-items:center;">
-    <div style="background:#1e1e1e;border-radius:12px;padding:20px;width:90%;max-width:400px;">
-      <h3 style="color:white;margin-top:0;text-align:center;">Aggiungi Link</h3>
-      
-      <div id="main-options">
-        <button id="open-camera-btn" style="width:100%;padding:12px;margin-bottom:10px;background:#007AFF;color:white;border:none;border-radius:8px;font-size:16px;">
-          <i class="fas fa-camera"></i> Scansiona QR Code
-        </button>
-        <button id="manual-entry-btn" style="width:100%;padding:12px;margin-bottom:10px;background:#34C759;color:white;border:none;border-radius:8px;font-size:16px;">
-          <i class="fas fa-keyboard"></i> Inserisci Manualmente
-        </button>
-        <button id="show-bookmarklet-btn" style="width:100%;padding:12px;background:#AF52DE;color:white;border:none;border-radius:8px;font-size:16px;">
-          <i class="fas fa-bookmark"></i> Istruzioni Bookmarklet
-        </button>
-      </div>
-      
-      <div id="camera-view" style="display:none;position:relative;">
-        <div style="color:white;text-align:center;margin-bottom:10px;">Inquadra un QR code</div>
-        <video id="qr-video" style="width:100%;border-radius:8px;"></video>
-        <div style="text-align:center;margin-top:10px;">
-          <button id="close-camera-btn" style="padding:8px 16px;background:#FF3B30;color:white;border:none;border-radius:8px;">
-            <i class="fas fa-times"></i> Chiudi
-          </button>
-        </div>
-      </div>
-      
-      <div id="manual-input-view" style="display:none;">
-        <input type="text" id="url-input" placeholder="https://..." style="width:100%;padding:12px;margin-bottom:10px;border-radius:8px;border:none;font-size:16px;">
-        <input type="text" id="title-input" placeholder="Titolo (opzionale)" style="width:100%;padding:12px;margin-bottom:10px;border-radius:8px;border:none;font-size:16px;">
-        <div style="display:flex;gap:10px;">
-          <button id="cancel-input-btn" style="flex:1;padding:12px;background:#FF3B30;color:white;border:none;border-radius:8px;">
-            Annulla
-          </button>
-          <button id="save-link-btn" style="flex:1;padding:12px;background:#34C759;color:white;border:none;border-radius:8px;">
-            Salva
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>`;
-
-  document.body.insertAdjacentHTML('beforeend', modalHTML);
-  const modal = document.getElementById('linkzen-save-modal');
-  let scanner = null;
-
-  // Mostra opzioni principali
-  function showMainOptions() {
-    if (scanner) {
-      scanner.stop();
-      scanner = null;
-    }
-    document.getElementById('main-options').style.display = 'block';
-    document.getElementById('camera-view').style.display = 'none';
-    document.getElementById('manual-input-view').style.display = 'none';
-  }
-
-  // Mostra input manuale
-  function showManualInput(url = '') {
-    document.getElementById('main-options').style.display = 'none';
-    document.getElementById('camera-view').style.display = 'none';
-    document.getElementById('manual-input-view').style.display = 'block';
-    const urlInput = document.getElementById('url-input');
-    urlInput.value = url;
-    urlInput.focus();
-  }
-
-  // Apertura fotocamera (versione semplificata e funzionante)
-// SOSTITUISCI completamente il gestore del click "open-camera-btn" con questo codice:
-document.getElementById("open-camera-btn").addEventListener("click", async () => {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  
-  // 1. Prova prima il metodo nativo iOS se disponibile
-  if (isIOS) {
-    try {
-      // Codice speciale per iOS
-      const callbackUrl = encodeURIComponent(`${window.location.origin}/qr-handler.html?result=$$$`);
-      window.location.href = `applewebdata://scan?callback=${callbackUrl}`;
-      
-      // Fallback dopo 1 secondo se il protocollo non è supportato
-      setTimeout(() => {
-        if (!document.hidden) {
-          throw new Error("Protocollo non supportato");
-        }
-      }, 1000);
-      
-      return;
-    } catch (err) {
-      console.log("Fallback a scanner JS", err);
-      // Continua con lo scanner JS normale
-    }
-  }
-
-  // 2. Scanner JavaScript standard (per altri dispositivi/fallback)
-  document.getElementById("main-options").style.display = "none";
-  const cameraView = document.getElementById("camera-view");
-  cameraView.style.display = "block";
-  
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }
-    });
+    // Mostra dialog con opzioni multiple
+    const choice = await showSaveOptionsDialog();
     
-    const videoElem = document.getElementById("qr-video");
-    videoElem.srcObject = stream;
-    videoElem.play();
-    
-    const scanner = new Instascan.Scanner({ video: videoElem });
-    scanner.addListener("scan", content => {
-      stream.getTracks().forEach(track => track.stop());
-      showManualInput(content);
-    });
-    
-    const cameras = await Instascan.Camera.getCameras();
-    if (cameras.length > 0) {
-      await scanner.start(cameras[0]);
-    } else {
-      throw new Error("Nessuna fotocamera trovata");
+    switch(choice) {
+      case 'bookmarklet':
+        showBookmarkletInstructions();
+        break;
+        
+      case 'manual':
+        const manualData = await showManualInputDialog();
+        if (manualData) await processNewLink(manualData.url, manualData.title);
+        break;
+        
+      case 'qr':
+        const qrData = await scanQRCode();
+        if (qrData) await processNewLink(qrData.url, qrData.title);
+        break;
     }
-    
-    document.getElementById("close-camera-btn").onclick = () => {
-      scanner.stop();
-      stream.getTracks().forEach(track => track.stop());
-      showMainOptions();
-    };
-    
-  } catch (err) {
-    console.error("Errore camera:", err);
-    alert("Usa il pulsante 'Inserisci Manualmente' o il bookmarklet");
-    showMainOptions();
+  } catch (error) {
+    console.error("Save error:", error);
+    showAlert("Error", "Failed to save link: " + error.message);
   }
 });
 
-  
+// ==============================================
+// 2. DIALOG FUNCTIONS - GESTIONE INTERFACCIA UTENTE
+// ==============================================
 
-
-
-
-  
-  // Input manuale
-  document.getElementById('manual-entry-btn').addEventListener('click', () => showManualInput());
-
-  // Annulla input
-  document.getElementById('cancel-input-btn').addEventListener('click', showMainOptions);
-
-  // Salvataggio
-  document.getElementById('save-link-btn').addEventListener('click', async () => {
-    const url = document.getElementById('url-input').value.trim();
-    const title = document.getElementById('title-input').value.trim() || url;
+/**
+ * Mostra dialog con le opzioni di salvataggio
+ */
+async function showSaveOptionsDialog() {
+  return new Promise((resolve) => {
+    const dialog = document.createElement("div");
+    dialog.style.position = "fixed";
+    dialog.style.top = "0";
+    dialog.style.left = "0";
+    dialog.style.right = "0";
+    dialog.style.bottom = "0";
+    dialog.style.backgroundColor = "rgba(0,0,0,0.7)";
+    dialog.style.zIndex = "1000";
+    dialog.style.display = "flex";
+    dialog.style.flexDirection = "column";
+    dialog.style.justifyContent = "center";
+    dialog.style.alignItems = "center";
+    dialog.style.gap = "15px";
     
-    try {
-      new URL(url); // Validazione URL
-      
-      categorizeByLearnedKeywords(title, url, async (category, isIA) => {
-        const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-        
-        if (!visitedUrls.some(item => item.url === url)) {
-          await storage.set({
-            visitedUrls: [...visitedUrls, { url, title, category, originalCategory: category }],
-            lastAddedUrl: url,
-            highlightColor: "green"
+    dialog.innerHTML = `
+      <h3 style="color: white; margin: 0">Save Link</h3>
+      <button style="padding: 12px; width: 200px; background: #4CAF50; color: white; border: none; border-radius: 6px" 
+              data-choice="bookmarklet">Use Bookmarklet</button>
+      <button style="padding: 12px; width: 200px; background: #2196F3; color: white; border: none; border-radius: 6px" 
+              data-choice="manual">Enter Manually</button>
+      <button style="padding: 12px; width: 200px; background: #9C27B0; color: white; border: none; border-radius: 6px" 
+              data-choice="qr">Scan QR Code</button>
+      <button style="padding: 12px; width: 200px; background: #f44336; color: white; border: none; border-radius: 6px" 
+              data-choice="cancel">Cancel</button>
+    `;
+    
+    document.body.appendChild(dialog);
+    
+    // Gestione click sulle opzioni
+    dialog.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.body.removeChild(dialog);
+        resolve(btn.dataset.choice === "cancel" ? null : btn.dataset.choice);
+      });
+    });
+  });
+}
+
+/**
+ * Mostra dialog per input manuale
+ */
+async function showManualInputDialog() {
+  return new Promise((resolve) => {
+    const dialog = document.createElement("div");
+    dialog.style.position = "fixed";
+    dialog.style.top = "0";
+    dialog.style.left = "0";
+    dialog.style.right = "0";
+    dialog.style.bottom = "0";
+    dialog.style.backgroundColor = "rgba(0,0,0,0.7)";
+    dialog.style.zIndex = "1000";
+    dialog.style.display = "flex";
+    dialog.style.flexDirection = "column";
+    dialog.style.justifyContent = "center";
+    dialog.style.alignItems = "center";
+    dialog.style.gap = "15px";
+    dialog.style.padding = "20px";
+    
+    dialog.innerHTML = `
+      <div style="background: white; padding: 20px; border-radius: 8px; width: 100%; max-width: 400px">
+        <h3 style="margin-top: 0">Enter Link Details</h3>
+        <input type="text" id="manual-url" placeholder="https://example.com" 
+               style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd">
+        <input type="text" id="manual-title" placeholder="Page Title (optional)" 
+               style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd">
+        <div style="display: flex; gap: 10px; justify-content: flex-end">
+          <button data-action="cancel" style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 4px">Cancel</button>
+          <button data-action="save" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px">Save</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    
+    // Focus automatico sul campo URL
+    dialog.querySelector("#manual-url").focus();
+    
+    // Gestione azioni
+    dialog.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (btn.dataset.action === "save") {
+          const url = dialog.querySelector("#manual-url").value.trim();
+          if (!url) return;
+          
+          resolve({
+            url: url,
+            title: dialog.querySelector("#manual-title").value.trim() || url
           });
         } else {
-          await storage.set({ lastAddedUrl: url, highlightColor: "orange" });
+          resolve(null);
         }
-        
-        modal.remove();
-        await loadUrls();
+        document.body.removeChild(dialog);
       });
-    } catch {
-      alert("Inserisci un URL valido (deve iniziare con http:// o https://)");
-    }
+    });
   });
+}
 
-  // Istruzioni bookmarklet
-  document.getElementById('show-bookmarklet-btn').addEventListener('click', () => {
-    modal.remove();
-    setTimeout(() => {
-      alert(`💡 COME USARE IL BOOKMARKLET:
+// ==============================================
+// 3. QR CODE SCANNER - IMPLEMENTAZIONE PER IOS 15+
+// ==============================================
+
+/**
+ * Scanner QR Code con fallback per iOS 15+
+ */
+async function scanQRCode() {
+  try {
+    // Prova prima con l'API nativa se disponibile
+    if ("BarcodeDetector" in window) {
+      return await scanWithNativeAPI();
+    } else {
+      return await scanWithFallbackMethod();
+    }
+  } catch (error) {
+    console.error("QR scan error:", error);
+    showAlert("QR Error", "Failed to scan QR code. Please try manual entry.");
+    return null;
+  }
+}
+
+/**
+ * Implementazione con BarcodeDetector API (iOS 15+)
+ */
+async function scanWithNativeAPI() {
+  return new Promise(async (resolve) => {
+    const dialog = document.createElement("div");
+    dialog.style.position = "fixed";
+    dialog.style.top = "0";
+    dialog.style.left = "0";
+    dialog.style.right = "0";
+    dialog.style.bottom = "0";
+    dialog.style.backgroundColor = "black";
+    dialog.style.zIndex = "1000";
+    dialog.style.display = "flex";
+    dialog.style.flexDirection = "column";
+    
+    dialog.innerHTML = `
+      <video autoplay playsinline style="width: 100%; height: 100%; object-fit: cover"></video>
+      <div style="position: absolute; top: 20px; left: 0; right: 0; text-align: center; color: white">
+        Point camera at QR code
+      </div>
+      <button style="position: absolute; bottom: 20px; left: 0; right: 0; margin: auto; 
+                    width: 100px; padding: 10px; background: #f44336; color: white; border: none; border-radius: 4px">
+        Cancel
+      </button>
+    `;
+    
+    document.body.appendChild(dialog);
+    const video = dialog.querySelector("video");
+    const cancelBtn = dialog.querySelector("button");
+    
+    // Configura stream camera
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: { 
+        facingMode: "environment",
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      } 
+    });
+    video.srcObject = stream;
+    
+    // Configura BarcodeDetector
+    const barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+    let scanInterval = setInterval(async () => {
+      try {
+        const barcodes = await barcodeDetector.detect(video);
+        if (barcodes.length > 0) {
+          clearInterval(scanInterval);
+          stream.getTracks().forEach(track => track.stop());
+          document.body.removeChild(dialog);
+          resolve({ url: barcodes[0].rawValue, title: "QR Code Link" });
+        }
+      } catch (e) { /* Ignora errori di detection */ }
+    }, 500);
+    
+    // Gestione cancellazione
+    cancelBtn.addEventListener("click", () => {
+      clearInterval(scanInterval);
+      stream.getTracks().forEach(track => track.stop());
+      document.body.removeChild(dialog);
+      resolve(null);
+    });
+  });
+}
+
+/**
+ * Fallback per browser senza BarcodeDetector
+ */
+async function scanWithFallbackMethod() {
+  return new Promise((resolve) => {
+    showAlert("QR Scanning", "For best results, use Safari on iOS 15+ or a browser that supports QR scanning.");
+    resolve(null);
+  });
+}
+
+// ==============================================
+// 4. BOOKMARKLET FUNCTIONS - FUNZIONALITÀ ESISTENTE
+// ==============================================
+
+function showBookmarkletInstructions() {
+  const bookmarkletCode = `javascript:(function(){
+    window.open('https://yourdomain.com/?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href));
+  })();`;
+  
+  showAlert("Bookmarklet Instructions", `
+    1. Copy this code:
+    ${bookmarkletCode}
+    
+    2. Create a new bookmark in Safari
+    3. Paste as URL
+    4. Use from any page by tapping the bookmark
+  `);
+}
+
+// ==============================================
+// 5. CORE PROCESSING FUNCTIONS - GESTIONE DEI LINK
+// ==============================================
+
+/**
+ * Elabora un nuovo link (usato da tutte le modalità)
+ */
+async function processNewLink(url, title) {
+  try {
+    if (!isValidUrl(url)) throw new Error("Invalid URL format");
+    
+    const mockTab = { url, title };
+    const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+    
+    categorizeByLearnedKeywords(mockTab.title, mockTab.url, async (category, isIA) => {
+      const index = visitedUrls.findIndex(item => item.url === mockTab.url);
       
-1. Apri la pagina che vuoi salvare in Safari
-2. Tocca l'icona 'Condividi' (la casetta con freccia in su)
-3. Scorri verso il basso e tocca 'Modifica Azioni'
-4. Aggiungi 'Save to LinkZen' ai preferiti
-5. Ora puoi usarlo da qualsiasi pagina!`);
-    }, 300);
-  });
+      if (index === -1) {
+        visitedUrls.push({ 
+          url: mockTab.url, 
+          category, 
+          originalCategory: category, 
+          title: mockTab.title 
+        });
+        await storage.set({
+          visitedUrls,
+          lastAddedUrl: mockTab.url,
+          highlightColor: "green"
+        });
+      } else {
+        await storage.set({
+          lastAddedUrl: mockTab.url,
+          highlightColor: "orange"
+        });
+      }
+      
+      await loadUrls();
+      showAlert("Success", `Link saved in category: ${category}`);
+    });
+  } catch (error) {
+    console.error("Process link error:", error);
+    showAlert("Error", error.message);
+  }
+}
 
-  // Chiudi modal cliccando sullo sfondo
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      if (scanner) scanner.stop();
-      modal.remove();
-    }
-  });
-});
+/**
+ * Validazione URL di base
+ */
+function isValidUrl(string) {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
 
+// ==============================================
+// 6. UTILITY FUNCTIONS - FUNZIONI DI SUPPORTO
+// ==============================================
+
+function showAlert(title, message) {
+  const alertDiv = document.createElement("div");
+  alertDiv.style.position = "fixed";
+  alertDiv.style.top = "20px";
+  alertDiv.style.left = "50%";
+  alertDiv.style.transform = "translateX(-50%)";
+  alertDiv.style.backgroundColor = "#333";
+  alertDiv.style.color = "white";
+  alertDiv.style.padding = "15px";
+  alertDiv.style.borderRadius = "5px";
+  alertDiv.style.zIndex = "1000";
+  alertDiv.style.maxWidth = "80%";
+  
+  alertDiv.innerHTML = `
+    <h4 style="margin: 0 0 10px 0">${title}</h4>
+    <div style="font-size: 14px">${message}</div>
+  `;
+  
+  document.body.appendChild(alertDiv);
+  setTimeout(() => document.body.removeChild(alertDiv), 5000);
+}
+
+
+
+  
   
   
 // ============================================
