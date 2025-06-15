@@ -560,229 +560,165 @@ dropdown.addEventListener("click", async (event) => {
   });
 
 
+document.getElementById("save-btn").addEventListener("click", async () => {
+  const modal = document.createElement("div");
+  modal.style.position = "fixed";
+  modal.style.top = "0";
+  modal.style.left = "0";
+  modal.style.right = "0";
+  modal.style.bottom = "0";
+  modal.style.backgroundColor = "rgba(0,0,0,0.8)";
+  modal.style.zIndex = "1000";
+  modal.style.display = "flex";
+  modal.style.flexDirection = "column";
+  modal.style.alignItems = "center";
+  modal.style.justifyContent = "center";
+  modal.style.padding = "20px";
 
-
-
-  // ============================================
-// NUOVA FUNZIONE SAVE COMPLETA (iOS/Android/Desktop)
-// ============================================
-
-document.getElementById("save-btn").addEventListener("click", async function() {
-  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-    await showIOSSaveDialog();
-  } else {
-    await saveCurrentTab();
-  }
-});
-
-// ============================================
-// FUNZIONI DI SUPPORTO
-// ============================================
-
-/**
- * Dialog avanzata per iOS con input manuale e QR code
- */
-async function showIOSSaveDialog() {
-  // Crea il modal
-  const modal = document.createElement('div');
-  modal.id = 'save-modal';
-  modal.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.9);
-    z-index: 10000;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    color: white;
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  `;
-
-  // HTML della dialog
+  const closeModal = () => document.body.removeChild(modal);
+  
   modal.innerHTML = `
-    <h2 style="text-align: center; margin-bottom: 25px;">Aggiungi Link</h2>
-    
-    <div style="margin-bottom: 15px; width: 100%;">
-      <label for="manual-url" style="display: block; margin-bottom: 5px;">URL:</label>
-      <input type="url" id="manual-url" 
-             placeholder="https://" 
-             style="width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 16px;">
-    </div>
-    
-    <div style="margin-bottom: 25px; width: 100%;">
-      <label for="manual-title" style="display: block; margin-bottom: 5px;">Titolo (opzionale):</label>
-      <input type="text" id="manual-title" 
-             placeholder="Titolo della pagina" 
-             style="width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 16px;">
-    </div>
-    
-    <button id="scan-qr-btn" 
-            style="background: #32c458; color: white; padding: 12px; border: none; 
-                   border-radius: 8px; font-size: 16px; margin-bottom: 10px; display: flex; 
-                   align-items: center; justify-content: center;">
-      <span style="margin-right: 8px;">📷</span> Scansiona QR Code
-    </button>
-    
-    <button id="confirm-save-btn" 
-            style="background: #007aff; color: white; padding: 12px; border: none; 
-                   border-radius: 8px; font-size: 16px; margin-bottom: 10px;">
-      Salva Link
-    </button>
-    
-    <button id="cancel-btn" 
-            style="background: transparent; color: #ff3b30; padding: 12px; border: 1px solid #ff3b30; 
-                   border-radius: 8px; font-size: 16px;">
-      Annulla
-    </button>
-    
-    <div id="qr-scanner-container" style="display: none; margin-top: 20px; width: 100%;">
-      <video id="qr-video" width="100%" style="border-radius: 8px;"></video>
-      <p style="text-align: center; margin-top: 10px;">Inquadra un QR code</p>
+    <div style="background:#fff;padding:20px;border-radius:10px;width:100%;max-width:400px;">
+      <h3 style="margin-top:0;">Add New Link</h3>
+      <input type="text" id="manual-url-input" placeholder="Paste URL here" 
+             style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:5px;">
+      <input type="text" id="manual-title-input" placeholder="Title (optional)" 
+             style="width:100%;padding:10px;margin-bottom:15px;border:1px solid #ccc;border-radius:5px;">
+      <button id="scan-qr-btn" style="width:100%;padding:10px;background:#4CAF50;color:white;border:none;border-radius:5px;margin-bottom:10px;">
+        Scan QR Code
+      </button>
+      <div style="display:flex;gap:10px;">
+        <button id="confirm-save-btn" style="flex:1;padding:10px;background:#2196F3;color:white;border:none;border-radius:5px;">
+          Save
+        </button>
+        <button id="cancel-btn" style="flex:1;padding:10px;background:#f44336;color:white;border:none;border-radius:5px;">
+          Cancel
+        </button>
+      </div>
     </div>
   `;
 
   document.body.appendChild(modal);
-  document.getElementById('manual-url').focus();
 
-  // Elementi UI
-  const qrBtn = document.getElementById('scan-qr-btn');
-  const confirmBtn = document.getElementById('confirm-save-btn');
-  const cancelBtn = document.getElementById('cancel-btn');
-  const qrContainer = document.getElementById('qr-scanner-container');
-  const qrVideo = document.getElementById('qr-video');
+  // QR Scanner usando la libreria lightweight Instascan (compatibile con iOS 15)
+  const script = document.createElement("script");
+  script.src = "https://rawgit.com/schmich/instascan-builds/master/instascan.min.js";
+  document.head.appendChild(script);
 
-  // Gestione eventi
-  cancelBtn.addEventListener('click', () => modal.remove());
-  
-  confirmBtn.addEventListener('click', async () => {
-    const url = document.getElementById('manual-url').value.trim();
-    const title = document.getElementById('manual-title').value.trim() || "Senza titolo";
+  document.getElementById("cancel-btn").addEventListener("click", closeModal);
+
+  document.getElementById("confirm-save-btn").addEventListener("click", async () => {
+    const urlInput = document.getElementById("manual-url-input").value.trim();
+    const titleInput = document.getElementById("manual-title-input").value.trim();
     
-    if (!isValidUrl(url)) {
-      alert("Inserisci un URL valido (es. https://esempio.com)");
+    if (!urlInput) {
+      alert("Please enter a valid URL");
       return;
     }
-    
-    await saveLink(url, title);
-    modal.remove();
+
+    try {
+      new URL(urlInput); // Validate URL format
+      await saveLink(urlInput, titleInput);
+      closeModal();
+    } catch (e) {
+      alert("Invalid URL format");
+    }
   });
 
-  // Scanner QR Code (solo se supportato)
-  if (navigator.mediaDevices) {
-    qrBtn.addEventListener('click', async () => {
-      try {
-        qrContainer.style.display = 'block';
-        qrBtn.style.display = 'none';
-        
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" }
-        });
-        
-        qrVideo.srcObject = stream;
-        await qrVideo.play();
-        
-        // Usa una libreria QR scanner qui (es. Instascan)
-        // Implementazione esempio:
-        startQRScanner(qrVideo, (decodedUrl) => {
-          document.getElementById('manual-url').value = decodedUrl;
-          stream.getTracks().forEach(track => track.stop());
-          qrContainer.style.display = 'none';
-          qrBtn.style.display = 'flex';
-        });
-        
-      } catch (err) {
-        console.error("Errore camera:", err);
-        alert("Impossibile accedere alla camera. Controlla i permessi.");
-        qrContainer.style.display = 'none';
-        qrBtn.style.display = 'flex';
-      }
-    });
-  } else {
-    qrBtn.style.display = 'none';
-  }
-}
+  document.getElementById("scan-qr-btn").addEventListener("click", () => {
+    const scannerDiv = document.createElement("div");
+    scannerDiv.style.position = "fixed";
+    scannerDiv.style.top = "0";
+    scannerDiv.style.left = "0";
+    scannerStyle.right = "0";
+    scannerDiv.style.bottom = "0";
+    scannerDiv.style.backgroundColor = "rgba(0,0,0,0.8)";
+    scannerDiv.style.zIndex = "1001";
+    scannerDiv.innerHTML = `
+      <div style="position:absolute;top:20px;left:20px;right:20px;bottom:80px;border:2px solid white;"></div>
+      <div style="position:absolute;bottom:20px;left:0;right:0;text-align:center;">
+        <button id="stop-scan" style="padding:10px 20px;background:#f44336;color:white;border:none;border-radius:5px;">
+          Stop Scanner
+        </button>
+      </div>
+    `;
+    
+    document.body.appendChild(scannerDiv);
+    const videoElement = document.createElement("video");
+    videoElement.style.width = "100%";
+    videoElement.style.height = "100%";
+    scannerDiv.insertBefore(videoElement, scannerDiv.firstChild);
 
-/**
- * Salva un link con categorizzazione automatica
- */
-async function saveLink(url, title) {
-  return new Promise((resolve) => {
-    categorizeByLearnedKeywords(title, url, async (category) => {
-      const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+    let scanner = null;
+    script.onload = () => {
+      scanner = new Instascan.Scanner({ video: videoElement });
+      scanner.addListener("scan", async (content) => {
+        try {
+          new URL(content); // Validate scanned content
+          document.getElementById("manual-url-input").value = content;
+          scanner.stop();
+          document.body.removeChild(scannerDiv);
+        } catch (e) {
+          alert("Scanned content is not a valid URL");
+        }
+      });
       
-      if (!visitedUrls.some(item => item.url === url)) {
+      Instascan.Camera.getCameras().then(cameras => {
+        if (cameras.length > 0) {
+          scanner.start(cameras[0]);
+        } else {
+          alert("No camera found");
+          document.body.removeChild(scannerDiv);
+        }
+      });
+    };
+
+    document.getElementById("stop-scan").addEventListener("click", () => {
+      if (scanner) scanner.stop();
+      document.body.removeChild(scannerDiv);
+    });
+  });
+});
+
+async function saveLink(url, title = "") {
+  try {
+    const mockTab = {
+      url: url,
+      title: title || url
+    };
+
+    categorizeByLearnedKeywords(mockTab.title, mockTab.url, async (category, isIA) => {
+      const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+      const index = visitedUrls.findIndex(item => item.url === mockTab.url);
+      
+      if (index === -1) {
         visitedUrls.push({ 
-          url, 
-          title,
+          url: mockTab.url, 
           category, 
-          originalCategory: category 
+          originalCategory: category, 
+          title: mockTab.title 
         });
-        
         await storage.set({
           visitedUrls,
-          lastAddedUrl: url,
+          lastAddedUrl: mockTab.url,
           highlightColor: "green"
         });
-        
-        await loadUrls();
       } else {
         await storage.set({
-          lastAddedUrl: url,
+          lastAddedUrl: mockTab.url,
           highlightColor: "orange"
         });
       }
-      resolve();
+      await loadUrls();
     });
-  });
-}
-
-/**
- * Funzione di salvataggio per desktop/Android
- */
-async function saveCurrentTab() {
-  try {
-    const mockTab = {
-      url: window.location.href,
-      title: document.title || ""
-    };
-    await saveLink(mockTab.url, mockTab.title);
   } catch (err) {
-    console.error("Errore salvataggio:", err);
-    alert("Errore durante il salvataggio");
+    console.error("Save error:", err);
+    alert("Error saving link");
   }
 }
 
-/**
- * Validazione URL semplice
- */
-function isValidUrl(string) {
-  try {
-    new URL(string);
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
 
-/**
- * Esempio implementazione scanner QR (sostituisci con libreria reale)
- */
-function startQRScanner(videoElement, callback) {
-  // Implementazione dummy - sostituire con libreria reale come:
-  // https://github.com/schmich/instascan
-  
-  console.log("Scanner QR attivato (implementa con libreria esterna)");
-  
-  // Esempio con timeout per simulazione
-  setTimeout(() => {
-    if (confirm("Simulazione QR scanner: vuoi inserire un URL di esempio?")) {
-      callback("https://esempio.com");
-    }
-  }, 1000);
-}
+
   
 // ============================================
 // FUNZIONI CORE (rimangono identiche)
