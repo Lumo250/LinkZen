@@ -924,10 +924,98 @@ function showQRContentDialog(content) {
 // 5. FUNZIONI AUSILIARIE (COMPLETE)
 // ==============================================
 
-function showBookmarkletInstructions() {
+//function showBookmarkletInstructions() {
+//  const bookmarkletCode = `javascript:(function(){
+//    window.location.href='${window.location.origin}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href);
+//  })();`;
+
+  function showBookmarkletInstructions() {
   const bookmarkletCode = `javascript:(function(){
     window.location.href='${window.location.origin}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href);
   })();`;
+  
+  const dialog = document.createElement("div");
+  dialog.style.position = "fixed";
+  dialog.style.top = "0";
+  dialog.style.left = "0";
+  dialog.style.right = "0";
+  dialog.style.bottom = "0";
+  dialog.style.backgroundColor = "rgba(0,0,0,0.8)";
+  dialog.style.zIndex = "1000";
+  dialog.style.display = "flex";
+  dialog.style.justifyContent = "center";
+  dialog.style.alignItems = "center";
+  dialog.style.padding = "20px";
+  
+  dialog.innerHTML = `
+    <div style="
+      background: #2d3748;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow: auto;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    ">
+      <h3 style="margin-top:0;color:#81e6d9;text-align:center">How to Use Bookmarklet</h3>
+      
+      <div style="
+        margin: 15px 0;
+        padding: 12px;
+        background: #4a5568;
+        border-radius: 4px;
+        font-size: 14px;
+        line-height: 1.5;
+      ">
+        <ol style="padding-left:20px;margin:0">
+          <li style="margin-bottom:10px">Copy this code:</li>
+        </ol>
+        
+        <div style="
+          padding: 10px;
+          background: #1a202c;
+          border-radius: 4px;
+          font-family: monospace;
+          word-break: break-all;
+          color: #f0fff4;
+          margin: 10px 0;
+          border: 1px solid #4a5568;
+        ">
+          ${bookmarkletCode}
+        </div>
+        
+        <ol start="2" style="padding-left:20px;margin:0">
+          <li style="margin-bottom:10px">Create a new bookmark in Safari</li>
+          <li style="margin-bottom:10px">Paste as URL</li>
+          <li>Use from any page by tapping the bookmark</li>
+        </ol>
+      </div>
+      
+      <button style="
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background: #2b6cb0;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        margin-top: 15px;
+        cursor: pointer;
+      ">
+        Close
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(dialog);
+  
+  // Chiudi al click
+  dialog.querySelector("button").addEventListener("click", () => {
+    document.body.removeChild(dialog);
+  });
+}
   
   showAlert("How to Use Bookmarklet", `
     1. Copy this code:<br><br>
