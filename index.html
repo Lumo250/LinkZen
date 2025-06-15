@@ -1,7 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/instascan@1.0.0/dist/instascan.min.js"></script>
+
+<script>
+  // Caricatore sicuro per Instascan
+  function loadExternalScript(src) {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) return resolve();
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+</script>
+
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0, 
       maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
   <meta charset="UTF-8" />
