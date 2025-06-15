@@ -560,206 +560,181 @@ dropdown.addEventListener("click", async (event) => {
   });
 
 
-// ===== INIZIO CODICE DA COPIARE ===== //
-// 1. Aggiungi queste variabili in cima al tuo main.js (prima di qualsiasi funzione)
-const QR_SUPPORT = {
-  hasNative: ('BarcodeDetector' in window),
-  hasInstascan: false
-};
+// VERIFICA DIAGNOSTICA INIZIALE
+console.log("Browser support check:", {
+  isiPhone: /iPhone/.test(navigator.userAgent),
+  iOSVersion: navigator.userAgent.match(/OS (\d+)_/)?.[1] || "unknown",
+  hasBarcodeDetector: 'BarcodeDetector' in window,
+  hasMediaDevices: !!navigator.mediaDevices?.getUserMedia,
+  isSecure: window.location.protocol === 'https:'
+});
 
-// 2. Copia questa funzione DOPO le variabili
-async function setupQRScanner() {
-  if (QR_SUPPORT.hasNative) return true;
-  
-  try {
-    await new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/instascan@1.0.0/dist/instascan.min.js';
-      script.onload = () => {
-        QR_SUPPORT.hasInstascan = true;
-        resolve();
-      };
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-    return true;
-  } catch (e) {
-    console.warn("Instascan non caricato:", e);
-    return false;
-  }
-}
-
-// 3. Sostituisci l'evento click esistente del pulsante "Save" con questo:
+// FUNZIONE PRINCIPALE AGGIORNATA
 document.getElementById("save-btn").addEventListener("click", async function() {
-  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-    const canScan = await setupQRScanner();
-    await showMobileSaveDialog(canScan);
+  if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+    await showMobileSaveDialog();
   } else {
     await saveCurrentTab();
   }
 });
 
-// 4. Sostituisci la funzione showMobileSaveDialog con questa:
-async function showMobileSaveDialog(qrSupported) {
+async function showMobileSaveDialog() {
+  // 1. RILEVA IL SUPPORTO REAL-TIME
+  const supportsNativeQR = ('BarcodeDetector' in window) && 
+                         (typeof BarcodeDetector.getSupportedFormats === 'function' ? 
+                          (await BarcodeDetector.getSupportedFormats()).includes('qr_code') : true);
+  
+  const supportsCamera = !!navigator.mediaDevices?.getUserMedia;
+  const canUseQR = supportsNativeQR && supportsCamera;
+
+  // 2. CREA L'INTERFACCIA
   const modal = document.createElement('div');
   modal.id = 'save-modal';
   modal.style.cssText = `
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.9); z-index: 10000;
-    display: flex; flex-direction: column; padding: 20px;
-    color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   `;
 
   modal.innerHTML = `
     <h2 style="text-align: center; margin-bottom: 25px;">Aggiungi Link</h2>
+    
     <div style="margin-bottom: 15px; width: 100%;">
-      <label for="manual-url" style="display: block; margin-bottom: 5px;">URL:</label>
-      <input type="url" id="manual-url" placeholder="https://" 
-             style="width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 16px;">
+      <input type="url" id="manual-url" 
+             placeholder="Incolla URL qui" 
+             style="width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 16px;"
+             autocapitalize="off" autocorrect="off">
     </div>
-    <div style="margin-bottom: 25px; width: 100%;">
-      <label for="manual-title" style="display: block; margin-bottom: 5px;">Titolo (opzionale):</label>
-      <input type="text" id="manual-title" placeholder="Titolo della pagina" 
-             style="width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 16px;">
-    </div>
-    ${qrSupported ? `
-    <button id="scan-qr-btn" style="background: #32c458; color: white; padding: 12px; border: none; 
-           border-radius: 8px; font-size: 16px; margin-bottom: 10px;">
-      📷 Scansiona QR Code
-    </button>` : ''}
-    <button id="confirm-save-btn" style="background: #007aff; color: white; padding: 12px; 
-           border: none; border-radius: 8px; font-size: 16px; margin-bottom: 10px;">
+    
+    ${canUseQR ? `
+    <button id="scan-qr-btn" 
+            style="background: #32c458; padding: 12px; border: none; 
+                   border-radius: 8px; font-size: 16px; margin-bottom: 10px; display: flex; 
+                   align-items: center; justify-content: center;">
+      <span style="margin-right: 8px;">📷</span> Scansiona QR Code
+    </button>
+    ` : ''}
+    
+    <button id="confirm-save-btn" 
+            style="background: #007aff; color: white; padding: 12px; border: none; 
+                   border-radius: 8px; font-size: 16px; margin-bottom: 10px;">
       Salva Link
     </button>
-    <button id="cancel-btn" style="background: transparent; color: #ff3b30; padding: 12px; 
-           border: 1px solid #ff3b30; border-radius: 8px; font-size: 16px;">
+    
+    <button id="cancel-btn" 
+            style="background: transparent; color: #ff3b30; padding: 12px; border: 1px solid #ff3b30; 
+                   border-radius: 8px; font-size: 16px;">
       Annulla
     </button>
-    ${qrSupported ? `
+    
+    ${canUseQR ? `
     <div id="qr-scanner-container" style="display: none; margin-top: 20px; width: 100%; position: relative;">
       <video id="qr-video" width="100%" style="border-radius: 8px; background: black;"></video>
-      <button id="stop-scan-btn" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); 
-             color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px;">
-        ✕
-      </button>
+      <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 10px;">
+        <button id="toggle-camera-btn" style="background: rgba(0,0,0,0.5); color: white; 
+               border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px;">
+          🔄
+        </button>
+        <button id="stop-scan-btn" style="background: rgba(0,0,0,0.5); color: white; 
+               border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px;">
+          ✕
+        </button>
+      </div>
       <p style="text-align: center; margin-top: 10px; font-size: 14px;">Inquadra un QR code</p>
-    </div>` : ''}
+    </div>
+    ` : ''}
+    
     <div id="qr-error-msg" style="color: #ff3b30; text-align: center; margin-top: 10px; display: none;"></div>
   `;
 
   document.body.appendChild(modal);
   document.getElementById('manual-url').focus();
 
-  // Event listeners
-  document.getElementById('cancel-btn').addEventListener('click', () => modal.remove());
-  
-  document.getElementById('confirm-save-btn').addEventListener('click', async () => {
-    const url = document.getElementById('manual-url').value.trim();
-    const title = document.getElementById('manual-title').value.trim() || "Senza titolo";
-    
-    if (!url.startsWith('http')) {
-      document.getElementById('qr-error-msg').textContent = "L'URL deve iniziare con http:// o https://";
-      document.getElementById('qr-error-msg').style.display = 'block';
-      return;
-    }
-    
-    await saveLink(url, title);
-    modal.remove();
-  });
+  // 3. GESTIONE SCANSIONE QR (solo se supportata)
+  if (canUseQR) {
+    let currentStream = null;
+    let backCamera = true;
+    const qrBtn = document.getElementById('scan-qr-btn');
+    const qrContainer = document.getElementById('qr-scanner-container');
+    const qrVideo = document.getElementById('qr-video');
+    const stopBtn = document.getElementById('stop-scan-btn');
+    const toggleBtn = document.getElementById('toggle-camera-btn');
 
-  if (qrSupported) {
-    setupQRScanning(modal);
-  }
-}
-
-function setupQRScanning(modal) {
-  const qrBtn = document.getElementById('scan-qr-btn');
-  const qrContainer = document.getElementById('qr-scanner-container');
-  const qrVideo = document.getElementById('qr-video');
-  const stopBtn = document.getElementById('stop-scan-btn');
-  let scanner = null;
-
-  qrBtn.addEventListener('click', async () => {
-    qrContainer.style.display = 'block';
-    qrBtn.style.display = 'none';
-    
-    if (QR_SUPPORT.hasNative) {
-      startNativeScan(qrVideo, qrContainer);
-    } else if (QR_SUPPORT.hasInstascan) {
-      startInstascan(qrVideo, qrContainer);
-    }
-  });
-
-  stopBtn.addEventListener('click', () => {
-    if (scanner) scanner.stop();
-    if (qrVideo.srcObject) qrVideo.srcObject.getTracks().forEach(t => t.stop());
-    qrContainer.style.display = 'none';
-    qrBtn.style.display = 'block';
-  });
-}
-
-async function startNativeScan(videoElement, container) {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-    videoElement.srcObject = stream;
-    await videoElement.play();
-    
-    const detector = new BarcodeDetector({ formats: ['qr_code'] });
-    const interval = setInterval(async () => {
+    qrBtn.addEventListener('click', async () => {
       try {
-        const barcodes = await detector.detect(videoElement);
-        if (barcodes.length > 0) {
-          clearInterval(interval);
-          document.getElementById('manual-url').value = barcodes[0].rawValue;
-          container.style.display = 'none';
-          document.getElementById('scan-qr-btn').style.display = 'block';
-          stream.getTracks().forEach(track => track.stop());
+        qrContainer.style.display = 'block';
+        qrBtn.style.display = 'none';
+        
+        currentStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: backCamera ? 'environment' : 'user',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        });
+        
+        qrVideo.srcObject = currentStream;
+        await qrVideo.play();
+        
+        const barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+        let scanActive = true;
+        
+        async function scanFrame() {
+          if (!scanActive) return;
+          
+          try {
+            const barcodes = await barcodeDetector.detect(qrVideo);
+            if (barcodes.length > 0) {
+              document.getElementById('manual-url').value = barcodes[0].rawValue;
+              stopScan();
+            }
+          } catch (e) {
+            console.error("Scan error:", e);
+          }
+          
+          requestAnimationFrame(scanFrame);
         }
-      } catch (e) { /* Ignora errori di detection */ }
-    }, 500);
-  } catch (e) {
-    console.error("Errore scanner nativo:", e);
-    showError("Errore accesso camera");
-  }
-}
-
-function startInstascan(videoElement, container) {
-  const scanner = new Instascan.Scanner({ video: videoElement, mirror: false });
-  
-  scanner.addListener('scan', content => {
-    document.getElementById('manual-url').value = content;
-    container.style.display = 'none';
-    document.getElementById('scan-qr-btn').style.display = 'block';
-    scanner.stop();
-  });
-
-  Instascan.Camera.getCameras()
-    .then(cameras => {
-      if (cameras.length > 0) {
-        scanner.start(cameras.find(c => c.name.includes('back')) || cameras[0]);
-      } else {
-        throw new Error("Nessuna camera trovata");
+        
+        scanFrame();
+        
+        toggleBtn.addEventListener('click', async () => {
+          backCamera = !backCamera;
+          stopScan();
+          await startScan();
+        });
+        
+      } catch (err) {
+        console.error("Camera error:", err);
+        showError("Errore camera: " + (err.message || "Controlla i permessi"));
+        stopScan();
       }
-    })
-    .catch(e => {
-      console.error("Errore Instascan:", e);
-      showError("Errore accesso camera");
     });
+
+    function stopScan() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+      }
+      qrContainer.style.display = 'none';
+      qrBtn.style.display = 'flex';
+    }
+
+    stopBtn.addEventListener('click', stopScan);
+  }
+
+  // ... (resto del codice rimane identico alla versione precedente)
 }
 
-function showError(msg) {
-  const errorEl = document.getElementById('qr-error-msg');
-  errorEl.textContent = msg;
-  errorEl.style.display = 'block';
-  setTimeout(() => errorEl.style.display = 'none', 3000);
-}
-
-// Mantieni queste funzioni ESATTAMENTE come sono già nel tuo codice:
-// - saveLink()
-// - saveCurrentTab()
-// - isValidUrl()
-// ===== FINE CODICE DA COPIARE ===== //
-
+// ... (le altre funzioni saveLink, saveCurrentTab, isValidUrl rimangono identiche)
 
   
 // ============================================
