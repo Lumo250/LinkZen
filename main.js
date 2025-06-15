@@ -804,15 +804,50 @@ function showQRContentDialog(content) {
   dialog.style.padding = "20px";
   
   dialog.innerHTML = `
-    <div style="background:white;padding:20px;border-radius:8px;width:100%;max-width:400px;max-height:80vh;overflow:auto">
-      <h3 style="margin-top:0">QR Code Content</h3>
-      <div style="padding:10px;background:#f5f5f5;border-radius:4px;word-break:break-all">${content}</div>
-      <button id="copy-content-btn" style="margin-top:10px;padding:8px 12px;background:#4CAF50;color:white;border:none;border-radius:4px">
-        Copy to Clipboard
-      </button>
-      <button style="margin-top:10px;padding:8px 12px;background:#2196F3;color:white;border:none;border-radius:4px;width:100%">
-        Close
-      </button>
+    <div style="
+      background: #2d3748;  // Sfondo più scuro (grigio-azzurro scuro)
+      color: #e2e8f0;      // Testo chiaro
+      padding: 20px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow: auto;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    ">
+      <h3 style="margin-top:0;color:#ffffff">QR Code Content</h3>
+      <div style="
+        padding: 12px;
+        background: #4a5568;  // Sfondo area contenuto
+        border-radius: 4px;
+        word-break: break-all;
+        font-family: monospace;
+        color: #f7fafc;
+      ">
+        ${content}
+      </div>
+      <div style="display:flex;gap:10px;margin-top:15px">
+        <button id="copy-content-btn" style="
+          padding: 8px 12px;
+          background: #4caf50;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          flex-grow:1;
+        ">
+          Copy to Clipboard
+        </button>
+        <button style="
+          padding: 8px 12px;
+          background: #2b6cb0;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          flex-grow:1;
+        ">
+          Close
+        </button>
+      </div>
     </div>
   `;
   
