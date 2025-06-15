@@ -559,42 +559,228 @@ dropdown.addEventListener("click", async (event) => {
     });
   });
 
-  // Save
-  document.getElementById("save-btn").addEventListener("click", async () => {
-    try {
-      const mockTab = {
-        url: window.location.href,
-        title: document.title || ""
-      };
 
-      categorizeByLearnedKeywords(mockTab.title, mockTab.url, async (category, isIA) => {
-        const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-        const index = visitedUrls.findIndex(item => item.url === mockTab.url);
-        if (index === -1) {
-          visitedUrls.push({ 
-            url: mockTab.url, 
-            category, 
-            originalCategory: category, 
-            title: mockTab.title 
-          });
-          await storage.set({
-            visitedUrls,
-            lastAddedUrl: mockTab.url,
-            highlightColor: "green"
-          });
-        } else {
-          await storage.set({
-            lastAddedUrl: mockTab.url,
-            highlightColor: "orange"
-          });
-        }
-        await loadUrls();
+// ============================================
+// FUNZIONE SAVE COMPLETA CON SCANNER QR REALE
+// ============================================
+
+document.getElementById("save-btn").addEventListener("click", async function() {
+  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+    await showIOSSaveDialog();
+  } else {
+    await saveCurrentTab();
+  }
+});
+
+// ============================================
+// FUNZIONI DI SUPPORTO CON INSTASCAN
+// ============================================
+
+async function showIOSSaveDialog() {
+  const modal = document.createElement('div');
+  modal.id = 'save-modal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  `;
+
+  modal.innerHTML = `
+    <h2 style="text-align: center; margin-bottom: 25px;">Aggiungi Link</h2>
+    
+    <div style="margin-bottom: 15px; width: 100%;">
+      <label for="manual-url" style="display: block; margin-bottom: 5px;">URL:</label>
+      <input type="url" id="manual-url" 
+             placeholder="https://" 
+             style="width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 16px;">
+    </div>
+    
+    <div style="margin-bottom: 25px; width: 100%;">
+      <label for="manual-title" style="display: block; margin-bottom: 5px;">Titolo (opzionale):</label>
+      <input type="text" id="manual-title" 
+             placeholder="Titolo della pagina" 
+             style="width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 16px;">
+    </div>
+    
+    <button id="scan-qr-btn" 
+            style="background: #32c458; color: white; padding: 12px; border: none; 
+                   border-radius: 8px; font-size: 16px; margin-bottom: 10px; display: flex; 
+                   align-items: center; justify-content: center;">
+      <span style="margin-right: 8px;">📷</span> Scansiona QR Code
+    </button>
+    
+    <button id="confirm-save-btn" 
+            style="background: #007aff; color: white; padding: 12px; border: none; 
+                   border-radius: 8px; font-size: 16px; margin-bottom: 10px;">
+      Salva Link
+    </button>
+    
+    <button id="cancel-btn" 
+            style="background: transparent; color: #ff3b30; padding: 12px; border: 1px solid #ff3b30; 
+                   border-radius: 8px; font-size: 16px;">
+      Annulla
+    </button>
+    
+    <div id="qr-scanner-container" style="display: none; margin-top: 20px; width: 100%; position: relative;">
+      <video id="qr-video" width="100%" style="border-radius: 8px;"></video>
+      <div style="position: absolute; top: 10px; right: 10px;">
+        <button id="stop-scan-btn" style="background: rgba(0,0,0,0.5); color: white; 
+               border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px;">
+          ✕
+        </button>
+      </div>
+      <p style="text-align: center; margin-top: 10px; font-size: 14px;">Inquadra un QR code</p>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  document.getElementById('manual-url').focus();
+
+  // Elementi UI
+  const qrBtn = document.getElementById('scan-qr-btn');
+  const confirmBtn = document.getElementById('confirm-save-btn');
+  const cancelBtn = document.getElementById('cancel-btn');
+  const qrContainer = document.getElementById('qr-scanner-container');
+  const qrVideo = document.getElementById('qr-video');
+  const stopScanBtn = document.getElementById('stop-scan-btn');
+
+  // Variabile per lo scanner
+  let scanner = null;
+
+  // Gestione eventi
+  cancelBtn.addEventListener('click', () => {
+    if (scanner) scanner.stop();
+    modal.remove();
+  });
+  
+  confirmBtn.addEventListener('click', async () => {
+    const url = document.getElementById('manual-url').value.trim();
+    const title = document.getElementById('manual-title').value.trim() || "Senza titolo";
+    
+    if (!isValidUrl(url)) {
+      alert("Inserisci un URL valido (es. https://esempio.com)");
+      return;
+    }
+    
+    await saveLink(url, title);
+    if (scanner) scanner.stop();
+    modal.remove();
+  });
+
+  // Scanner QR Code con Instascan
+  qrBtn.addEventListener('click', async () => {
+    try {
+      // Nascondi pulsante e mostra scanner
+      qrContainer.style.display = 'block';
+      qrBtn.style.display = 'none';
+      
+      // Inizializza scanner
+      scanner = new Instascan.Scanner({
+        video: qrVideo,
+        mirror: false,
+        captureImage: false
       });
+      
+      scanner.addListener('scan', function(content) {
+        document.getElementById('manual-url').value = content;
+        scanner.stop();
+        qrContainer.style.display = 'none';
+        qrBtn.style.display = 'flex';
+      });
+      
+      // Avvia camera
+      const cameras = await Instascan.Camera.getCameras();
+      if (cameras.length > 0) {
+        await scanner.start(cameras.find(c => c.name.includes('back')) || cameras[0]);
+      } else {
+        throw new Error('Nessuna camera disponibile');
+      }
+      
     } catch (err) {
-      console.error("Errore nel salvataggio:", err);
+      console.error("Errore scanner:", err);
+      alert("Errore camera: " + (err.message || "Controlla i permessi"));
+      qrContainer.style.display = 'none';
+      qrBtn.style.display = 'flex';
+      if (scanner) scanner.stop();
     }
   });
 
+  // Pulsante stop scanner
+  stopScanBtn.addEventListener('click', () => {
+    if (scanner) scanner.stop();
+    qrContainer.style.display = 'none';
+    qrBtn.style.display = 'flex';
+  });
+}
+
+// ============================================
+// FUNZIONI CORE (rimangono identiche)
+// ============================================
+
+async function saveLink(url, title) {
+  return new Promise((resolve) => {
+    categorizeByLearnedKeywords(title, url, async (category) => {
+      const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+      
+      if (!visitedUrls.some(item => item.url === url)) {
+        visitedUrls.push({ 
+          url, 
+          title,
+          category, 
+          originalCategory: category 
+        });
+        
+        await storage.set({
+          visitedUrls,
+          lastAddedUrl: url,
+          highlightColor: "green"
+        });
+        
+        await loadUrls();
+      } else {
+        await storage.set({
+          lastAddedUrl: url,
+          highlightColor: "orange"
+        });
+      }
+      resolve();
+    });
+  });
+}
+
+async function saveCurrentTab() {
+  try {
+    const mockTab = {
+      url: window.location.href,
+      title: document.title || ""
+    };
+    await saveLink(mockTab.url, mockTab.title);
+  } catch (err) {
+    console.error("Errore salvataggio:", err);
+    alert("Errore durante il salvataggio");
+  }
+}
+
+function isValidUrl(string) {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+
+  
   // Caricamento iniziale
   await loadUrls();
 });
