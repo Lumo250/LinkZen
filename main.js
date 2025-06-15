@@ -725,7 +725,7 @@ async function loadUrls() {
     });
 
     const del = document.createElement("button");
-    del.textContent = "><";
+    del.textContent = "[x]";
     del.className = "delete-btn";
     del.addEventListener("click", async () => {
       const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
