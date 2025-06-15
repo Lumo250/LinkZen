@@ -561,44 +561,9 @@ dropdown.addEventListener("click", async (event) => {
 
 
 
-document.getElementById("save-btn").addEventListener("click", async function() {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  
-  if (!isIOS) {
-    try {
-      const mockTab = {
-        url: window.location.href,
-        title: document.title || ""
-      };
-      categorizeByLearnedKeywords(mockTab.title, mockTab.url, async (category, isIA) => {
-        const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-        const index = visitedUrls.findIndex(item => item.url === mockTab.url);
-        if (index === -1) {
-          visitedUrls.push({ 
-            url: mockTab.url, 
-            category, 
-            originalCategory: category, 
-            title: mockTab.title 
-          });
-          await storage.set({
-            visitedUrls,
-            lastAddedUrl: mockTab.url,
-            highlightColor: "green"
-          });
-        } else {
-          await storage.set({
-            lastAddedUrl: mockTab.url,
-            highlightColor: "orange"
-          });
-        }
-        await loadUrls();
-      });
-    } catch (err) {
-      console.error("Errore nel salvataggio:", err);
-    }
-    return;
-  }
 
+
+document.getElementById("save-btn").addEventListener("click", async function() {
   // Modal semplificato
   const modalHTML = `
   <div id="linkzen-save-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:1000;display:flex;justify-content:center;align-items:center;">
@@ -618,10 +583,11 @@ document.getElementById("save-btn").addEventListener("click", async function() {
       </div>
       
       <div id="camera-view" style="display:none;position:relative;">
+        <div style="color:white;text-align:center;margin-bottom:10px;">Inquadra un QR code</div>
         <video id="qr-video" style="width:100%;border-radius:8px;"></video>
         <div style="text-align:center;margin-top:10px;">
           <button id="close-camera-btn" style="padding:8px 16px;background:#FF3B30;color:white;border:none;border-radius:8px;">
-            <i class="fas fa-times"></i> Annulla
+            <i class="fas fa-times"></i> Chiudi
           </button>
         </div>
       </div>
@@ -645,56 +611,69 @@ document.getElementById("save-btn").addEventListener("click", async function() {
   const modal = document.getElementById('linkzen-save-modal');
   let scanner = null;
 
-  // Apertura fotocamera
-  document.getElementById('open-camera-btn').addEventListener('click', async () => {
-    document.getElementById('main-options').style.display = 'none';
-    const cameraView = document.getElementById('camera-view');
-    cameraView.style.display = 'block';
-    
-    try {
-      const videoElem = document.getElementById('qr-video');
-      scanner = new Instascan.Scanner({ video: videoElem, mirror: false });
-      
-      scanner.addListener('scan', function(content) {
-        try {
-          new URL(content);
-          document.getElementById('url-input').value = content;
-          scanner.stop();
-          showManualInput();
-        } catch(e) {
-          alert("Contenuto non valido: " + content);
-        }
-      });
-      
-      const cameras = await Instascan.Camera.getCameras();
-      if (cameras.length > 0) {
-        await scanner.start(cameras[0]);
-      } else {
-        alert("Fotocamera non disponibile");
-        showMainOptions();
-      }
-    } catch (err) {
-      console.error("Errore fotocamera:", err);
-      alert("Errore nell'accesso alla fotocamera");
-      showMainOptions();
+  // Mostra opzioni principali
+  function showMainOptions() {
+    if (scanner) {
+      scanner.stop();
+      scanner = null;
     }
-  });
+    document.getElementById('main-options').style.display = 'block';
+    document.getElementById('camera-view').style.display = 'none';
+    document.getElementById('manual-input-view').style.display = 'none';
+  }
 
-  // Chiusura fotocamera
-  document.getElementById('close-camera-btn').addEventListener('click', () => {
-    if (scanner) scanner.stop();
-    showMainOptions();
-  });
-
-  // Input manuale
-  document.getElementById('manual-entry-btn').addEventListener('click', showManualInput);
-  
-  function showManualInput() {
+  // Mostra input manuale
+  function showManualInput(url = '') {
     document.getElementById('main-options').style.display = 'none';
     document.getElementById('camera-view').style.display = 'none';
     document.getElementById('manual-input-view').style.display = 'block';
-    document.getElementById('url-input').focus();
+    const urlInput = document.getElementById('url-input');
+    urlInput.value = url;
+    urlInput.focus();
   }
+
+  // Apertura fotocamera (versione semplificata e funzionante)
+  document.getElementById('open-camera-btn').addEventListener('click', () => {
+    document.getElementById('main-options').style.display = 'none';
+    document.getElementById('camera-view').style.display = 'block';
+    
+    const videoElem = document.getElementById('qr-video');
+    scanner = new Instascan.Scanner({
+      video: videoElem,
+      mirror: false,
+      backgroundScan: false
+    });
+
+    scanner.addListener('scan', content => {
+      try {
+        new URL(content);
+        showManualInput(content);
+      } catch {
+        alert("QR code non valido. Deve contenere un URL completo (es: https://...)");
+      }
+    });
+
+    Instascan.Camera.getCameras()
+      .then(cameras => {
+        if (cameras.length > 0) {
+          // Su iOS usiamo la camera posteriore
+          const backCamera = cameras.find(c => c.name.includes('back')) || cameras[0];
+          return scanner.start(backCamera);
+        }
+        throw new Error('Nessuna fotocamera trovata');
+      })
+      .catch(err => {
+        console.error("Errore fotocamera:", err);
+        alert("Impossibile accedere alla fotocamera. Assicurati di aver concesso i permessi.");
+        showMainOptions();
+      });
+  });
+
+  // Chiudi fotocamera
+  document.getElementById('close-camera-btn').addEventListener('click', showMainOptions);
+
+  // Input manuale
+  document.getElementById('manual-entry-btn').addEventListener('click', () => showManualInput());
 
   // Annulla input
   document.getElementById('cancel-input-btn').addEventListener('click', showMainOptions);
@@ -705,7 +684,7 @@ document.getElementById("save-btn").addEventListener("click", async function() {
     const title = document.getElementById('title-input').value.trim() || url;
     
     try {
-      new URL(url);
+      new URL(url); // Validazione URL
       
       categorizeByLearnedKeywords(title, url, async (category, isIA) => {
         const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
@@ -716,43 +695,41 @@ document.getElementById("save-btn").addEventListener("click", async function() {
             lastAddedUrl: url,
             highlightColor: "green"
           });
-          modal.remove();
-          await loadUrls();
         } else {
           await storage.set({ lastAddedUrl: url, highlightColor: "orange" });
-          modal.remove();
-          await loadUrls();
         }
+        
+        modal.remove();
+        await loadUrls();
       });
-    } catch(e) {
-      alert("Inserisci un URL valido (inizia con http:// o https://)");
+    } catch {
+      alert("Inserisci un URL valido (deve iniziare con http:// o https://)");
     }
   });
 
-  // Bookmarklet
+  // Istruzioni bookmarklet
   document.getElementById('show-bookmarklet-btn').addEventListener('click', () => {
     modal.remove();
     setTimeout(() => {
-      alert(`ISTRUZIONI BOOKMARKLET:
-1. Apri la pagina da salvare
-2. Tocca il bookmarklet "Save to LinkZen"
-3. Torna a questa app
-
-Se non hai il bookmarklet:
-1. Apri Safari
-2. Tocca l'icona 'Condividi'
-3. Scorri e tocca 'Modifica Azioni'
-4. Aggiungi 'Save to LinkZen'`);
+      alert(`💡 COME USARE IL BOOKMARKLET:
+      
+1. Apri la pagina che vuoi salvare in Safari
+2. Tocca l'icona 'Condividi' (la casetta con freccia in su)
+3. Scorri verso il basso e tocca 'Modifica Azioni'
+4. Aggiungi 'Save to LinkZen' ai preferiti
+5. Ora puoi usarlo da qualsiasi pagina!`);
     }, 300);
   });
 
-  function showMainOptions() {
-    if (scanner) scanner.stop();
-    document.getElementById('main-options').style.display = 'block';
-    document.getElementById('camera-view').style.display = 'none';
-    document.getElementById('manual-input-view').style.display = 'none';
-  }
+  // Chiudi modal cliccando sullo sfondo
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      if (scanner) scanner.stop();
+      modal.remove();
+    }
+  });
 });
+
   
   
 // ============================================
