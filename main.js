@@ -455,16 +455,18 @@ document.addEventListener("click", (event) => {
 
   if (!input || !dropdown) return;
 
-  const isClickInsideInput = input.contains(event.target);
-  const isClickInsideDropdown = dropdown.contains(event.target);
-  const isDeleteButton = event.target.closest(".delete-category-btn");
-
-  // Se non hai cliccato in input, né nel dropdown, né su una X, nascondi
-  if (!isClickInsideInput && !isClickInsideDropdown && !isDeleteButton) {
-    dropdown.classList.add("hidden");
+  // Verifica se hai cliccato dentro l'input o dentro il dropdown
+  if (
+    input.contains(event.target) ||
+    dropdown.contains(event.target)
+  ) {
+    // Non fare nulla: il click è interno, quindi NON nascondere il dropdown
+    return;
   }
-});
 
+  // Se sei arrivato qui, il click è esterno: nascondi il dropdown
+  dropdown.classList.add("hidden");
+});
 
 
 
