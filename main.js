@@ -1134,90 +1134,42 @@ function showAlert(title, message, showCopyButton = false) {
 
 // ESEMPIO DI USO
 function showBookmarkletInstructions() {
-  // 1. Estrae dinamicamente l'URL COMPLETO attuale (funziona sempre)
-  const getCurrentAppUrl = () => {
-    const url = new URL(window.location.href);
-    // Rimuove parametri, hash e file specifici (index.html, etc.)
-    return `${url.origin}${url.pathname.replace(/(\/index\.html|\/?\?.*|\/#.*|\/[^\/]*$)/, '')}`;
-  };
+  // Estrae dinamicamente l'URL base senza alcun controllo ridondante
+  const currentUrl = window.location.origin + window.location.pathname
+    .replace(/(\/index\.html|\/?\?.*|\/#.*)$/, '')
+    .replace(/\/$/, '') + '/';
 
-  // 2. Bookmarklet autoadattativo (usa l'URL corrente)
+  // Genera il bookmarklet pulito
   const bookmarkletCode = `javascript:(function(){
-    const appUrl = '${getCurrentAppUrl()}';
-    if(!appUrl) {
-      alert('Error: Cannot detect LinkZen URL');
-      return;
-    }
-    window.open(appUrl + '?bookmarklet=1&title=' + 
-      encodeURIComponent(document.title) + '&url=' + 
-      encodeURIComponent(location.href), '_blank');
+    window.open('${currentUrl}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href),'_blank');
   })();`;
 
-  // 3. Stili grafici completi (con miglioramenti)
-  const alertContent = `
-    <div style="max-width:100%;font-size:15px">
-      <div style="margin-bottom:15px">
-        1. Copy this <strong>universal</strong> bookmarklet:
-      </div>
-      
-      <code style="
-        background: #2D3748;
-        padding: 12px;
-        border-radius: 8px;
-        color: #F7FAFC;
-        display: block;
-        margin: 15px 0;
-        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-        word-break: break-all;
-        border: 1px solid #4A5568;
-        user-select: all;
-        -webkit-user-select: all;
-        font-size: 14px;
-        line-height: 1.5;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      ">${bookmarkletCode}</code>
-
-      <div style="
-        background: #EFF6FF;
-        border-left: 4px solid #3B82F6;
-        padding: 12px;
-        margin: 20px 0;
-        border-radius: 0 8px 8px 0;
-      ">
-        <div style="
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          color: #1E40AF;
-          font-weight: 500;
-        ">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-            <polyline points="13 2 13 9 20 9"></polyline>
-          </svg>
-          <span>Works in ALL these cases:</span>
-        </div>
-        <ul style="
-          margin: 8px 0 0 0;
-          padding-left: 20px;
-          color: #1E3A8A;
-        ">
-          <li>Changing repository name</li>
-          <li>Moving to another GitHub account</li>
-          <li>Custom domain (mydomain.com)</li>
-          <li>Local development (localhost)</li>
-        </ul>
-      </div>
-
-      <div style="margin-top:25px">
-        2. Create bookmark → 3. Paste code → 4. Use anywhere
-      </div>
-    </div>
+  // Stile minimale ed efficace
+  const codeStyle = `
+    background: #2D3748;
+    padding: 12px;
+    border-radius: 8px;
+    color: #F7FAFC;
+    display: block;
+    margin: 15px 0;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    word-break: break-all;
+    border: 1px solid #4A5568;
+    user-select: all;
+    -webkit-user-select: all;
+    font-size: 14px;
+    line-height: 1.5;
   `;
 
-  showAlert("Universal Bookmarklet", alertContent, true);
+  // Messaggio essenziale
+  showAlert("Bookmarklet Instructions", `
+    <div style="font-size:15px">
+      1. Copy this code:<br><br>
+      <code style="${codeStyle}">${bookmarkletCode}</code><br>
+      2. Create bookmark → 3. Paste as URL → 4. Use anywhere
+    </div>
+  `, true);
 }
-  
   
 // ============================================
 // FUNZIONI CORE (rimangono identiche)
