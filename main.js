@@ -1134,78 +1134,35 @@ function showAlert(title, message, showCopyButton = false) {
 
 // ESEMPIO DI USO
 function showBookmarkletInstructions() {
-  // Estrae dinamicamente l'URL base in modo pulito
-  const appUrl = window.location.href.split(/[?#]/)[0].replace(/\/[^\/]*$/, '/');
+  // Estrae dinamicamente l'URL base senza alcun controllo superfluo
+  const currentUrl = window.location.href.split('?')[0].replace(/#.*$/, '').replace(/\/[^\/]*$/, '/');
 
-  // Genera il bookmarklet pulito senza controlli ridondanti
+  // Genera il bookmarklet pulito
   const bookmarkletCode = `javascript:(function(){
-    window.open('${appUrl}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href),'_blank');
+    window.open('${currentUrl}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href),'_blank');
   })();`;
 
-  // Stili ottimizzati per leggibilità ed eleganza
-  const alertContent = `
-    <div style="
-      max-width: 100%;
-      font-size: 15px;
-      color: #2D3748;
-      line-height: 1.5;
-    ">
-      <div style="margin-bottom: 16px; font-weight: 500;">
-        Copy this bookmarklet code:
-      </div>
-      
-      <code style="
-        background: #F7FAFC;
-        padding: 14px;
-        border-radius: 8px;
-        color: #1A202C;
-        display: block;
-        margin: 16px 0;
-        font-family: 'SF Mono', 'Roboto Mono', monospace;
-        word-break: break-all;
-        border: 1px solid #E2E8F0;
-        user-select: all;
-        -webkit-user-select: all;
-        font-size: 14px;
-        line-height: 1.5;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        white-space: pre-wrap;
-        position: relative;
-      ">
-        <span style="
-          position: absolute;
-          top: 0;
-          right: 0;
-          padding: 2px 8px;
-          background: #EDF2F7;
-          color: #718096;
-          font-size: 12px;
-          border-radius: 0 8px 0 4px;
-        ">click to copy</span>
-        ${bookmarkletCode}
-      </code>
-
-      <div style="
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        margin-top: 24px;
-        padding-top: 16px;
-        border-top: 1px solid #E2E8F0;
-        color: #4A5568;
-      ">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-        </svg>
-        <span style="font-size: 14px;">
-          Create bookmark → Paste into URL field
-        </span>
-      </div>
-    </div>
-  `;
-
-  showAlert("Save to LinkZen", alertContent, true);
+  // Mostra l'alert con lo stile originale
+  showAlert("How to Use Bookmarklet", `
+    1. Copy this code:<br><br>
+    <code style="
+      background:#4A5568;
+      padding:10px;
+      border-radius:6px;
+      color:#F7FAFC;
+      display:block;
+      margin:10px 0;
+      font-family:monospace;
+      word-break:break-all;
+      border:1px solid #718096;
+      user-select:all;
+      -webkit-user-select:all;
+    ">${bookmarkletCode}</code><br>
+    2. Create a new bookmark in Safari<br>
+    3. Paste as URL<br>
+    4. Use from any page by tapping the bookmark<br><br>
+    
+  `, true);
 }
   
 // ============================================
