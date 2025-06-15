@@ -636,10 +636,10 @@ function showSaveOptionsDialog() {
   });
 }
 
-// ==============================================
+
+  // ==============================================
 // 3. SCANNER QR CODE (VERSIONE COMPLETA PER IOS)
 // ==============================================
-
 async function scanQRCode() {
   // Carica la libreria jsQR se non è presente
   if (!window.jsQR) {
@@ -719,7 +719,7 @@ async function scanQRCode() {
               
               // 1. AGGIUNGI VIBRAZIONE
               if (navigator.vibrate) {
-                navigator.vibrate([100, 30, 100]); // Vibrazione breve
+                navigator.vibrate([100, 30, 100]);
               }
               
               // 2. AGGIUNGI FEEDBACK VISIVO
@@ -740,26 +740,27 @@ async function scanQRCode() {
               `;
               scannerDiv.appendChild(feedbackDiv);
 
-            // 3. VERIFICA SE È UN LINK VALIDO
-    const isUrl = isValidUrl(code.data);
+              // 3. VERIFICA SE È UN LINK VALIDO
+              const isUrl = isValidUrl(code.data);
               
-       // 4. CHIUDI DOPO UN BREVE RITARDO
-    setTimeout(() => {
-      stream.getTracks().forEach(track => track.stop());
-      document.body.removeChild(scannerDiv);
-      
-      if (isUrl) {
-        // Comportamento attuale per URL validi
-        resolve({ url: code.data, title: "Scanned QR Code" });
-      } else {
-        // Mostra il contenuto senza creare il link
-        showQRContentDialog(code.data);
-        resolve(null); // Non crea un nuovo link
-      }
-    }, 500);
-    return;
-  }
-            
+              // 4. CHIUDI DOPO UN BREVE RITARDO
+              setTimeout(() => {
+                stream.getTracks().forEach(track => track.stop());
+                document.body.removeChild(scannerDiv);
+                
+                if (isUrl) {
+                  // Comportamento attuale per URL validi
+                  resolve({ url: code.data, title: "Scanned QR Code" });
+                } else {
+                  // Mostra il contenuto senza creare il link
+                  showQRContentDialog(code.data);
+                  resolve(null); // Non crea un nuovo link
+                }
+              }, 500);
+              return;
+            }
+          }
+          
           if (scanActive) requestAnimationFrame(scanFrame);
         } catch (error) {
           console.error("Scan error:", error);
@@ -836,52 +837,53 @@ function showQRContentDialog(content) {
   });
 }
   
-  
-// ==============================================
-// 4. FUNZIONE DI SALVATAGGIO LINK (COMPLETA)
-// ==============================================
-async function processNewLink(url, title) {
-  if (!url) throw new Error("No URL provided");
-  
-  // Verifica se l'URL è valido
-  try {
-    new URL(url);
-  } catch {
-    throw new Error("Invalid URL format");
-  }
-  
-  const mockTab = { url, title: title || url };
-  const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-  
-  return new Promise((resolve) => {
-    categorizeByLearnedKeywords(mockTab.title, mockTab.url, async (category, isIA) => {
+ // ==============================================
+  // 4. FUNZIONE DI SALVATAGGIO LINK (VERSIONE MIGLIORATA)
+  // ==============================================
+  async function processNewLink(url, title) {
+    if (!url) throw new Error("No URL provided");
+    
+    if (!isValidUrl(url)) {
+      throw new Error("Invalid URL format");
+    }
+    
+    const mockTab = { url, title: title || url };
+    
+    try {
+      const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
       const existingIndex = visitedUrls.findIndex(item => item.url === mockTab.url);
       
-      if (existingIndex === -1) {
-        visitedUrls.push({
-          url: mockTab.url,
-          category,
-          originalCategory: category,
-          title: mockTab.title
+      return new Promise((resolve) => {
+        categorizeByLearnedKeywords(mockTab.title, mockTab.url, async (category, isIA) => {
+          if (existingIndex === -1) {
+            visitedUrls.push({
+              url: mockTab.url,
+              category,
+              originalCategory: category,
+              title: mockTab.title
+            });
+            
+            await storage.set({
+              visitedUrls,
+              lastAddedUrl: mockTab.url,
+              highlightColor: "green"
+            });
+          } else {
+            await storage.set({
+              lastAddedUrl: mockTab.url,
+              highlightColor: "orange"
+            });
+          }
+          
+          await loadUrls();
+          resolve();
         });
-        
-        await storage.set({
-          visitedUrls,
-          lastAddedUrl: mockTab.url,
-          highlightColor: "green"
-        });
-      } else {
-        await storage.set({
-          lastAddedUrl: mockTab.url,
-          highlightColor: "orange"
-        });
-      }
-      
-      await loadUrls();
-      resolve();
-    });
-  });
-}
+      });
+    } catch (error) {
+      console.error("Error saving link:", error);
+      throw error;
+    }
+  }
 
 // ==============================================
 // 5. FUNZIONI AUSILIARIE (COMPLETE)
@@ -1032,14 +1034,14 @@ async function saveCurrentTab() {
   }
 }
 
-function isValidUrl(string) {
-  try {
-    new URL(string);
-    return true;
-  } catch (_) {
-    return false;
+  function isValidUrl(string) {
+    try {
+      const url = new URL(string);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch (_) {
+      return false;
+    }
   }
-}
  
   // Caricamento iniziale
   await loadUrls();
