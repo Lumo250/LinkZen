@@ -1134,18 +1134,15 @@ function showAlert(title, message, showCopyButton = false) {
 
 // ESEMPIO DI USO
 function showBookmarkletInstructions() {
-  // Estrae dinamicamente l'URL base senza alcun controllo superfluo
   const currentUrl = window.location.href.split('?')[0].replace(/#.*$/, '').replace(/\/[^\/]*$/, '/');
-
-  // Genera il bookmarklet pulito
+  
   const bookmarkletCode = `javascript:(function(){
     window.open('${currentUrl}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href),'_blank');
   })();`;
 
-  // Mostra l'alert con lo stile originale
   showAlert("How to Use Bookmarklet", `
     1. Copy this code:<br><br>
-    <code style="
+    <code id="bookmarklet-code" style="
       background:#4A5568;
       padding:10px;
       border-radius:6px;
@@ -1157,11 +1154,28 @@ function showBookmarkletInstructions() {
       border:1px solid #718096;
       user-select:all;
       -webkit-user-select:all;
-    ">${bookmarkletCode}</code><br>
+    ">${bookmarkletCode}</code>
+    
+    <button onclick="
+      navigator.clipboard.writeText(document.getElementById('bookmarklet-code').innerText);
+      this.textContent = '✓ Copied!';
+      setTimeout(() => this.textContent = 'Copy Code', 2000);
+    " style="
+      padding:8px 16px;
+      background:#4CAF50;
+      color:white;
+      border:none;
+      border-radius:4px;
+      font-size:14px;
+      cursor:pointer;
+      margin-top:5px;
+    ">
+      Copy Code
+    </button><br>
+    
     2. Create a new bookmark in Safari<br>
     3. Paste as URL<br>
-    4. Use from any page by tapping the bookmark<br><br>
-    
+    4. Use from any page by tapping the bookmark
   `, true);
 }
   
