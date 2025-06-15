@@ -1,5 +1,5 @@
 // sw.js - Service Worker ottimizzato per LinkZen
-importScripts('https://cdn.jsdelivr.net/npm/webrtc-adapter@latest/dist/adapter.min.js');
+
 
 const CACHE_NAME = 'linkzen-v2.0';
 const DYNAMIC_CACHE_NAME = 'linkzen-dynamic-v2';
@@ -11,6 +11,18 @@ const ASSETS_TO_CACHE = [
   '/icon48.png',
   '/icon128.png'
 ];
+
+// Aggiungi questo al tuo service worker (sw.js)
+self.addEventListener('fetch', (event) => {
+  if (event.request.url.includes('BarcodeDetector-polyfill')) {
+    event.respondWith(
+      fetch(event.request).catch(() => new Response(''))
+    );
+  }
+});
+
+
+
 
 // Installazione: cache delle risorse statiche
 self.addEventListener('install', (event) => {
