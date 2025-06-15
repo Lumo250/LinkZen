@@ -1135,7 +1135,7 @@ function showAlert(title, message, showCopyButton = false) {
 // ESEMPIO DI USO
 function showBookmarkletInstructions() {
   const bookmarkletCode = `javascript:(function(){
-    window.location.href='${window.location.origin}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href);
+    window.open('${window.location.origin}/?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href),'_blank');
   })();`;
 
   showAlert("How to Use Bookmarklet", `
@@ -1149,13 +1149,17 @@ function showBookmarkletInstructions() {
       margin:10px 0;
       font-family:monospace;
       word-break:break-all;
-      border:1px solid #718096
+      border:1px solid #718096;
+      user-select:all;
+      -webkit-user-select:all;
     ">${bookmarkletCode}</code><br>
     2. Create a new bookmark in Safari<br>
     3. Paste as URL<br>
-    4. Use from any page by tapping the bookmark
+    4. Use from any page by tapping the bookmark<br><br>
+    <small><em>Note: Make sure LinkZen is installed as PWA for best results</em></small>
   `, true);
 }
+  
   
 // ============================================
 // FUNZIONI CORE (rimangono identiche)
