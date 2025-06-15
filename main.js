@@ -428,11 +428,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     reader.readAsText(file);
   });
 
- // Categorie - Versione migliorata
+// Categorie - Versione con ><
 const input = document.getElementById("new-category-input");
 const dropdown = document.getElementById("dropdown-category-list");
 
-// Funzione per caricare le categorie nel dropdown
 async function loadDropdownCategories() {
   const { userCategories = [] } = await storage.get({ userCategories: [] });
   dropdown.innerHTML = "";
@@ -443,7 +442,7 @@ async function loadDropdownCategories() {
     row.textContent = cat;
 
     const remove = document.createElement("span");
-    remove.textContent = "><";
+    remove.textContent = "><";  // Qui il cambiamento
     remove.className = "remove";
     remove.style.marginLeft = "6px";
     remove.style.cursor = "pointer";
@@ -454,7 +453,6 @@ async function loadDropdownCategories() {
   });
 }
 
-// Aggiungi nuova categoria
 document.getElementById("add-category-btn").addEventListener("click", async () => {
   const newCategory = input.value.trim();
   if (!newCategory) return;
@@ -463,17 +461,15 @@ document.getElementById("add-category-btn").addEventListener("click", async () =
     const updated = [...userCategories, newCategory];
     await storage.set({ userCategories: updated });
     input.value = "";
-    await loadDropdownCategories(); // Aggiorna solo il dropdown
+    await loadDropdownCategories();
   }
 });
 
-// Mostra dropdown al focus
 input.addEventListener("focus", async () => {
   dropdown.classList.remove("hidden");
   await loadDropdownCategories();
 });
 
-// Gestione click esterno (chiusura dropdown)
 document.addEventListener("click", (event) => {
   if (!input || !dropdown) return;
 
@@ -482,20 +478,19 @@ document.addEventListener("click", (event) => {
 
   if (input.contains(event.target) || 
       (dropdown.contains(event.target) && !isRemoveButton)) {
-    return; // Non chiudere se click interno (tranne che sulle x)
+    return;
   }
   dropdown.classList.add("hidden");
 });
 
-// Gestione cancellazione categoria
 dropdown.addEventListener("click", async (event) => {
   const removeBtn = event.target.closest(".remove");
   if (!removeBtn) return;
   
-  event.stopPropagation(); // Impedisce la chiusura del dropdown
+  event.stopPropagation();
   
   const catRow = removeBtn.closest(".dropdown-item");
-  const cat = catRow.textContent.replace("x", "").trim();
+  const cat = catRow.textContent.replace("><", "").trim();  // Qui il cambiamento
   
   const { userCategories = [], visitedUrls = [] } = await storage.get({ 
     userCategories: [], 
@@ -518,7 +513,7 @@ dropdown.addEventListener("click", async (event) => {
     visitedUrls: updatedUrls
   });
   
-  await loadDropdownCategories(); // Aggiorna la lista
+  await loadDropdownCategories();
 });
 
     
