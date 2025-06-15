@@ -785,7 +785,57 @@ async function scanQRCode() {
   }
 }
 
-
+// ==============================================
+// FUNZIONE PER MOSTRARE CONTENUTI NON-URL
+// ==============================================
+function showQRContentDialog(content) {
+  const dialog = document.createElement("div");
+  dialog.style.position = "fixed";
+  dialog.style.top = "0";
+  dialog.style.left = "0";
+  dialog.style.right = "0";
+  dialog.style.bottom = "0";
+  dialog.style.backgroundColor = "rgba(0,0,0,0.8)";
+  dialog.style.zIndex = "1000";
+  dialog.style.display = "flex";
+  dialog.style.justifyContent = "center";
+  dialog.style.alignItems = "center";
+  dialog.style.padding = "20px";
+  
+  dialog.innerHTML = `
+    <div style="background:white;padding:20px;border-radius:8px;width:100%;max-width:400px;max-height:80vh;overflow:auto">
+      <h3 style="margin-top:0">QR Code Content</h3>
+      <div style="padding:10px;background:#f5f5f5;border-radius:4px;word-break:break-all">${content}</div>
+      <button id="copy-content-btn" style="margin-top:10px;padding:8px 12px;background:#4CAF50;color:white;border:none;border-radius:4px">
+        Copy to Clipboard
+      </button>
+      <button style="margin-top:10px;padding:8px 12px;background:#2196F3;color:white;border:none;border-radius:4px;width:100%">
+        Close
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(dialog);
+  
+  // Aggiungi funzionalità di copia
+  dialog.querySelector("#copy-content-btn").addEventListener("click", () => {
+    navigator.clipboard.writeText(content).then(() => {
+      const btn = dialog.querySelector("#copy-content-btn");
+      btn.textContent = "Copied!";
+      btn.style.backgroundColor = "#388E3C";
+      setTimeout(() => {
+        btn.textContent = "Copy to Clipboard";
+        btn.style.backgroundColor = "#4CAF50";
+      }, 2000);
+    });
+  });
+  
+  // Chiudi al click
+  dialog.querySelector("button:not(#copy-content-btn)").addEventListener("click", () => {
+    document.body.removeChild(dialog);
+  });
+}
+  
   
 // ==============================================
 // 4. FUNZIONE DI SALVATAGGIO LINK (COMPLETA)
@@ -990,40 +1040,7 @@ function isValidUrl(string) {
     return false;
   }
 }
-
-// NUOVA FUNZIONE PER MOSTRARE CONTENUTI NON-URL
-function showQRContentDialog(content) {
-  const dialog = document.createElement("div");
-  dialog.style.position = "fixed";
-  dialog.style.top = "0";
-  dialog.style.left = "0";
-  dialog.style.right = "0";
-  dialog.style.bottom = "0";
-  dialog.style.backgroundColor = "rgba(0,0,0,0.8)";
-  dialog.style.zIndex = "1000";
-  dialog.style.display = "flex";
-  dialog.style.justifyContent = "center";
-  dialog.style.alignItems = "center";
-  dialog.style.padding = "20px";
-  
-  dialog.innerHTML = `
-    <div style="background:white;padding:20px;border-radius:8px;width:100%;max-width:400px;max-height:80vh;overflow:auto">
-      <h3 style="margin-top:0">QR Code Content</h3>
-      <div style="padding:10px;background:#f5f5f5;border-radius:4px;word-break:break-all">${content}</div>
-      <button style="margin-top:20px;padding:10px 15px;background:#2196F3;color:white;border:none;border-radius:4px;width:100%">
-        Close
-      </button>
-    </div>
-  `;
-  
-  document.body.appendChild(dialog);
-  
-  // Chiudi al click
-  dialog.querySelector("button").addEventListener("click", () => {
-    document.body.removeChild(dialog);
-  });
-}
-  
+ 
   // Caricamento iniziale
   await loadUrls();
 });
