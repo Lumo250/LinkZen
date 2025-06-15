@@ -639,6 +639,7 @@ function showSaveOptionsDialog() {
 // ==============================================
 // 3. SCANNER QR CODE (VERSIONE COMPLETA PER IOS)
 // ==============================================
+
 async function scanQRCode() {
   // Carica la libreria jsQR se non è presente
   if (!window.jsQR) {
@@ -715,9 +716,36 @@ async function scanQRCode() {
             
             if (code) {
               scanActive = false;
-              stream.getTracks().forEach(track => track.stop());
-              document.body.removeChild(scannerDiv);
-              resolve({ url: code.data, title: "Scanned QR Code" });
+              
+              // 1. AGGIUNGI VIBRAZIONE
+              if (navigator.vibrate) {
+                navigator.vibrate([100, 30, 100]); // Vibrazione breve
+              }
+              
+              // 2. AGGIUNGI FEEDBACK VISIVO
+              const feedbackDiv = document.createElement('div');
+              feedbackDiv.style.position = 'absolute';
+              feedbackDiv.style.top = '0';
+              feedbackDiv.style.left = '0';
+              feedbackDiv.style.width = '100%';
+              feedbackDiv.style.height = '100%';
+              feedbackDiv.style.backgroundColor = 'rgba(76, 175, 80, 0.5)';
+              feedbackDiv.style.display = 'flex';
+              feedbackDiv.style.justifyContent = 'center';
+              feedbackDiv.style.alignItems = 'center';
+              feedbackDiv.innerHTML = `
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+              `;
+              scannerDiv.appendChild(feedbackDiv);
+              
+              // 3. CHIUDI DOPO UN BREVE RITARDO
+              setTimeout(() => {
+                stream.getTracks().forEach(track => track.stop());
+                document.body.removeChild(scannerDiv);
+                resolve({ url: code.data, title: "Scanned QR Code" });
+              }, 500);
               return;
             }
           }
@@ -747,6 +775,8 @@ async function scanQRCode() {
   }
 }
 
+
+  
 // ==============================================
 // 4. FUNZIONE DI SALVATAGGIO LINK (COMPLETA)
 // ==============================================
