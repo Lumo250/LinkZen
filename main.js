@@ -1005,10 +1005,21 @@ async function showManualInputDialog() {
 
 
 
-  function showAlert(title, message, showCopyButton = false) {
+function showAlert(title, message, showCopyButton = false) {
   const alertDiv = document.createElement("div");
+  const overlay = document.createElement("div");
   
-  // Stile del contenitore principale (mantenuto uguale ma aggiunto transition per eventuali hover)
+  // Creazione overlay semi-trasparente
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.right = "0";
+  overlay.style.bottom = "0";
+  overlay.style.backgroundColor = "rgba(0,0,0,0.5)";
+  overlay.style.zIndex = "1000";
+  overlay.style.backdropFilter = "blur(2px)";
+  
+  // Stile del contenitore principale (come prima)
   alertDiv.style.position = "fixed";
   alertDiv.style.top = "20px";
   alertDiv.style.left = "50%";
@@ -1023,7 +1034,6 @@ async function showManualInputDialog() {
   alertDiv.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
   alertDiv.style.border = "1px solid #4A5568";
   alertDiv.style.fontFamily = "system-ui, -apple-system, sans-serif";
-  alertDiv.style.transition = "all 0.2s ease";
 
   // Pulsante di chiusura (X in alto a destra)
   const closeButton = document.createElement("button");
@@ -1038,30 +1048,22 @@ async function showManualInputDialog() {
   closeButton.style.cursor = "pointer";
   closeButton.style.padding = "0 8px";
   closeButton.style.lineHeight = "1";
-  
-  // Aggiungi effetto hover al pulsante di chiusura
-  closeButton.addEventListener("mouseenter", () => {
-    closeButton.style.color = "#FFFFFF";
-    closeButton.style.transform = "scale(1.2)";
-  });
-  closeButton.addEventListener("mouseleave", () => {
-    closeButton.style.color = "#E2E8F0";
-    closeButton.style.transform = "scale(1)";
-  });
 
-  // Contenuto interno (modificato per lasciare spazio ai pulsanti)
+  // Contenuto interno
   alertDiv.innerHTML = `
     <h4 style="margin:0 25px 12px 0; font-size:18px; color:#FFFFFF; font-weight:600">${title}</h4>
     <div style="font-size:15px; line-height:1.5; color:#E2E8F0">${message}</div>
   `;
 
-  // Aggiungi pulsante di chiusura
-  alertDiv.appendChild(closeButton);
-
   // Aggiungi pulsante copia se richiesto
   if (showCopyButton) {
     const copyButton = document.createElement("button");
-    copyButton.textContent = "Copy";
+    copyButton.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:5px">
+        <path d="M8 17.929H6c-1.105 0-2-.912-2-2.036V5.036C4 3.91 4.895 3 6 3h8c1.105 0 2 .911 2 2.036v1.866m-6 .17h8c1.105 0 2 .91 2 2.035v10.857C20 21.09 19.105 22 18 22h-8c-1.105 0-2-.911-2-2.036V9.107c0-1.124.895-2.036 2-2.036z"/>
+      </svg>
+      Copy
+    `;
     copyButton.style.marginTop = "15px";
     copyButton.style.padding = "6px 12px";
     copyButton.style.background = "#4A5568";
@@ -1069,44 +1071,22 @@ async function showManualInputDialog() {
     copyButton.style.border = "none";
     copyButton.style.borderRadius = "4px";
     copyButton.style.cursor = "pointer";
-    copyButton.style.transition = "all 0.2s ease";
-    copyButton.style.display = "flex";
-    copyButton.style.alignItems = "center";
-    copyButton.style.gap = "5px";
-    copyButton.style.marginLeft = "auto";
-
-    // Icona di copia (SVG inline)
-    copyButton.innerHTML = `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M8 17.929H6c-1.105 0-2-.912-2-2.036V5.036C4 3.91 4.895 3 6 3h8c1.105 0 2 .911 2 2.036v1.866m-6 .17h8c1.105 0 2 .91 2 2.035v10.857C20 21.09 19.105 22 18 22h-8c-1.105 0-2-.911-2-2.036V9.107c0-1.124.895-2.036 2-2.036z"/>
-      </svg>
-      Copy
-    `;
-
-    // Effetto hover per il pulsante copia
-    copyButton.addEventListener("mouseenter", () => {
-      copyButton.style.background = "#718096";
-    });
-    copyButton.addEventListener("mouseleave", () => {
-      copyButton.style.background = "#4A5568";
-    });
-
-    copyButton.addEventListener("click", () => {
-      // Rimuove i tag HTML prima di copiare
+    
+    copyButton.addEventListener("click", (e) => {
+      e.stopPropagation(); // Previene la chiusura quando si clicca Copia
       const textToCopy = message.replace(/<[^>]*>?/gm, '');
       navigator.clipboard.writeText(textToCopy)
         .then(() => {
           copyButton.innerHTML = `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:5px">
               <path d="M20 6L9 17l-5-5"/>
             </svg>
             Copied!
           `;
           copyButton.style.background = "#38A169";
-          
           setTimeout(() => {
             copyButton.innerHTML = `
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:5px">
                 <path d="M8 17.929H6c-1.105 0-2-.912-2-2.036V5.036C4 3.91 4.895 3 6 3h8c1.105 0 2 .911 2 2.036v1.866m-6 .17h8c1.105 0 2 .91 2 2.035v10.857C20 21.09 19.105 22 18 22h-8c-1.105 0-2-.911-2-2.036V9.107c0-1.124.895-2.036 2-2.036z"/>
               </svg>
               Copy
@@ -1115,25 +1095,44 @@ async function showManualInputDialog() {
           }, 2000);
         });
     });
-
-    // Contenitore per il pulsante copia (allineato a destra)
+    
     const buttonContainer = document.createElement("div");
     buttonContainer.style.display = "flex";
     buttonContainer.style.justifyContent = "flex-end";
     buttonContainer.appendChild(copyButton);
-    
     alertDiv.querySelector("div").appendChild(buttonContainer);
   }
 
-  // Gestione chiusura
-  closeButton.addEventListener("click", () => {
+  // Funzione di chiusura
+  const closeAlert = () => {
+    document.body.removeChild(overlay);
     document.body.removeChild(alertDiv);
+  };
+
+  // Gestione chiusura
+  closeButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeAlert();
   });
 
+  // Chiudi quando si clicca sull'overlay (fuori dall'alert)
+  overlay.addEventListener("click", closeAlert);
+  
+  // Previeni la chiusura quando si clicca sull'alert stesso
+  alertDiv.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
+
+  // Aggiungi elementi al DOM
+  document.body.appendChild(overlay);
+  alertDiv.appendChild(closeButton);
   document.body.appendChild(alertDiv);
+
+  // Ritorna funzione di chiusura per controllo esterno
+  return closeAlert;
 }
 
-// ESEMPIO DI USO (come nello snippet originale)
+// ESEMPIO DI USO
 function showBookmarkletInstructions() {
   const bookmarkletCode = `javascript:(function(){
     window.location.href='${window.location.origin}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href);
@@ -1155,9 +1154,8 @@ function showBookmarkletInstructions() {
     2. Create a new bookmark in Safari<br>
     3. Paste as URL<br>
     4. Use from any page by tapping the bookmark
-  `, true); // Abilita il pulsante Copy
+  `, true);
 }
-  
   
 // ============================================
 // FUNZIONI CORE (rimangono identiche)
