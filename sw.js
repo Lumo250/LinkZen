@@ -1,4 +1,6 @@
 // sw.js - Service Worker ottimizzato per LinkZen
+importScripts('https://cdn.jsdelivr.net/npm/webrtc-adapter@latest/dist/adapter.min.js');
+
 const CACHE_NAME = 'linkzen-v2.0';
 const DYNAMIC_CACHE_NAME = 'linkzen-dynamic-v2';
 const ASSETS_TO_CACHE = [
