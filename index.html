@@ -338,24 +338,25 @@ body {
       color: gray;
     }
 
-    .delete-btn {
-      background-color: none; 
-      color: red;
-      border: none;
-      padding: 1px 3px;
-     min-width: 14px;    /* ▲ Larghezza minima garantita */
-     min-height: 14px;   /* ▲ Altezza minima garantita */
-     font-size: 14px;    /* ▼ Dimensione originale del testo */
-     line-height: 14px;  /* ▼ Allineamento verticale */
-     align-items: center;
-     justify-content: center;
-      /* font-weight: bold; /* Testo in grassetto */
-      cursor: pointer;
-    
-      flex-shrink: 0; 
-      margin-right: 6px;
-    }
-
+.delete-btn {
+  background-color: transparent; /* Sostituisce 'none' che non è valido */
+  color: red;
+  border: none;
+  padding: 0; /* Ridotto da 1px 3px per meno spazio attorno */
+  min-width: 14px;
+  min-height: 14px;
+  font-size: 14px;
+  line-height: 14px;
+  display: inline-flex; /* Aggiunto per meglio gestire allineamento */
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-right: 6px;
+  /* Rimuovi eventuali ombre/effetti se presenti */
+  box-shadow: none;
+  text-shadow: none;
+}
     
 
     
