@@ -1093,12 +1093,32 @@ function showAlert(title, message, showCopyButton = false) {
 
 // ESEMPIO DI USO
 function showBookmarkletInstructions() {
-  const currentUrl = window.location.href.split('?')[0].replace(/#.*$/, '').replace(/\/[^\/]*$/, '/');
+//  const currentUrl = window.location.href.split('?')[0].replace(/#.*$/, '').replace(/\/[^\/]*$/, '/');
   
-  const bookmarkletCode = `javascript:(function(){
-    window.open('${currentUrl}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href),'_blank');
+//  const bookmarkletCode = `javascript:(function(){
+//    window.open('${currentUrl}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href),'_blank');
+//  })();`;
+
+ // 1. Genera l'URL base in modo dinamico e sicuro
+  const getBaseUrl = () => {
+    const url = new URL(window.location.href);
+    return `${url.origin}${url.pathname.split('/').slice(0, 2).join('/')}/`;
+  };
+
+  // 2. Crea il bookmarklet con la sintassi che funziona
+  const rawBookmarklet = `javascript:(function(){
+    var titolo=encodeURIComponent(document.title);
+    var url=encodeURIComponent(window.location.href);
+    window.location.href='${getBaseUrl()}?bookmarklet&titolo='+titolo+'&url='+url;
   })();`;
 
+  // 3. Codifica correttamente per l'uso in HTML
+  const bookmarkletCode = rawBookmarklet
+    .replace(/ /g, '%20')
+    .replace(/'/g, '%27')
+    .replace(/"/g, '%22');
+
+    // 4. Mostra la finestra con pulsante di copia
   showAlert("How to Use Bookmarklet", `
     1. Copy this code:<br><br>
     <code id="bookmarklet-code" style="
