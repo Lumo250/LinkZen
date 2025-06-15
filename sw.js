@@ -12,15 +12,15 @@ const ASSETS_TO_CACHE = [
   '/icon128.png'
 ];
 
-// Aggiungi questo al tuo service worker (sw.js)
 self.addEventListener('fetch', (event) => {
-  if (event.request.url.includes('BarcodeDetector-polyfill')) {
+  if (event.request.url.includes('jsQR')) {
     event.respondWith(
-      fetch(event.request).catch(() => new Response(''))
+      caches.match(event.request).then(response => {
+        return response || fetch(event.request);
+      })
     );
   }
 });
-
 
 
 
