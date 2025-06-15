@@ -1156,11 +1156,7 @@ function showBookmarkletInstructions() {
       -webkit-user-select:all;
     ">${bookmarkletCode}</code>
     
-    <button onclick="
-      navigator.clipboard.writeText(document.getElementById('bookmarklet-code').innerText);
-      this.textContent = '✓ Copied!';
-      setTimeout(() => this.textContent = 'Copy Code', 2000);
-    " style="
+    <button onclick="copyBookmarklet()" style="
       padding:8px 16px;
       background:#4CAF50;
       color:white;
@@ -1169,6 +1165,7 @@ function showBookmarkletInstructions() {
       font-size:14px;
       cursor:pointer;
       margin-top:5px;
+      width:100%;
     ">
       Copy Code
     </button><br>
@@ -1177,6 +1174,20 @@ function showBookmarkletInstructions() {
     3. Paste as URL<br>
     4. Use from any page by tapping the bookmark
   `, true);
+
+  // Funzione dedicata per la copia
+  function copyBookmarklet() {
+    const code = document.getElementById('bookmarklet-code').textContent;
+    navigator.clipboard.writeText(code.trim()).then(() => {
+      const btn = document.querySelector('#bookmarklet-code + button');
+      btn.textContent = '✓ Copied!';
+      btn.style.backgroundColor = '#388E3C';
+      setTimeout(() => {
+        btn.textContent = 'Copy Code';
+        btn.style.backgroundColor = '#4CAF50';
+      }, 2000);
+    });
+  }
 }
   
 // ============================================
