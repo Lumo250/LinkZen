@@ -342,23 +342,37 @@ body {
     }
 
 .delete-btn {
-  background-color: transparent; /* Sostituisce 'none' che non è valido */
-  color: orange;
+  background-color: transparent;
+  color: orange; /* Colore base (verrà sovrascritto dalle regole dark/light) */
   border: none;
-  padding: 0; /* Ridotto da 1px 3px per meno spazio attorno */
+  padding: 0;
   min-width: 14px;
   min-height: 14px;
   font-size: 14px;
   line-height: 14px;
-  display: inline-flex; /* Aggiunto per meglio gestire allineamento */
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
   margin-right: 6px;
-  /* Rimuovi eventuali ombre/effetti se presenti */
   box-shadow: none;
   text-shadow: none;
+}
+
+/* Modalità light - testo nero */
+body:not(.dark) .delete-btn {
+  color: black;
+}
+
+/* Modalità dark - testo bianco */
+body.dark .delete-btn {
+  color: white;
+}
+
+/* Manteniamo orange come colore hover per entrambe le modalità */
+.delete-btn:hover {
+  color: orange;
 }
     
 
