@@ -633,45 +633,79 @@ document.getElementById("save-btn").addEventListener("click", async function() {
   }
 
   // Apertura fotocamera (versione semplificata e funzionante)
-  document.getElementById('open-camera-btn').addEventListener('click', () => {
-    document.getElementById('main-options').style.display = 'none';
-    document.getElementById('camera-view').style.display = 'block';
+
+
+document.getElementById("open-camera-btn").addEventListener("click", async () => {
+  document.getElementById("main-options").style.display = "none";
+  const cameraView = document.getElementById("camera-view");
+  cameraView.style.display = "block";
+  
+  // 1. Verifica i permessi
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "environment", // Forza camera posteriore
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    });
     
-    const videoElem = document.getElementById('qr-video');
-    scanner = new Instascan.Scanner({
+    // 2. Configura video
+    const videoElem = document.getElementById("qr-video");
+    videoElem.srcObject = stream;
+    videoElem.playsInline = true;
+    
+    // 3. Avvia scanner QR
+    const scanner = new Instascan.Scanner({
       video: videoElem,
       mirror: false,
+      scanPeriod: 5,
       backgroundScan: false
     });
-
-    scanner.addListener('scan', content => {
+    
+    scanner.addListener("scan", content => {
       try {
-        new URL(content);
+        new URL(content); // Validazione URL
         showManualInput(content);
+        stream.getTracks().forEach(track => track.stop());
       } catch {
-        alert("QR code non valido. Deve contenere un URL completo (es: https://...)");
+        alert("QR non valido. Deve contenere un URL completo (es. https://...)");
       }
     });
-
+    
+    // 4. Avvia scansione
     Instascan.Camera.getCameras()
       .then(cameras => {
         if (cameras.length > 0) {
-          // Su iOS usiamo la camera posteriore
-          const backCamera = cameras.find(c => c.name.includes('back')) || cameras[0];
+          const backCamera = cameras.find(c => c.name.includes("back")) || cameras[0];
           return scanner.start(backCamera);
         }
-        throw new Error('Nessuna fotocamera trovata');
+        throw new Error("Nessuna fotocamera trovata");
       })
       .catch(err => {
-        console.error("Errore fotocamera:", err);
-        alert("Impossibile accedere alla fotocamera. Assicurati di aver concesso i permessi.");
+        console.error("Errore camera:", err);
+        alert(`Impossibile accedere alla fotocamera: ${err.message}`);
         showMainOptions();
+        if (stream) stream.getTracks().forEach(track => track.stop());
       });
-  });
+      
+    // 5. Gestione chiusura
+    document.getElementById("close-camera-btn").onclick = () => {
+      scanner.stop();
+      stream.getTracks().forEach(track => track.stop());
+      showMainOptions();
+    };
+    
+  } catch (err) {
+    console.error("Errore permessi camera:", err);
+    alert("Devi concedere i permessi per la fotocamera. Ricarica la pagina e riprova.");
+    showMainOptions();
+  }
+});
 
-  // Chiudi fotocamera
-  document.getElementById('close-camera-btn').addEventListener('click', showMainOptions);
 
+  
   // Input manuale
   document.getElementById('manual-entry-btn').addEventListener('click', () => showManualInput());
 
