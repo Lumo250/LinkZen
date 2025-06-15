@@ -560,164 +560,184 @@ dropdown.addEventListener("click", async (event) => {
   });
 
 
-document.getElementById("save-btn").addEventListener("click", async () => {
-  const modal = document.createElement("div");
-  modal.style.position = "fixed";
-  modal.style.top = "0";
-  modal.style.left = "0";
-  modal.style.right = "0";
-  modal.style.bottom = "0";
-  modal.style.backgroundColor = "rgba(0,0,0,0.8)";
-  modal.style.zIndex = "1000";
-  modal.style.display = "flex";
-  modal.style.flexDirection = "column";
-  modal.style.alignItems = "center";
-  modal.style.justifyContent = "center";
-  modal.style.padding = "20px";
-
-  const closeModal = () => document.body.removeChild(modal);
+// Nuova funzione Save (sostituisci completamente il blocco esistente)
+document.getElementById("save-btn").addEventListener("click", async function() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   
-  modal.innerHTML = `
-    <div style="background:#fff;padding:20px;border-radius:10px;width:100%;max-width:400px;">
-      <h3 style="margin-top:0;">Add New Link</h3>
-      <input type="text" id="manual-url-input" placeholder="Paste URL here" 
-             style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:5px;">
-      <input type="text" id="manual-title-input" placeholder="Title (optional)" 
-             style="width:100%;padding:10px;margin-bottom:15px;border:1px solid #ccc;border-radius:5px;">
-      <button id="scan-qr-btn" style="width:100%;padding:10px;background:#4CAF50;color:white;border:none;border-radius:5px;margin-bottom:10px;">
-        Scan QR Code
-      </button>
-      <div style="display:flex;gap:10px;">
-        <button id="confirm-save-btn" style="flex:1;padding:10px;background:#2196F3;color:white;border:none;border-radius:5px;">
-          Save
-        </button>
-        <button id="cancel-btn" style="flex:1;padding:10px;background:#f44336;color:white;border:none;border-radius:5px;">
-          Cancel
-        </button>
+  if (!isIOS) {
+    try {
+      const mockTab = {
+        url: window.location.href,
+        title: document.title || ""
+      };
+      categorizeByLearnedKeywords(mockTab.title, mockTab.url, async (category, isIA) => {
+        const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+        const index = visitedUrls.findIndex(item => item.url === mockTab.url);
+        if (index === -1) {
+          visitedUrls.push({ 
+            url: mockTab.url, 
+            category, 
+            originalCategory: category, 
+            title: mockTab.title 
+          });
+          await storage.set({
+            visitedUrls,
+            lastAddedUrl: mockTab.url,
+            highlightColor: "green"
+          });
+        } else {
+          await storage.set({
+            lastAddedUrl: mockTab.url,
+            highlightColor: "orange"
+          });
+        }
+        await loadUrls();
+      });
+    } catch (err) {
+      console.error("Errore nel salvataggio:", err);
+    }
+    return;
+  }
+
+  // Modal per iOS
+  const modalHTML = `
+    <div id="linkzen-save-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;">
+      <div style="background:#2c2c2c;padding:20px;border-radius:10px;max-width:90%;width:400px;">
+        <h2 style="margin-top:0;">Aggiungi Link</h2>
+        <div style="display:flex;gap:10px;margin-bottom:15px;">
+          <button id="manual-input-btn" style="flex:1;padding:10px;background:#4CAF50;color:white;border:none;border-radius:5px;">
+            <i class="fas fa-keyboard"></i> Manuale
+          </button>
+          <button id="scan-qr-btn" style="flex:1;padding:10px;background:#2196F3;color:white;border:none;border-radius:5px;">
+            <i class="fas fa-qrcode"></i> Scansiona
+          </button>
+        </div>
+        <div id="input-container" style="display:none;">
+          <input type="text" id="manual-url-input" placeholder="Incolla URL qui" style="width:100%;padding:10px;margin-bottom:10px;border-radius:5px;border:none;">
+          <input type="text" id="manual-title-input" placeholder="Titolo (opzionale)" style="width:100%;padding:10px;margin-bottom:10px;border-radius:5px;border:none;">
+          <div style="display:flex;gap:10px;">
+            <button id="cancel-input-btn" style="flex:1;padding:10px;background:#f44336;color:white;border:none;border-radius:5px;">Annulla</button>
+            <button id="confirm-save-btn" style="flex:1;padding:10px;background:#4CAF50;color:white;border:none;border-radius:5px;">Salva</button>
+          </div>
+        </div>
+        <div id="scanner-container" style="display:none;position:relative;">
+          <video id="qr-scanner" style="width:100%;border-radius:5px;"></video>
+          <button id="cancel-scan-btn" style="position:absolute;top:10px;right:10px;padding:5px 10px;background:#f44336;color:white;border:none;border-radius:5px;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div style="margin-top:15px;text-align:center;">
+          <button id="use-bookmarklet-btn" style="padding:10px;background:#9C27B0;color:white;border:none;border-radius:5px;width:100%;">
+            <i class="fas fa-bookmark"></i> Usa Bookmarklet
+          </button>
+        </div>
       </div>
     </div>
   `;
 
-  document.body.appendChild(modal);
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  const modal = document.getElementById('linkzen-save-modal');
 
-  // QR Scanner usando la libreria lightweight Instascan (compatibile con iOS 15)
-  const script = document.createElement("script");
-  script.src = "https://rawgit.com/schmich/instascan-builds/master/instascan.min.js";
-  document.head.appendChild(script);
+  // Gestione input manuale
+  document.getElementById('manual-input-btn').addEventListener('click', () => {
+    document.getElementById('input-container').style.display = 'block';
+    document.getElementById('scanner-container').style.display = 'none';
+    document.getElementById('manual-url-input').focus();
+  });
 
-  document.getElementById("cancel-btn").addEventListener("click", closeModal);
-
-  document.getElementById("confirm-save-btn").addEventListener("click", async () => {
-    const urlInput = document.getElementById("manual-url-input").value.trim();
-    const titleInput = document.getElementById("manual-title-input").value.trim();
+  // Gestione scan QR
+  document.getElementById('scan-qr-btn').addEventListener('click', () => {
+    document.getElementById('input-container').style.display = 'none';
+    const scannerContainer = document.getElementById('scanner-container');
+    scannerContainer.style.display = 'block';
     
-    if (!urlInput) {
-      alert("Please enter a valid URL");
-      return;
-    }
+    const scanner = new Instascan.Scanner({
+      video: document.getElementById('qr-scanner'),
+      mirror: false
+    });
+    
+    scanner.addListener('scan', function(content) {
+      try {
+        new URL(content); // Verifica se è un URL valido
+        document.getElementById('manual-url-input').value = content;
+        document.getElementById('input-container').style.display = 'block';
+        scannerContainer.style.display = 'none';
+        scanner.stop();
+        document.getElementById('manual-title-input').focus();
+      } catch(e) {
+        alert("QR code non valido. Deve contenere un URL.");
+      }
+    });
+    
+    Instascan.Camera.getCameras().then(function(cameras) {
+      if (cameras.length > 0) {
+        scanner.start(cameras[0]);
+      } else {
+        alert("Nessuna fotocamera trovata");
+        scannerContainer.style.display = 'none';
+      }
+    });
+  });
 
+  // Conferma salvataggio
+  document.getElementById('confirm-save-btn').addEventListener('click', async () => {
+    const url = document.getElementById('manual-url-input').value.trim();
+    const title = document.getElementById('manual-title-input').value.trim() || url;
+    
     try {
-      new URL(urlInput); // Validate URL format
-      await saveLink(urlInput, titleInput);
-      closeModal();
-    } catch (e) {
-      alert("Invalid URL format");
+      new URL(url); // Validazione URL
+      
+      categorizeByLearnedKeywords(title, url, async (category, isIA) => {
+        const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+        const index = visitedUrls.findIndex(item => item.url === url);
+        
+        if (index === -1) {
+          visitedUrls.push({ 
+            url, 
+            category, 
+            originalCategory: category, 
+            title 
+          });
+          await storage.set({
+            visitedUrls,
+            lastAddedUrl: url,
+            highlightColor: "green"
+          });
+          modal.remove();
+          await loadUrls();
+        } else {
+          await storage.set({
+            lastAddedUrl: url,
+            highlightColor: "orange"
+          });
+          modal.remove();
+          await loadUrls();
+        }
+      });
+    } catch(e) {
+      alert("Inserisci un URL valido (es: https://esempio.com)");
     }
   });
 
-  document.getElementById("scan-qr-btn").addEventListener("click", () => {
-    const scannerDiv = document.createElement("div");
-    scannerDiv.style.position = "fixed";
-    scannerDiv.style.top = "0";
-    scannerDiv.style.left = "0";
-    scannerStyle.right = "0";
-    scannerDiv.style.bottom = "0";
-    scannerDiv.style.backgroundColor = "rgba(0,0,0,0.8)";
-    scannerDiv.style.zIndex = "1001";
-    scannerDiv.innerHTML = `
-      <div style="position:absolute;top:20px;left:20px;right:20px;bottom:80px;border:2px solid white;"></div>
-      <div style="position:absolute;bottom:20px;left:0;right:0;text-align:center;">
-        <button id="stop-scan" style="padding:10px 20px;background:#f44336;color:white;border:none;border-radius:5px;">
-          Stop Scanner
-        </button>
-      </div>
-    `;
-    
-    document.body.appendChild(scannerDiv);
-    const videoElement = document.createElement("video");
-    videoElement.style.width = "100%";
-    videoElement.style.height = "100%";
-    scannerDiv.insertBefore(videoElement, scannerDiv.firstChild);
+  // Pulsante annulla
+  document.getElementById('cancel-input-btn').addEventListener('click', () => {
+    modal.remove();
+  });
 
-    let scanner = null;
-    script.onload = () => {
-      scanner = new Instascan.Scanner({ video: videoElement });
-      scanner.addListener("scan", async (content) => {
-        try {
-          new URL(content); // Validate scanned content
-          document.getElementById("manual-url-input").value = content;
-          scanner.stop();
-          document.body.removeChild(scannerDiv);
-        } catch (e) {
-          alert("Scanned content is not a valid URL");
-        }
-      });
-      
-      Instascan.Camera.getCameras().then(cameras => {
-        if (cameras.length > 0) {
-          scanner.start(cameras[0]);
-        } else {
-          alert("No camera found");
-          document.body.removeChild(scannerDiv);
-        }
-      });
-    };
+  // Pulsante annulla scan
+  document.getElementById('cancel-scan-btn').addEventListener('click', () => {
+    modal.remove();
+  });
 
-    document.getElementById("stop-scan").addEventListener("click", () => {
-      if (scanner) scanner.stop();
-      document.body.removeChild(scannerDiv);
-    });
+  // Bookmarklet
+  document.getElementById('use-bookmarklet-btn').addEventListener('click', () => {
+    modal.remove();
+    alert(`Per salvare pagine da altre schede:
+1. Apri la pagina che vuoi salvare
+2. Tocca il bookmarklet "Save to LinkZen"
+3. Torna a questa app`);
   });
 });
-
-async function saveLink(url, title = "") {
-  try {
-    const mockTab = {
-      url: url,
-      title: title || url
-    };
-
-    categorizeByLearnedKeywords(mockTab.title, mockTab.url, async (category, isIA) => {
-      const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-      const index = visitedUrls.findIndex(item => item.url === mockTab.url);
-      
-      if (index === -1) {
-        visitedUrls.push({ 
-          url: mockTab.url, 
-          category, 
-          originalCategory: category, 
-          title: mockTab.title 
-        });
-        await storage.set({
-          visitedUrls,
-          lastAddedUrl: mockTab.url,
-          highlightColor: "green"
-        });
-      } else {
-        await storage.set({
-          lastAddedUrl: mockTab.url,
-          highlightColor: "orange"
-        });
-      }
-      await loadUrls();
-    });
-  } catch (err) {
-    console.error("Save error:", err);
-    alert("Error saving link");
-  }
-}
-
-
 
   
 // ============================================
