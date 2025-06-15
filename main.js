@@ -560,7 +560,7 @@ dropdown.addEventListener("click", async (event) => {
   });
 
 
-// Nuova funzione Save (sostituisci completamente il blocco esistente)
+
 document.getElementById("save-btn").addEventListener("click", async function() {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   
@@ -599,146 +599,161 @@ document.getElementById("save-btn").addEventListener("click", async function() {
     return;
   }
 
-  // Modal per iOS
+  // Modal semplificato
   const modalHTML = `
-    <div id="linkzen-save-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;">
-      <div style="background:#2c2c2c;padding:20px;border-radius:10px;max-width:90%;width:400px;">
-        <h2 style="margin-top:0;">Aggiungi Link</h2>
-        <div style="display:flex;gap:10px;margin-bottom:15px;">
-          <button id="manual-input-btn" style="flex:1;padding:10px;background:#4CAF50;color:white;border:none;border-radius:5px;">
-            <i class="fas fa-keyboard"></i> Manuale
-          </button>
-          <button id="scan-qr-btn" style="flex:1;padding:10px;background:#2196F3;color:white;border:none;border-radius:5px;">
-            <i class="fas fa-qrcode"></i> Scansiona
-          </button>
-        </div>
-        <div id="input-container" style="display:none;">
-          <input type="text" id="manual-url-input" placeholder="Incolla URL qui" style="width:100%;padding:10px;margin-bottom:10px;border-radius:5px;border:none;">
-          <input type="text" id="manual-title-input" placeholder="Titolo (opzionale)" style="width:100%;padding:10px;margin-bottom:10px;border-radius:5px;border:none;">
-          <div style="display:flex;gap:10px;">
-            <button id="cancel-input-btn" style="flex:1;padding:10px;background:#f44336;color:white;border:none;border-radius:5px;">Annulla</button>
-            <button id="confirm-save-btn" style="flex:1;padding:10px;background:#4CAF50;color:white;border:none;border-radius:5px;">Salva</button>
-          </div>
-        </div>
-        <div id="scanner-container" style="display:none;position:relative;">
-          <video id="qr-scanner" style="width:100%;border-radius:5px;"></video>
-          <button id="cancel-scan-btn" style="position:absolute;top:10px;right:10px;padding:5px 10px;background:#f44336;color:white;border:none;border-radius:5px;">
-            <i class="fas fa-times"></i>
+  <div id="linkzen-save-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:1000;display:flex;justify-content:center;align-items:center;">
+    <div style="background:#1e1e1e;border-radius:12px;padding:20px;width:90%;max-width:400px;">
+      <h3 style="color:white;margin-top:0;text-align:center;">Aggiungi Link</h3>
+      
+      <div id="main-options">
+        <button id="open-camera-btn" style="width:100%;padding:12px;margin-bottom:10px;background:#007AFF;color:white;border:none;border-radius:8px;font-size:16px;">
+          <i class="fas fa-camera"></i> Scansiona QR Code
+        </button>
+        <button id="manual-entry-btn" style="width:100%;padding:12px;margin-bottom:10px;background:#34C759;color:white;border:none;border-radius:8px;font-size:16px;">
+          <i class="fas fa-keyboard"></i> Inserisci Manualmente
+        </button>
+        <button id="show-bookmarklet-btn" style="width:100%;padding:12px;background:#AF52DE;color:white;border:none;border-radius:8px;font-size:16px;">
+          <i class="fas fa-bookmark"></i> Istruzioni Bookmarklet
+        </button>
+      </div>
+      
+      <div id="camera-view" style="display:none;position:relative;">
+        <video id="qr-video" style="width:100%;border-radius:8px;"></video>
+        <div style="text-align:center;margin-top:10px;">
+          <button id="close-camera-btn" style="padding:8px 16px;background:#FF3B30;color:white;border:none;border-radius:8px;">
+            <i class="fas fa-times"></i> Annulla
           </button>
         </div>
-        <div style="margin-top:15px;text-align:center;">
-          <button id="use-bookmarklet-btn" style="padding:10px;background:#9C27B0;color:white;border:none;border-radius:5px;width:100%;">
-            <i class="fas fa-bookmark"></i> Usa Bookmarklet
+      </div>
+      
+      <div id="manual-input-view" style="display:none;">
+        <input type="text" id="url-input" placeholder="https://..." style="width:100%;padding:12px;margin-bottom:10px;border-radius:8px;border:none;font-size:16px;">
+        <input type="text" id="title-input" placeholder="Titolo (opzionale)" style="width:100%;padding:12px;margin-bottom:10px;border-radius:8px;border:none;font-size:16px;">
+        <div style="display:flex;gap:10px;">
+          <button id="cancel-input-btn" style="flex:1;padding:12px;background:#FF3B30;color:white;border:none;border-radius:8px;">
+            Annulla
+          </button>
+          <button id="save-link-btn" style="flex:1;padding:12px;background:#34C759;color:white;border:none;border-radius:8px;">
+            Salva
           </button>
         </div>
       </div>
     </div>
-  `;
+  </div>`;
 
   document.body.insertAdjacentHTML('beforeend', modalHTML);
   const modal = document.getElementById('linkzen-save-modal');
+  let scanner = null;
 
-  // Gestione input manuale
-  document.getElementById('manual-input-btn').addEventListener('click', () => {
-    document.getElementById('input-container').style.display = 'block';
-    document.getElementById('scanner-container').style.display = 'none';
-    document.getElementById('manual-url-input').focus();
-  });
-
-  // Gestione scan QR
-  document.getElementById('scan-qr-btn').addEventListener('click', () => {
-    document.getElementById('input-container').style.display = 'none';
-    const scannerContainer = document.getElementById('scanner-container');
-    scannerContainer.style.display = 'block';
-    
-    const scanner = new Instascan.Scanner({
-      video: document.getElementById('qr-scanner'),
-      mirror: false
-    });
-    
-    scanner.addListener('scan', function(content) {
-      try {
-        new URL(content); // Verifica se è un URL valido
-        document.getElementById('manual-url-input').value = content;
-        document.getElementById('input-container').style.display = 'block';
-        scannerContainer.style.display = 'none';
-        scanner.stop();
-        document.getElementById('manual-title-input').focus();
-      } catch(e) {
-        alert("QR code non valido. Deve contenere un URL.");
-      }
-    });
-    
-    Instascan.Camera.getCameras().then(function(cameras) {
-      if (cameras.length > 0) {
-        scanner.start(cameras[0]);
-      } else {
-        alert("Nessuna fotocamera trovata");
-        scannerContainer.style.display = 'none';
-      }
-    });
-  });
-
-  // Conferma salvataggio
-  document.getElementById('confirm-save-btn').addEventListener('click', async () => {
-    const url = document.getElementById('manual-url-input').value.trim();
-    const title = document.getElementById('manual-title-input').value.trim() || url;
+  // Apertura fotocamera
+  document.getElementById('open-camera-btn').addEventListener('click', async () => {
+    document.getElementById('main-options').style.display = 'none';
+    const cameraView = document.getElementById('camera-view');
+    cameraView.style.display = 'block';
     
     try {
-      new URL(url); // Validazione URL
+      const videoElem = document.getElementById('qr-video');
+      scanner = new Instascan.Scanner({ video: videoElem, mirror: false });
+      
+      scanner.addListener('scan', function(content) {
+        try {
+          new URL(content);
+          document.getElementById('url-input').value = content;
+          scanner.stop();
+          showManualInput();
+        } catch(e) {
+          alert("Contenuto non valido: " + content);
+        }
+      });
+      
+      const cameras = await Instascan.Camera.getCameras();
+      if (cameras.length > 0) {
+        await scanner.start(cameras[0]);
+      } else {
+        alert("Fotocamera non disponibile");
+        showMainOptions();
+      }
+    } catch (err) {
+      console.error("Errore fotocamera:", err);
+      alert("Errore nell'accesso alla fotocamera");
+      showMainOptions();
+    }
+  });
+
+  // Chiusura fotocamera
+  document.getElementById('close-camera-btn').addEventListener('click', () => {
+    if (scanner) scanner.stop();
+    showMainOptions();
+  });
+
+  // Input manuale
+  document.getElementById('manual-entry-btn').addEventListener('click', showManualInput);
+  
+  function showManualInput() {
+    document.getElementById('main-options').style.display = 'none';
+    document.getElementById('camera-view').style.display = 'none';
+    document.getElementById('manual-input-view').style.display = 'block';
+    document.getElementById('url-input').focus();
+  }
+
+  // Annulla input
+  document.getElementById('cancel-input-btn').addEventListener('click', showMainOptions);
+
+  // Salvataggio
+  document.getElementById('save-link-btn').addEventListener('click', async () => {
+    const url = document.getElementById('url-input').value.trim();
+    const title = document.getElementById('title-input').value.trim() || url;
+    
+    try {
+      new URL(url);
       
       categorizeByLearnedKeywords(title, url, async (category, isIA) => {
         const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-        const index = visitedUrls.findIndex(item => item.url === url);
         
-        if (index === -1) {
-          visitedUrls.push({ 
-            url, 
-            category, 
-            originalCategory: category, 
-            title 
-          });
+        if (!visitedUrls.some(item => item.url === url)) {
           await storage.set({
-            visitedUrls,
+            visitedUrls: [...visitedUrls, { url, title, category, originalCategory: category }],
             lastAddedUrl: url,
             highlightColor: "green"
           });
           modal.remove();
           await loadUrls();
         } else {
-          await storage.set({
-            lastAddedUrl: url,
-            highlightColor: "orange"
-          });
+          await storage.set({ lastAddedUrl: url, highlightColor: "orange" });
           modal.remove();
           await loadUrls();
         }
       });
     } catch(e) {
-      alert("Inserisci un URL valido (es: https://esempio.com)");
+      alert("Inserisci un URL valido (inizia con http:// o https://)");
     }
   });
 
-  // Pulsante annulla
-  document.getElementById('cancel-input-btn').addEventListener('click', () => {
-    modal.remove();
-  });
-
-  // Pulsante annulla scan
-  document.getElementById('cancel-scan-btn').addEventListener('click', () => {
-    modal.remove();
-  });
-
   // Bookmarklet
-  document.getElementById('use-bookmarklet-btn').addEventListener('click', () => {
+  document.getElementById('show-bookmarklet-btn').addEventListener('click', () => {
     modal.remove();
-    alert(`Per salvare pagine da altre schede:
-1. Apri la pagina che vuoi salvare
+    setTimeout(() => {
+      alert(`ISTRUZIONI BOOKMARKLET:
+1. Apri la pagina da salvare
 2. Tocca il bookmarklet "Save to LinkZen"
-3. Torna a questa app`);
-  });
-});
+3. Torna a questa app
 
+Se non hai il bookmarklet:
+1. Apri Safari
+2. Tocca l'icona 'Condividi'
+3. Scorri e tocca 'Modifica Azioni'
+4. Aggiungi 'Save to LinkZen'`);
+    }, 300);
+  });
+
+  function showMainOptions() {
+    if (scanner) scanner.stop();
+    document.getElementById('main-options').style.display = 'block';
+    document.getElementById('camera-view').style.display = 'none';
+    document.getElementById('manual-input-view').style.display = 'none';
+  }
+});
+  
   
 // ============================================
 // FUNZIONI CORE (rimangono identiche)
