@@ -702,88 +702,157 @@ async function showManualInputDialog() {
 // ==============================================
 
 /**
- * Scanner QR Code con fallback per iOS 15+
+ * QR Scanner compatibile iOS 15+ (incluso iPhone SE 2020)
  */
 async function scanQRCode() {
+  // Step 1: Verifica i permessi
   try {
-    // Prova prima con l'API nativa se disponibile
-    if ("BarcodeDetector" in window) {
-      return await scanWithNativeAPI();
-    } else {
-      return await scanWithFallbackMethod();
+    const cameraPermission = await navigator.permissions.query({ name: 'camera' });
+    if (cameraPermission.state === 'denied') {
+      showAlert("Camera Blocked", "Please enable camera access in Safari settings");
+      return null;
     }
-  } catch (error) {
-    console.error("QR scan error:", error);
-    showAlert("QR Error", "Failed to scan QR code. Please try manual entry.");
-    return null;
+  } catch (e) {
+    console.log("Permissions API not supported");
   }
-}
 
-/**
- * Implementazione con BarcodeDetector API (iOS 15+)
- */
-async function scanWithNativeAPI() {
-  return new Promise(async (resolve) => {
-    const dialog = document.createElement("div");
-    dialog.style.position = "fixed";
-    dialog.style.top = "0";
-    dialog.style.left = "0";
-    dialog.style.right = "0";
-    dialog.style.bottom = "0";
-    dialog.style.backgroundColor = "black";
-    dialog.style.zIndex = "1000";
-    dialog.style.display = "flex";
-    dialog.style.flexDirection = "column";
-    
-    dialog.innerHTML = `
-      <video autoplay playsinline style="width: 100%; height: 100%; object-fit: cover"></video>
-      <div style="position: absolute; top: 20px; left: 0; right: 0; text-align: center; color: white">
-        Point camera at QR code
-      </div>
-      <button style="position: absolute; bottom: 20px; left: 0; right: 0; margin: auto; 
-                    width: 100px; padding: 10px; background: #f44336; color: white; border: none; border-radius: 4px">
-        Cancel
-      </button>
-    `;
-    
-    document.body.appendChild(dialog);
-    const video = dialog.querySelector("video");
-    const cancelBtn = dialog.querySelector("button");
-    
-    // Configura stream camera
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      video: { 
-        facingMode: "environment",
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
-      } 
+  // Step 2: Crea l'interfaccia di scanning
+  const scannerDiv = document.createElement('div');
+  scannerDiv.style.position = 'fixed';
+  scannerDiv.style.top = '0';
+  scannerDiv.style.left = '0';
+  scannerDiv.style.width = '100%';
+  scannerDiv.style.height = '100%';
+  scannerDiv.style.backgroundColor = 'black';
+  scannerDiv.style.zIndex = '10000';
+  scannerDiv.style.display = 'flex';
+  scannerDiv.style.flexDirection = 'column';
+  scannerDiv.style.alignItems = 'center';
+  scannerDiv.style.justifyContent = 'center';
+
+  scannerDiv.innerHTML = `
+    <video autoplay playsinline style="width: 100%; height: 100%; object-fit: cover"></video>
+    <div style="position: absolute; top: 20px; color: white; text-align: center; width: 100%">
+      <h3>Scan QR Code</h3>
+      <p>Point your camera at the QR code</p>
+    </div>
+    <div style="position: absolute; bottom: 20px; display: flex; gap: 15px">
+      <button id="cancel-scan" style="padding: 10px 20px; background: #f44336; color: white; border: none; border-radius: 4px">Cancel</button>
+      <button id="toggle-camera" style="padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 4px">Switch Camera</button>
+    </div>
+    <div id="scan-guide" style="position: absolute; width: 70%; height: 70%; border: 2px dashed rgba(255,255,255,0.5); pointer-events: none"></div>
+  `;
+
+  document.body.appendChild(scannerDiv);
+  const video = scannerDiv.querySelector('video');
+  const cancelBtn = scannerDiv.querySelector('#cancel-scan');
+  const toggleBtn = scannerDiv.querySelector('#toggle-camera');
+
+  // Step 3: Configura lo stream della camera
+  let stream;
+  let facingMode = "environment"; // Back camera di default
+  let scanInterval;
+
+  const startCamera = async () => {
+    try {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+
+      video.srcObject = stream;
+      video.play();
+
+      // Step 4: Usa la libreria esterna per QR scanning (più affidabile su iOS)
+      await loadQRScannerLibrary();
+      startQRDetection();
+
+    } catch (err) {
+      console.error("Camera error:", err);
+      showAlert("Camera Error", "Could not access camera. Please try manual entry.");
+      document.body.removeChild(scannerDiv);
+    }
+  };
+
+  // Step 5: Carica dinamicamente una libreria QR scanner
+  async function loadQRScannerLibrary() {
+    return new Promise((resolve) => {
+      if (window.jsQR) return resolve();
+
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+      script.onload = resolve;
+      document.head.appendChild(script);
     });
-    video.srcObject = stream;
+  }
+
+  function startQRDetection() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
     
-    // Configura BarcodeDetector
-    const barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
-    let scanInterval = setInterval(async () => {
-      try {
-        const barcodes = await barcodeDetector.detect(video);
-        if (barcodes.length > 0) {
+    scanInterval = setInterval(() => {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = window.jsQR(imageData.data, imageData.width, imageData.height);
+        
+        if (code) {
           clearInterval(scanInterval);
           stream.getTracks().forEach(track => track.stop());
-          document.body.removeChild(dialog);
-          resolve({ url: barcodes[0].rawValue, title: "QR Code Link" });
+          document.body.removeChild(scannerDiv);
+          return { url: code.data, title: "Scanned QR Code" };
         }
-      } catch (e) { /* Ignora errori di detection */ }
-    }, 500);
-    
-    // Gestione cancellazione
-    cancelBtn.addEventListener("click", () => {
+      }
+    }, 200);
+  }
+
+  // Gestione pulsanti
+  cancelBtn.addEventListener('click', () => {
+    clearInterval(scanInterval);
+    if (stream) stream.getTracks().forEach(track => track.stop());
+    document.body.removeChild(scannerDiv);
+    return null;
+  });
+
+  toggleBtn.addEventListener('click', () => {
+    facingMode = facingMode === "user" ? "environment" : "user";
+    startCamera();
+  });
+
+  // Avvia la camera
+  return new Promise((resolve) => {
+    cancelBtn.addEventListener('click', () => {
       clearInterval(scanInterval);
-      stream.getTracks().forEach(track => track.stop());
-      document.body.removeChild(dialog);
+      if (stream) stream.getTracks().forEach(track => track.stop());
+      document.body.removeChild(scannerDiv);
       resolve(null);
+    });
+
+    startCamera().then(() => {
+      const checkResult = () => {
+        const result = startQRDetection();
+        if (result) {
+          resolve(result);
+        } else {
+          requestAnimationFrame(checkResult);
+        }
+      };
+      checkResult();
     });
   });
 }
-
+  
 /**
  * Fallback per browser senza BarcodeDetector
  */
