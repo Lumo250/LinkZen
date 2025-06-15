@@ -924,102 +924,24 @@ function showQRContentDialog(content) {
 // 5. FUNZIONI AUSILIARIE (COMPLETE)
 // ==============================================
 
-//function showBookmarkletInstructions() {
-//  const bookmarkletCode = `javascript:(function(){
-//    window.location.href='${window.location.origin}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href);
-//  })();`;
-
-  function showBookmarkletInstructions() {
+function showBookmarkletInstructions() {
   const bookmarkletCode = `javascript:(function(){
     window.location.href='${window.location.origin}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href);
   })();`;
-  
-  const dialog = document.createElement("div");
-  dialog.style.position = "fixed";
-  dialog.style.top = "0";
-  dialog.style.left = "0";
-  dialog.style.right = "0";
-  dialog.style.bottom = "0";
-  dialog.style.backgroundColor = "rgba(0,0,0,0.8)";
-  dialog.style.zIndex = "1000";
-  dialog.style.display = "flex";
-  dialog.style.justifyContent = "center";
-  dialog.style.alignItems = "center";
-  dialog.style.padding = "20px";
-  
-  dialog.innerHTML = `
-    <div style="
-      background: #2d3748;
-      color: #e2e8f0;
-      padding: 20px;
-      border-radius: 8px;
-      width: 100%;
-      max-width: 500px;
-      max-height: 80vh;
-      overflow: auto;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    ">
-      <h3 style="margin-top:0;color:#81e6d9;text-align:center">How to Use Bookmarklet</h3>
-      
-      <div style="
-        margin: 15px 0;
-        padding: 12px;
-        background: #4a5568;
-        border-radius: 4px;
-        font-size: 14px;
-        line-height: 1.5;
-      ">
-        <ol style="padding-left:20px;margin:0">
-          <li style="margin-bottom:10px">Copy this code:</li>
-        </ol>
-        
-        <div style="
-          padding: 10px;
-          background: #1a202c;
-          border-radius: 4px;
-          font-family: monospace;
-          word-break: break-all;
-          color: #f0fff4;
-          margin: 10px 0;
-          border: 1px solid #4a5568;
-        ">
-          ${bookmarkletCode}
-        </div>
-        
-        <ol start="2" style="padding-left:20px;margin:0">
-          <li style="margin-bottom:10px">Create a new bookmark in Safari</li>
-          <li style="margin-bottom:10px">Paste as URL</li>
-          <li>Use from any page by tapping the bookmark</li>
-        </ol>
-      </div>
-      
-      <button style="
-        display: block;
-        width: 100%;
-        padding: 10px;
-        background: #2b6cb0;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        margin-top: 15px;
-        cursor: pointer;
-      ">
-        Close
-      </button>
-    </div>
-  `;
-  
-  document.body.appendChild(dialog);
-  
-  // Chiudi al click
-  dialog.querySelector("button").addEventListener("click", () => {
-    document.body.removeChild(dialog);
-  });
-}
-  
+
   showAlert("How to Use Bookmarklet", `
     1. Copy this code:<br><br>
-    <code style="background:#eee;padding:5px;border-radius:3px">${bookmarkletCode}</code><br><br>
+    <code style="
+      background:#4A5568;
+      padding:10px;
+      border-radius:6px;
+      color:#F7FAFC;
+      display:block;
+      margin:10px 0;
+      font-family:monospace;
+      word-break:break-all;
+      border:1px solid #718096
+    ">${bookmarkletCode}</code><br>
     2. Create a new bookmark in Safari<br>
     3. Paste as URL<br>
     4. Use from any page by tapping the bookmark
@@ -1083,24 +1005,33 @@ async function showManualInputDialog() {
 
 function showAlert(title, message) {
   const alertDiv = document.createElement("div");
+  
+  // Stile del contenitore principale (scuro con bordo)
   alertDiv.style.position = "fixed";
   alertDiv.style.top = "20px";
   alertDiv.style.left = "50%";
   alertDiv.style.transform = "translateX(-50%)";
-  alertDiv.style.backgroundColor = "#333";
-  alertDiv.style.color = "white";
+  alertDiv.style.backgroundColor = "#2D3748"; // Blu scuro/grigio
+  alertDiv.style.color = "#F7FAFC"; // Bianco molto chiaro
   alertDiv.style.padding = "15px";
-  alertDiv.style.borderRadius = "5px";
+  alertDiv.style.borderRadius = "8px";
   alertDiv.style.zIndex = "1001";
-  alertDiv.style.maxWidth = "80%";
-  alertDiv.style.boxShadow = "0 2px 10px rgba(0,0,0,0.3)";
+  alertDiv.style.maxWidth = "90%";
+  alertDiv.style.width = "max-content";
+  alertDiv.style.maxWidth = "min(90%, 500px)";
+  alertDiv.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+  alertDiv.style.border = "1px solid #4A5568"; // Bordo più scuro
+  alertDiv.style.fontFamily = "system-ui, -apple-system, sans-serif";
   
+  // Contenuto interno con migliori contrasti
   alertDiv.innerHTML = `
-    <h4 style="margin:0 0 10px 0">${title}</h4>
-    <div style="font-size:14px">${message}</div>
+    <h4 style="margin:0 0 12px 0; font-size:18px; color:#FFFFFF; font-weight:600">${title}</h4>
+    <div style="font-size:15px; line-height:1.5; color:#E2E8F0">${message}</div>
   `;
-  
+
   document.body.appendChild(alertDiv);
+
+  // Animazione di dissolvenza
   setTimeout(() => {
     alertDiv.style.opacity = "0";
     setTimeout(() => document.body.removeChild(alertDiv), 300);
