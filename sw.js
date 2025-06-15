@@ -75,16 +75,16 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Gestione speciale per richieste con parametri (bookmarklet)
-  if (url.search.includes('bookmarklet=') || url.search.includes('title=')) {
-    event.respondWith(
-      fetch(req).then(async (fetchRes) => {
-        const cache = await caches.open(DYNAMIC_CACHE_NAME);
-        cache.put(req, fetchRes.clone());
-        return fetchRes;
-      }).catch(() => caches.match('/index.html'))
-    );
-    return;
-  }
+//  if (url.search.includes('bookmarklet=') || url.search.includes('title=')) {
+//    event.respondWith(
+//      fetch(req).then(async (fetchRes) => {
+//        const cache = await caches.open(DYNAMIC_CACHE_NAME);
+//        cache.put(req, fetchRes.clone());
+//        return fetchRes;
+ //     }).catch(() => caches.match('/index.html'))
+ //   );
+ //   return;
+//  }
 
   // Strategia Cache-First con validazione
   event.respondWith(
