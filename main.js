@@ -371,6 +371,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const exportDefault = document.getElementById("export-default");
   const exportOptions = document.getElementById("export-options");
 
+const importBtn = document.getElementById("import-btn");
+const importDefault = document.getElementById("import-default");
+const importCustom = document.getElementById("import-custom");
+const importOptions = document.getElementById("import-options");
+
+  
   exportBtn.addEventListener("click", (e) => {
     exportDefault.style.display = "none";
     exportOptions.classList.remove("hidden");
@@ -404,9 +410,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Import
-  document.getElementById("import-btn").addEventListener("click", () => {
-    document.getElementById("import-file").click();
-  });
+importBtn.addEventListener("click", (e) => {
+  importBtn.style.display = "none";
+  importOptions.classList.remove("hidden");
+  e.stopPropagation();
+});
+
+// Chiudi opzioni se clic fuori
+document.addEventListener("click", (e) => {
+  const clickedInsideImport = importBtn.contains(e.target) || importOptions.contains(e.target);
+  if (!clickedInsideImport) {
+    importBtn.style.display = "inline-block";
+    importOptions.classList.add("hidden");
+  }
+});
 
   document.getElementById("import-file").addEventListener("change", async (event) => {
     const file = event.target.files[0];
@@ -429,6 +446,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     reader.readAsText(file);
   });
 
+importCustom.addEventListener("click", () => {
+  document.getElementById("import-file").click();
+  importBtn.style.display = "inline-block";
+  importOptions.classList.add("hidden");
+});
+
+importDefault.addEventListener("click", async () => {
+  try {
+    const response = await fetch("https://lumo250.github.io/LinkZen/default-config.json");
+    if (!response.ok) throw new Error("Impossibile scaricare il file");
+
+    const data = await response.json();
+    const isValid = data.visitedUrls && Array.isArray(data.visitedUrls);
+    if (!isValid) throw new Error("File non valido");
+
+    await storage.set(data);
+    await loadUrls();
+    showAlert("Successo", "Database di default importato.");
+  } catch (err) {
+    showAlert("Errore", "Import fallito: " + err.message);
+  } finally {
+    importBtn.style.display = "inline-block";
+    importOptions.classList.add("hidden");
+  }
+});
+
+  
+  
 // Categorie - Versione migliorata con [x] e dropdown persistente
 const input = document.getElementById("new-category-input");
 const dropdown = document.getElementById("dropdown-category-list");
