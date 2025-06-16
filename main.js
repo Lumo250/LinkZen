@@ -42,7 +42,7 @@ const storage = {
   set: (data) => new Promise(resolve => {
     try {
       Object.keys(data).forEach(key => {
-        localStorage.setItem(key, JSON.stringify(data[key]));
+        Storage.setItem(key, JSON.stringify(data[key]));
       });
       resolve();
     } catch (error) {
@@ -57,7 +57,7 @@ const storage = {
       const keysToGet = Array.isArray(keys) ? keys : Object.keys(keys);
       
       keysToGet.forEach(key => {
-        const value = localStorage.getItem(key);
+        const value = Storage.getItem(key);
         result[key] = value ? JSON.parse(value) : keys[key];
       });
       resolve(result);
@@ -68,7 +68,7 @@ const storage = {
   }),
   
   remove: (key) => new Promise(resolve => {
-    localStorage.removeItem(key);
+    Storage.removeItem(key);
     resolve();
   })
 };
