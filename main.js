@@ -256,6 +256,62 @@ document.addEventListener("DOMContentLoaded", async () => {
   fontScale = savedScale;
   applyFontSize(fontScale);
 
+// ==============================
+// 3D Sort Rotator - replacement for radio buttons
+// ==============================
+const rotator = document.getElementById("sort-rotator");
+const rotatorOptions = Array.from(rotator.querySelectorAll(".rotator-option"));
+let currentSortIndex = 0;
+
+const { sortOrder = "default" } = await storage.get({ sortOrder: "default" });
+const idx = rotatorOptions.findIndex(opt => opt.dataset.value === sortOrder);
+if (idx >= 0) {
+  currentSortIndex = idx;
+  rotator.style.transform = `translateY(-${currentSortIndex * 32}px)`;
+}
+
+// Funzione per aggiornare posizione e salvare scelta
+function updateSortRotator() {
+  rotator.style.transform = `translateY(-${currentSortIndex * 32}px)`;
+  const selected = rotatorOptions[currentSortIndex].dataset.value;
+  storage.set({ sortOrder: selected });
+  loadUrls();
+}
+
+// Scroll mouse
+rotator.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  if (e.deltaY > 0 && currentSortIndex < rotatorOptions.length - 1) {
+    currentSortIndex++;
+    updateSortRotator();
+  } else if (e.deltaY < 0 && currentSortIndex > 0) {
+    currentSortIndex--;
+    updateSortRotator();
+  }
+});
+
+// Swipe touch
+let startY = null;
+rotator.addEventListener("touchstart", (e) => {
+  startY = e.touches[0].clientY;
+});
+
+rotator.addEventListener("touchmove", (e) => {
+  if (startY === null) return;
+  const deltaY = e.touches[0].clientY - startY;
+  if (Math.abs(deltaY) > 20) {
+    if (deltaY > 0 && currentSortIndex > 0) {
+      currentSortIndex--;
+    } else if (deltaY < 0 && currentSortIndex < rotatorOptions.length - 1) {
+      currentSortIndex++;
+    }
+    updateSortRotator();
+    startY = null;
+  }
+});
+
+
+  
   undoBtn = document.getElementById("undo-btn");
   themeToggleWrapper = document.getElementById("theme-toggle");
 
@@ -637,12 +693,12 @@ dropdown.addEventListener("click", async (event) => {
   });
 
   // Sort
-  document.querySelectorAll('input[name="sort"]').forEach(radio => {
-    radio.addEventListener("change", async () => {
-      await storage.set({ sortOrder: radio.value });
-      await loadUrls();
-    });
-  });
+//  document.querySelectorAll('input[name="sort"]').forEach(radio => {
+//    radio.addEventListener("change", async () => {
+//      await storage.set({ sortOrder: radio.value });
+//      await loadUrls();
+//    });
+//  });
 
 
 // ==============================================
