@@ -457,7 +457,7 @@ importFileInput.addEventListener("change", async (event) => {
       if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
         await storage.set(data);
         await loadUrls();
-        alert("Importazione completata.");
+       // alert("Importazione completata.");
       } else {
         alert("File non valido. Nessuna lista trovata.");
       }
@@ -486,7 +486,7 @@ document.getElementById("import-default-btn").addEventListener("click", async ()
     if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
       await storage.set(data);
       await loadUrls();
-      alert("Importazione da default-config.json completata con successo.");
+      // alert("Importazione da default-config.json completata con successo.");
     } else {
       alert("File di default non valido.");
     }
