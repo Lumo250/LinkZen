@@ -618,20 +618,20 @@ function showSaveOptionsDialog() {
     
     // Nuova palette di colori per i pulsanti
     const buttonColors = {
-      bookmarklet: {
-        bg: isDark ? '#2b6cb0' : '#3182ce',
-        hover: isDark ? '#2c5282' : '#2b6cb0',
-        icon: '#ebf8ff'
-      },
-      manual: {
+      manual: { // Spostato in prima posizione
         bg: isDark ? '#38a169' : '#48bb78',
         hover: isDark ? '#2f855a' : '#38a169',
         icon: '#f0fff4'
       },
-      qr: {
+      qr: { // Spostato in seconda posizione
         bg: isDark ? '#9f7aea' : '#9f7aea',
         hover: isDark ? '#805ad5' : '#805ad5',
         icon: '#faf5ff'
+      },
+      bookmarklet: { // Spostato in terza posizione
+        bg: isDark ? '#2b6cb0' : '#3182ce',
+        hover: isDark ? '#2c5282' : '#2b6cb0',
+        icon: '#ebf8ff'
       }
     };
     
@@ -666,40 +666,7 @@ function showSaveOptionsDialog() {
         </h3>
         
         <div style="display: flex; flex-direction: column; gap: 12px;">
-          <button data-choice="bookmarklet" style="
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            padding: 12px 16px;
-            background: ${buttonColors.bookmarklet.bg};
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1);
-          ">
-            <div style="
-              width: 24px;
-              height: 24px;
-              border-radius: 6px;
-              background: rgba(255,255,255,0.2);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            ">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${buttonColors.bookmarklet.icon}" stroke-width="2">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-              </svg>
-            </div>
-            <span>Use Bookmarklet</span>
-          </button>
-          
+          <!-- Modificato l'ordine dei pulsanti -->
           <button data-choice="manual" style="
             display: flex;
             align-items: center;
@@ -771,10 +738,45 @@ function showSaveOptionsDialog() {
             </div>
             <span>Scan QR Code</span>
           </button>
+          
+          <button data-choice="bookmarklet" style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            background: ${buttonColors.bookmarklet.bg};
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1);
+          ">
+            <div style="
+              width: 24px;
+              height: 24px;
+              border-radius: 6px;
+              background: rgba(255,255,255,0.2);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${buttonColors.bookmarklet.icon}" stroke-width="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+            </div>
+            <span>Use Bookmarklet</span>
+          </button>
         </div>
       </div>
     `;
     
+    // ... (resto del codice rimane identico)
     document.body.appendChild(dialog);
     
     // Animazione di entrata
@@ -826,7 +828,6 @@ function showSaveOptionsDialog() {
     });
   });
 }
-
 
   // ==============================================
 // 3. SCANNER QR CODE (VERSIONE COMPLETA PER IOS)
