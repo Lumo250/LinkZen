@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Handler - Elaborazione QR Code</title>
+  
+  <script>
+    /**
+     * Blocco principale di elaborazione del risultato QR
+     * Questo script viene eseguito non appena la pagina è caricata
+     */
+    (function() {
+      // =========================================
+      // Recupero parametri dall'URL
+      // =========================================
+      /**
+       * Crea un oggetto URLSearchParams per analizzare i parametri GET
+       * e recupera il valore del parametro 'result' contenente i dati QR
+       */
+      const params = new URLSearchParams(window.location.search);
+      const result = params.get('result');
+      
+      // =========================================
+      // Elaborazione del risultato QR
+      // =========================================
+      /**
+       * Se è presente un risultato QR:
+       * 1. Tentativo di decodifica
+       * 2. Invio del risultato alla finestra padre
+       * 3. Chiusura della finestra popup
+       */
+      if (result) {
+        try {
+          // Decodifica il risultato URL-encoded
+          const decoded = decodeURIComponent(result);
+          
+          /**
+           * Invia il risultato decodificato alla finestra/pagina padre
+           * utilizzando postMessage con una struttura dati specifica:
+           * - type: 'qr-result' (identificativo del tipo di messaggio)
+           * - data: contenuto decodificato del QR code
+           * L'asterisco '*' indica che il messaggio può essere ricevuto da qualsiasi origine
+           */
+          window.opener.postMessage({ 
+            type: 'qr-result', 
+            data: decoded 
+          }, '*');
+          
+          // Chiude la finestra popup dopo l'invio del messaggio
+          window.close();
+          
+        } catch (err) {
+          /**
+           * Gestione degli errori durante la decodifica o l'invio:
+           * Mostra un alert all'utente con il messaggio di errore
+           */
+          alert("Errore nel QR code: " + err.message);
+        }
+      }
+    })();
+  </script>
+</head>
+<body>
+  <!-- 
+    Messaggio di stato visualizzato durante l'elaborazione
+    Questo testo viene mostrato solo brevemente prima della chiusura
+    della finestra o in caso di errori
+  -->
+  <p>Elaborazione in corso del QR code...</p>
+  
+  <!-- 
+    Eventuale spazio per aggiungere in futuro:
+    - Indicatori di caricamento
+    - Messaggi più dettagliati
+    - Interfaccia per gestione errori
+  -->
+</body>
+</html>
