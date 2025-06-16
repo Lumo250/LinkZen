@@ -669,6 +669,7 @@ selectedIndex = foundIndex >= 0 ? foundIndex : 0;
 updateRotor(true);
 
 function updateRotor(skipSave = false) {
+  selectedIndex = Math.max(0, Math.min(rotorItems.length - 1, selectedIndex));
   rotor.style.transform = `rotateX(-${selectedIndex * angleStep}deg)`;
   rotorItems.forEach((item, i) => {
     item.classList.toggle("active", i === selectedIndex);
@@ -680,16 +681,24 @@ function updateRotor(skipSave = false) {
   }
 }
 
+
 // Scroll mouse
+let wheelTimeout;
+
 rotor.addEventListener("wheel", (e) => {
   e.preventDefault();
+  clearTimeout(wheelTimeout);
+
   if (e.deltaY > 0 && selectedIndex < rotorItems.length - 1) {
     selectedIndex++;
-    updateRotor();
   } else if (e.deltaY < 0 && selectedIndex > 0) {
     selectedIndex--;
-    updateRotor();
   }
+
+  updateRotor();
+
+  // debounce per fluido snapping
+  wheelTimeout = setTimeout(() => updateRotor(), 100);
 });
 
 // Touch (mobile)
