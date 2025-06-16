@@ -404,30 +404,47 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Import
-  document.getElementById("import-btn").addEventListener("click", () => {
-    document.getElementById("import-file").click();
-  });
+const importBtn = document.getElementById("import-btn");
+const importDefault = document.getElementById("import-default");
+const importOptions = document.getElementById("import-options");
 
-  document.getElementById("import-file").addEventListener("change", async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+importBtn.addEventListener("click", (e) => {
+  importDefault.style.display = "none";
+  importOptions.classList.remove("hidden");
+  e.stopPropagation();
+});
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const data = JSON.parse(e.target.result);
-        if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
-          await storage.set(data);
-          await loadUrls();
-        } else {
-          alert("File non valido. Nessuna lista trovata.");
-        }
-      } catch (err) {
-        alert("Errore nel file: " + err.message);
-      }
-    };
-    reader.readAsText(file);
-  });
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#import-container")) {
+    importDefault.style.display = "flex";
+    importOptions.classList.add("hidden");
+  }
+});
+
+document.getElementById("import-custom").addEventListener("click", () => {
+  document.getElementById("import-file").click();
+});
+
+document.getElementById("import-default-btn").addEventListener("click", async () => {
+  try {
+    const response = await fetch("https://lumo250.github.io/LinkZen/default-config.json");
+    if (!response.ok) throw new Error("Errore nel download del file.");
+    const data = await response.json();
+    if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
+      await storage.set(data);
+      await loadUrls();
+      alert("Importazione da default-config.json completata con successo.");
+    } else {
+      alert("File di default non valido.");
+    }
+  } catch (err) {
+    alert("Errore durante l'importazione di default-config.json: " + err.message);
+  } finally {
+    importDefault.style.display = "flex";
+    importOptions.classList.add("hidden");
+  }
+});
+
 
 // Categorie - Versione migliorata con [x] e dropdown persistente
 const input = document.getElementById("new-category-input");
