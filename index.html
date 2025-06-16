@@ -543,7 +543,44 @@ body.dark .delete-btn {
       background-color: #444;
       color: #eee;
     }
+#import-options {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
 
+#import-options.hidden {
+  display: none;
+}
+
+#import-custom {
+  flex: 1;
+  height: 100%;
+  font-size: 12px;
+  font-weight: bold;
+  background-color: #e3e3e3;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+}
+
+#import-default-data {
+  flex: 1;
+  height: 100%;
+  font-size: 12px;
+  font-weight: bold;
+  background-color: #d0d0ff;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+}
+
+body.dark #import-custom,
+body.dark #import-default-data {
+  background-color: #444;
+  color: #eee;
+}
+    
   /* Fix globale per iOS */
   input, textarea, select {
     font-size: 16px;
@@ -592,14 +629,19 @@ body.dark .delete-btn {
         </div>
       </div>
 
-      <div class="btn-wrapper">
-        <button id="import-btn">
-          <span class="btn-icon">📥</span>
-          <span class="btn-label">Import</span>
-        </button>
-        <input type="file" id="import-file" accept=".json" />
-      </div>
+   <div class="btn-wrapper" id="import-container">
+    <div id="import-default">
+      <button id="import-btn">
+        <span class="btn-icon">📥</span>
+        <span class="btn-label">Import</span>
+      </button>
     </div>
+    <div id="import-options" class="hidden">
+      <button id="import-custom">Custom</button>
+      <button id="import-default-data">Default</button>
+    </div>
+    <input type="file" id="import-file" accept=".json" />
+   </div>
 
     <div class="custom-category-container">
       <div class="custom-input-wrapper">
