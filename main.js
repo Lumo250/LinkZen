@@ -256,59 +256,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   fontScale = savedScale;
   applyFontSize(fontScale);
 
-// ==============================
-// 3D Sort Rotator - replacement for radio buttons
-// ==============================
-const rotator = document.getElementById("sort-rotator");
-const rotatorOptions = Array.from(rotator.querySelectorAll(".rotator-option"));
-let currentSortIndex = 0;
-
-const { sortOrder = "default" } = await storage.get({ sortOrder: "default" });
-const idx = rotatorOptions.findIndex(opt => opt.dataset.value === sortOrder);
-if (idx >= 0) {
-  currentSortIndex = idx;
-  rotator.style.transform = `translateY(-${currentSortIndex * 32}px)`;
-}
-
-// Funzione per aggiornare posizione e salvare scelta
-function updateSortRotator() {
-  rotator.style.transform = `translateY(-${currentSortIndex * 32}px)`;
-  const selected = rotatorOptions[currentSortIndex].dataset.value;
-  storage.set({ sortOrder: selected });
-  loadUrls();
-}
-
-// Scroll mouse
-rotator.addEventListener("wheel", (e) => {
-  e.preventDefault();
-  if (e.deltaY > 0 && currentSortIndex < rotatorOptions.length - 1) {
-    currentSortIndex++;
-    updateSortRotator();
-  } else if (e.deltaY < 0 && currentSortIndex > 0) {
-    currentSortIndex--;
-    updateSortRotator();
-  }
-});
-
-// Swipe touch
-let startY = null;
-rotator.addEventListener("touchstart", (e) => {
-  startY = e.touches[0].clientY;
-});
-
-rotator.addEventListener("touchmove", (e) => {
-  if (startY === null) return;
-  const deltaY = e.touches[0].clientY - startY;
-  if (Math.abs(deltaY) > 20) {
-    if (deltaY > 0 && currentSortIndex > 0) {
-      currentSortIndex--;
-    } else if (deltaY < 0 && currentSortIndex < rotatorOptions.length - 1) {
-      currentSortIndex++;
-    }
-    updateSortRotator();
-    startY = null;
-  }
-});
 
 
   
@@ -700,6 +647,67 @@ dropdown.addEventListener("click", async (event) => {
 //    });
 //  });
 
+// ==============================
+// iOS-Style 3D Sort Picker
+// ==============================
+const iosPicker = document.getElementById("ios-sort-picker");
+const sortOptions = Array.from(iosPicker.querySelectorAll("li"));
+const anglePerItem = 360 / sortOptions.length;
+let currentSortIndex = 0;
+
+// Posiziona gli elementi sulla ruota 3D
+sortOptions.forEach((opt, i) => {
+  opt.style.transform = `rotateX(${i * anglePerItem}deg) translateZ(48px)`;
+});
+
+// Carica la scelta salvata
+const { sortOrder = "default" } = await storage.get({ sortOrder: "default" });
+const savedIndex = sortOptions.findIndex(opt => opt.dataset.value === sortOrder);
+if (savedIndex >= 0) {
+  currentSortIndex = savedIndex;
+  iosPicker.style.transform = `rotateX(-${currentSortIndex * anglePerItem}deg)`;
+}
+
+// Funzione per aggiornare la selezione
+function updateSortSelection() {
+  iosPicker.style.transform = `rotateX(-${currentSortIndex * anglePerItem}deg)`;
+  const selected = sortOptions[currentSortIndex].dataset.value;
+  storage.set({ sortOrder: selected });
+  loadUrls();
+}
+
+// Scroll con mouse
+iosPicker.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  if (e.deltaY > 0 && currentSortIndex < sortOptions.length - 1) {
+    currentSortIndex++;
+    updateSortSelection();
+  } else if (e.deltaY < 0 && currentSortIndex > 0) {
+    currentSortIndex--;
+    updateSortSelection();
+  }
+});
+
+// Touch per mobile
+let touchStartY = null;
+
+iosPicker.addEventListener("touchstart", (e) => {
+  touchStartY = e.touches[0].clientY;
+});
+
+iosPicker.addEventListener("touchmove", (e) => {
+  if (touchStartY === null) return;
+  const deltaY = e.touches[0].clientY - touchStartY;
+  if (Math.abs(deltaY) > 20) {
+    if (deltaY > 0 && currentSortIndex > 0) {
+      currentSortIndex--;
+    } else if (deltaY < 0 && currentSortIndex < sortOptions.length - 1) {
+      currentSortIndex++;
+    }
+    updateSortSelection();
+    touchStartY = null;
+  }
+});
 
 // ==============================================
 // 1. FUNZIONE PRINCIPALE DI SALVATAGGIO (COMPLETA)
