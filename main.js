@@ -647,7 +647,11 @@ dropdown.addEventListener("click", async (event) => {
 //    });
 //  });
 
-// Inizializzazione rotore
+
+// ==============================
+// iOS-Style 3D Sort Picker - Versione migliorata
+// ==============================
+
 const rotor = document.getElementById("sortRotor");
 const rotorItems = Array.from(rotor.querySelectorAll("li"));
 const angleStep = 360 / rotorItems.length;
@@ -657,9 +661,8 @@ let startY = 0;
 let currentY = 0;
 let velocity = 0;
 let animationFrameId = null;
-let lastTimestamp = 0;
 
-// Posiziona ogni voce sulla ruota in 3D
+// Posiziona ogni voce sulla ruota
 rotorItems.forEach((item, i) => {
   item.style.transform = `rotateX(${i * angleStep}deg) translateZ(90px)`;
 });
@@ -671,113 +674,116 @@ selectedIndex = foundIndex >= 0 ? foundIndex : 0;
 updateRotor(true);
 
 function updateRotor(skipSave = false) {
-  selectedIndex = Math.max(0, Math.min(rotorItems.length - 1, selectedIndex));
-  const targetRotation = -selectedIndex * angleStep;
+  selectedIndex = (selectedIndex % rotorItems.length + rotorItems.length) % rotorItems.length;
+  rotor.style.transform = `rotateX(-${selectedIndex * angleStep}deg)`;
   
-  // Applica l'animazione fluida
-  rotor.style.transform = `rotateX(${targetRotation}deg)`;
-  
-  // Aggiorna lo stato attivo
   rotorItems.forEach((item, i) => {
-    const distance = Math.abs(i - selectedIndex);
-    const opacity = 1 - (distance * 0.3);
-    const scale = 1 - (distance * 0.05);
+    const diff = Math.min(
+      Math.abs(i - selectedIndex),
+      rotorItems.length - Math.abs(i - selectedIndex)
+    );
+    const opacity = 1 - (diff * 0.3);
+    const scale = 1 - (diff * 0.1);
     
-    item.style.opacity = opacity;
+    item.style.opacity = opacity.toString();
     item.style.transform = `rotateX(${i * angleStep}deg) translateZ(90px) scale(${scale})`;
     item.classList.toggle("active", i === selectedIndex);
   });
   
-  if (!skipSave) {
+  if (!skipSave && !rotorItems[selectedIndex].dataset.value.startsWith("dummy")) {
     const val = rotorItems[selectedIndex].dataset.value;
     storage.set({ sortOrder: val });
     loadUrls();
   }
 }
 
-// Scroll mouse con inerzia
-function handleWheel(e) {
+// Gestione touch per mobile
+rotor.addEventListener("touchstart", (e) => {
   e.preventDefault();
-  
-  // Calcola la direzione (invertita per un movimento più naturale)
-  const delta = e.deltaY > 0 ? 1 : -1;
-  
-  // Applica l'inerzia
-  velocity = delta * 5;
-  if (!animationFrameId) {
-    lastTimestamp = performance.now();
-    animationFrameId = requestAnimationFrame(animateInertia);
-  }
-}
-
-// Touch (mobile)
-function handleTouchStart(e) {
   isDragging = true;
   startY = e.touches[0].clientY;
   currentY = startY;
-  cancelAnimationFrame(animationFrameId);
   velocity = 0;
-}
+  cancelAnimationFrame(animationFrameId);
+});
 
-function handleTouchMove(e) {
+rotor.addEventListener("touchmove", (e) => {
   if (!isDragging) return;
+  e.preventDefault();
   
-  const newY = e.touches[0].clientY;
-  const deltaY = newY - currentY;
-  currentY = newY;
+  const prevY = currentY;
+  currentY = e.touches[0].clientY;
+  const deltaY = currentY - prevY;
+  velocity = deltaY * 0.5; // Riduci la sensibilità
   
-  // Converti il movimento in pixel a un cambiamento di indice
-  const pixelsPerItem = 30; // Sensibilità del drag
-  const deltaIndex = deltaY / pixelsPerItem;
-  
-  selectedIndex -= deltaIndex;
-  updateRotor();
-}
+  // Calcola l'indice in base allo spostamento
+  const deltaIndex = -Math.round(deltaY / 10);
+  if (deltaIndex !== 0) {
+    selectedIndex += deltaIndex;
+    updateRotor();
+  }
+});
 
-function handleTouchEnd() {
+rotor.addEventListener("touchend", () => {
   isDragging = false;
   
-  // Snap all'elemento più vicino
-  selectedIndex = Math.round(selectedIndex);
-  updateRotor();
-}
-
-// Animazione inerzia
-function animateInertia(timestamp) {
-  const deltaTime = timestamp - lastTimestamp;
-  lastTimestamp = timestamp;
-  
-  if (Math.abs(velocity) > 0.1) {
-    selectedIndex += velocity * (deltaTime / 16);
-    velocity *= 0.95; // Attrito
-    
-    // Limiti
-    if (selectedIndex < 0) {
-      selectedIndex = 0;
-      velocity = 0;
-    } else if (selectedIndex > rotorItems.length - 1) {
-      selectedIndex = rotorItems.length - 1;
-      velocity = 0;
-    }
-    
-    updateRotor();
-    animationFrameId = requestAnimationFrame(animateInertia);
+  // Applica l'inerzia
+  if (Math.abs(velocity) > 1) {
+    const inertia = () => {
+      velocity *= 0.9; // Fattore di attrito
+      selectedIndex += velocity > 0 ? -1 : 1;
+      updateRotor();
+      
+      if (Math.abs(velocity) > 0.5) {
+        animationFrameId = requestAnimationFrame(inertia);
+      } else {
+        // Snap all'elemento più vicino
+        selectedIndex = Math.round(selectedIndex);
+        updateRotor();
+      }
+    };
+    inertia();
   } else {
     // Snap all'elemento più vicino
     selectedIndex = Math.round(selectedIndex);
     updateRotor();
-    animationFrameId = null;
   }
-}
+});
 
-// Event listeners
-rotor.addEventListener("wheel", handleWheel, { passive: false });
-rotor.addEventListener("touchstart", handleTouchStart, { passive: false });
-rotor.addEventListener("touchmove", handleTouchMove, { passive: false });
-rotor.addEventListener("touchend", handleTouchEnd);
-rotor.addEventListener("touchcancel", handleTouchEnd);
+// Gestione mouse wheel
+rotor.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  
+  if (e.deltaY > 0) {
+    selectedIndex++;
+  } else if (e.deltaY < 0) {
+    selectedIndex--;
+  }
+  
+  updateRotor();
+});
 
+// Previene lo scroll della pagina quando si interagisce con il rotore
+rotor.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+}, { passive: false });
 
+// Click per selezione diretta (opzionale)
+rotor.addEventListener("click", (e) => {
+  if (!isDragging) {
+    const rect = rotor.getBoundingClientRect();
+    const clickY = e.clientY - rect.top;
+    const centerY = rect.height / 2;
+    
+    if (clickY < centerY) {
+      selectedIndex--;
+    } else {
+      selectedIndex++;
+    }
+    
+    updateRotor();
+  }
+});
   
 // ==============================================
 // 1. FUNZIONE PRINCIPALE DI SALVATAGGIO (COMPLETA)
