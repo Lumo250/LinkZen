@@ -544,6 +544,47 @@ body.dark .delete-btn {
       color: #eee;
     }
 
+#import-options {
+  width: 100%;
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+#import-options.hidden {
+  display: none;
+}
+
+#import-custom,
+#import-default {
+  flex: 1;
+  height: 100%;
+  font-size: 12px;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#import-custom {
+  background-color: #e3e3e3;
+  color: #000;
+}
+
+#import-default {
+  background-color: #d0f0ff;
+  color: #000;
+}
+
+body.dark #import-custom,
+body.dark #import-default {
+  background-color: #444;
+  color: #eee;
+}
+
+
+
+    
   /* Fix globale per iOS */
   input, textarea, select {
     font-size: 16px;
@@ -598,6 +639,10 @@ body.dark .delete-btn {
           <span class="btn-label">Import</span>
         </button>
         <input type="file" id="import-file" accept=".json" />
+      </div>
+      <div id="import-options" class="hidden">
+        <button id="import-custom">📁 Custom</button>
+        <button id="import-default">🔄 Default</button>
       </div>
     </div>
 
