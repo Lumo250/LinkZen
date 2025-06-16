@@ -54,6 +54,11 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+  // In 'install':
+const theme = localStorage.getItem('darkMode') || 'false';
+caches.open(CACHE_NAME).then(cache => 
+  cache.put('/theme', new Response(theme))
+);
     // Ignora richieste non GET e chrome-extension://
   if (req.method !== 'GET' || req.url.startsWith('chrome-extension://')) {
     return;
