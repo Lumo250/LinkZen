@@ -1,7 +1,3 @@
-  if (localStorage.getItem("darkMode") === "true") {
-    document.documentElement.classList.add("dark-ready");
-    document.body?.classList?.add("dark");
-  }
 
 
 // main.js - Versione completa con supporto bookmarklet per Safari iOS
@@ -228,7 +224,24 @@ function openLinkSafari(url) {
 // 5. EVENT LISTENERS E INIZIALIZZAZIONE
 // ============================================
 document.addEventListener("DOMContentLoaded", async () => {
-    // Processa il bookmarklet se presente
+   
+   // ✅ 1. Controlla il tema dark all'avvio (usando storage, non localStorage)
+    const { darkMode = false } = await storage.get({ darkMode: false });
+    if (darkMode) {
+        document.body.classList.add("dark");
+        document.getElementById("toggle-theme").checked = true;
+    }
+
+    // ✅ 2. Aggiorna solo storage (rimuovi localStorage)
+    const toggleTheme = document.getElementById("toggle-theme");
+    toggleTheme.addEventListener("change", () => {
+        const enabled = toggleTheme.checked;
+        document.body.classList.toggle("dark", enabled);
+        storage.set({ darkMode: enabled }); // <-- Solo qui, niente localStorage
+    });
+   
+  
+  // Processa il bookmarklet se presente
     const bookmarkletData = processaBookmarklet();
     if(bookmarkletData) {
         const { titolo, url } = bookmarkletData;
@@ -269,7 +282,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const enabled = toggleTheme.checked;
     document.body.classList.toggle("dark", enabled);
     storage.set({ darkMode: enabled });
-    localStorage.setItem("darkMode", enabled.toString());
+  //  localStorage.setItem("darkMode", enabled.toString());
   });
 
   // Zoom
