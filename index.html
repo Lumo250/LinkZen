@@ -715,6 +715,7 @@ body.dark .rotor-mask::after {
 
 <body id="main-body" class="">
   <div class="panel">
+    <!-- Prima riga di pulsanti -->
     <div class="button-row">
       <div class="btn-wrapper">
         <button id="save-btn"><span class="btn-icon">💾</span><span class="btn-label">Save</span></button>
@@ -724,7 +725,9 @@ body.dark .rotor-mask::after {
       </div>
     </div>
 
+    <!-- Seconda riga di pulsanti -->
     <div class="button-row">
+      <!-- Export -->
       <div class="btn-wrapper" id="export-container">
         <div id="export-default">
           <button id="export-btn">
@@ -738,22 +741,23 @@ body.dark .rotor-mask::after {
         </div>
       </div>
 
-    <div class="btn-wrapper" id="import-container">
-  <div id="import-default">
-    <button id="import-btn">
-      <span class="btn-icon">📥</span>
-      <span class="btn-label">Import</span>
-    </button>
-  </div>
-  <div id="import-options" class="hidden">
-    <button id="import-custom">🔹 Custom</button>
-    <button id="import-default-btn">🔸 Default</button>
-  </div>
-  <input type="file" id="import-file" accept=".json" />
-</div>
+      <!-- Import -->
+      <div class="btn-wrapper" id="import-container">
+        <div id="import-default">
+          <button id="import-btn">
+            <span class="btn-icon">📥</span>
+            <span class="btn-label">Import</span>
+          </button>
+        </div>
+        <div id="import-options" class="hidden">
+          <button id="import-custom">🔹 Custom</button>
+          <button id="import-default-btn">🔸 Default</button>
+        </div>
+        <input type="file" id="import-file" accept=".json" />
+      </div>
+    </div> <!-- <-- CHIUSURA MANCANTE AGGIUNTA QUI -->
 
-    </div>
-
+    <!-- Input per categoria personalizzata -->
     <div class="custom-category-container">
       <div class="custom-input-wrapper">
         <input type="text" id="new-category-input" placeholder="New Category" />
@@ -762,21 +766,21 @@ body.dark .rotor-mask::after {
       <div id="dropdown-category-list" class="dropdown-list hidden"></div>
     </div>
 
+    <!-- Rotor + Undo + Zoom -->
     <div class="sort-undo-bar">
+      <div class="rotor-wrapper">
+        <div class="rotor-mask"></div>
+        <ul class="rotor-wheel" id="sortRotor">
+          <li data-value="default">By Input</li>
+          <li data-value="category">By Category</li>
+          <li data-value="date">By Date</li>
+          <li data-value="dummy1">Custom Sort 1</li>
+          <li data-value="dummy2">Custom Sort 2</li>
+          <li data-value="dummy3">Custom Sort 3</li>
+        </ul>
+      </div>
 
-<div class="rotor-wrapper">
-  <div class="rotor-mask"></div>
-  <ul class="rotor-wheel" id="sortRotor">
-    <li data-value="default">By Input</li>
-    <li data-value="category">By Category</li>
-    <li data-value="date">By Date</li>
-    <li data-value="dummy1">Custom Sort 1</li>
-    <li data-value="dummy2">Custom Sort 2</li>
-    <li data-value="dummy3">Custom Sort 3</li>
-  </ul>
-</div>
-</div>      
-       <div id="zoom-controls">
+      <div id="zoom-controls">
         <button id="zoom-in" title="Increase text size">A+</button>
         <button id="zoom-out" title="Decrease text size">A−</button>
         <button id="ia-knowledge-btn" title="Mostra parole chiave apprese">📚 IA</button>
@@ -790,8 +794,9 @@ body.dark .rotor-mask::after {
         </label>
       </div>
     </div>
-  </div>
+  </div> <!-- fine .panel -->
 
+  <!-- Lista dei link -->
   <div class="list-panel">
     <div id="url-container" style="position: relative;">
       <ul id="url-list"></ul>
@@ -814,6 +819,7 @@ body.dark .rotor-mask::after {
       </div>
     </div>
   </div>
+</body>
 
   <!-- Script per registrare il Service Worker -->
   <script>
