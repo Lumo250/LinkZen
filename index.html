@@ -500,11 +500,18 @@ body.dark .delete-btn {
       position: relative;
     }
 
+#import-container {
+  display: flex;
+  flex: 1;
+  height: 36px;
+  position: relative;
+}
+
+#import-defaultview,
 #import-options {
   width: 100%;
   display: flex;
   gap: 4px;
-  margin-top: 4px;
 }
 
 #import-options.hidden {
@@ -537,7 +544,6 @@ body.dark #import-default {
   background-color: #444;
   color: #eee;
 }
-
     
     #export-default,
     #export-options {
@@ -635,18 +641,19 @@ body.dark #import-default {
         </div>
       </div>
 
-      <div class="btn-wrapper">
-        <button id="import-btn">
-          <span class="btn-icon">📥</span>
-          <span class="btn-label">Import</span>
-        </button>
-        <input type="file" id="import-file" accept=".json" />
-      </div>
-      <div id="import-options" class="hidden">
-        <button id="import-custom">📁 Custom</button>
-        <button id="import-default">🔄 Default</button>
-      </div>
-    </div>
+<div class="btn-wrapper" id="import-container">
+  <div id="import-defaultview">
+    <button id="import-btn">
+      <span class="btn-icon">📥</span>
+      <span class="btn-label">Import</span>
+    </button>
+    <input type="file" id="import-file" accept=".json" />
+  </div>
+  <div id="import-options" class="hidden">
+    <button id="import-custom">📁 Custom</button>
+    <button id="import-default">🔄 Default</button>
+  </div>
+</div>
 
     <div class="custom-category-container">
       <div class="custom-input-wrapper">
