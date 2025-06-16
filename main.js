@@ -615,7 +615,25 @@ function showSaveOptionsDialog() {
     const bgColor = isDark ? "#2d3748" : "#ffffff";
     const textColor = isDark ? "#f7fafc" : "#1a202c";
     const borderColor = isDark ? "#4a5568" : "#e2e8f0";
-    const hoverBg = isDark ? "#4a5568" : "#edf2f7";
+    
+    // Nuova palette di colori per i pulsanti
+    const buttonColors = {
+      bookmarklet: {
+        bg: isDark ? '#2b6cb0' : '#3182ce',
+        hover: isDark ? '#2c5282' : '#2b6cb0',
+        icon: '#ebf8ff'
+      },
+      manual: {
+        bg: isDark ? '#38a169' : '#48bb78',
+        hover: isDark ? '#2f855a' : '#38a169',
+        icon: '#f0fff4'
+      },
+      qr: {
+        bg: isDark ? '#9f7aea' : '#9f7aea',
+        hover: isDark ? '#805ad5' : '#805ad5',
+        icon: '#faf5ff'
+      }
+    };
     
     dialog.innerHTML = `
       <div style="
@@ -637,6 +655,7 @@ function showSaveOptionsDialog() {
           display: flex;
           align-items: center;
           gap: 8px;
+          color: ${isDark ? '#a0aec0' : '#4a5568'};
         ">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
@@ -653,19 +672,31 @@ function showSaveOptionsDialog() {
             gap: 10px;
             width: 100%;
             padding: 12px 16px;
-            background: transparent;
-            color: inherit;
-            border: 1px solid ${borderColor};
+            background: ${buttonColors.bookmarklet.bg};
+            color: white;
+            border: none;
             border-radius: 8px;
             font-size: 14px;
+            font-weight: 500;
             text-align: left;
             cursor: pointer;
             transition: all 0.2s ease;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1);
           ">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-            </svg>
+            <div style="
+              width: 24px;
+              height: 24px;
+              border-radius: 6px;
+              background: rgba(255,255,255,0.2);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${buttonColors.bookmarklet.icon}" stroke-width="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+            </div>
             <span>Use Bookmarklet</span>
           </button>
           
@@ -675,21 +706,33 @@ function showSaveOptionsDialog() {
             gap: 10px;
             width: 100%;
             padding: 12px 16px;
-            background: transparent;
-            color: inherit;
-            border: 1px solid ${borderColor};
+            background: ${buttonColors.manual.bg};
+            color: white;
+            border: none;
             border-radius: 8px;
             font-size: 14px;
+            font-weight: 500;
             text-align: left;
             cursor: pointer;
             transition: all 0.2s ease;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1);
           ">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
-              <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
-              <path d="M2 2l7.586 7.586"></path>
-              <circle cx="11" cy="11" r="2"></circle>
-            </svg>
+            <div style="
+              width: 24px;
+              height: 24px;
+              border-radius: 6px;
+              background: rgba(255,255,255,0.2);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${buttonColors.manual.icon}" stroke-width="2">
+                <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                <path d="M2 2l7.586 7.586"></path>
+                <circle cx="11" cy="11" r="2"></circle>
+              </svg>
+            </div>
             <span>Enter Manually</span>
           </button>
           
@@ -699,21 +742,33 @@ function showSaveOptionsDialog() {
             gap: 10px;
             width: 100%;
             padding: 12px 16px;
-            background: transparent;
-            color: inherit;
-            border: 1px solid ${borderColor};
+            background: ${buttonColors.qr.bg};
+            color: white;
+            border: none;
             border-radius: 8px;
             font-size: 14px;
+            font-weight: 500;
             text-align: left;
             cursor: pointer;
             transition: all 0.2s ease;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1);
           ">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
+            <div style="
+              width: 24px;
+              height: 24px;
+              border-radius: 6px;
+              background: rgba(255,255,255,0.2);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${buttonColors.qr.icon}" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+            </div>
             <span>Scan QR Code</span>
           </button>
         </div>
@@ -731,11 +786,14 @@ function showSaveOptionsDialog() {
     // Gestione hover
     const buttons = dialog.querySelectorAll("button[data-choice]");
     buttons.forEach(btn => {
+      const choice = btn.dataset.choice;
       btn.addEventListener("mouseenter", () => {
-        btn.style.backgroundColor = hoverBg;
+        btn.style.backgroundColor = buttonColors[choice].hover;
+        btn.style.transform = "translateY(-1px)";
       });
       btn.addEventListener("mouseleave", () => {
-        btn.style.backgroundColor = "transparent";
+        btn.style.backgroundColor = buttonColors[choice].bg;
+        btn.style.transform = "translateY(0)";
       });
     });
     
