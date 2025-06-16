@@ -268,7 +268,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   toggleTheme.addEventListener("change", () => {
     const enabled = toggleTheme.checked;
     document.body.classList.toggle("dark", enabled);
-    storage.set({ darkMode: enabled });
+//    storage.set({ darkMode: enabled });
     localStorage.setItem("darkMode", enabled.toString());
   });
 
