@@ -591,14 +591,12 @@ body.dark #import-default-btn {
   color: #eee;
 }
 
-
-
-
+/* Aggiungi queste regole CSS */
 .rotor-wrapper {
   position: relative;
   width: 140px;
   height: 96px;
-  perspective: 800px;
+  perspective: 1000px;
   margin-right: 12px;
   overflow: hidden;
   border-radius: 8px;
@@ -606,21 +604,27 @@ body.dark #import-default-btn {
   flex-shrink: 0;
   border: 1px solid #bbb;
   box-shadow: inset 0 1px 4px rgba(0,0,0,0.1), 0 0 4px rgba(0,0,0,0.05);
+  touch-action: none; /* Previene lo scroll accidentale */
+  -webkit-overflow-scrolling: auto; /* Disabilita lo scroll elastico su iOS */
 }
 
 .rotor-wheel {
   transform-style: preserve-3d;
-  transition: transform 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   transform: rotateX(0deg);
   list-style: none;
   padding: 0;
   margin: 0;
   position: absolute;
-  top: 32px; /* centrato su 3 righe da 32px */
+  top: 32px;
   width: 100%;
+  height: 96px;
+  will-change: transform; /* Ottimizzazione per le animazioni */
 }
 
 .rotor-wheel li {
+  position: absolute;
+  width: 100%;
   height: 32px;
   line-height: 32px;
   text-align: center;
@@ -628,10 +632,18 @@ body.dark #import-default-btn {
   color: #333;
   backface-visibility: hidden;
   transform-origin: center center -90px;
-  transform-style: preserve-3d;
-  opacity: 0.3;
-  transition: opacity 0.3s ease;
+  opacity: 0.6;
+  transition: opacity 0.3s ease, transform 0.4s ease;
+  pointer-events: none;
+  user-select: none;
 }
+
+.rotor-wheel li:nth-child(1) { transform: rotateX(0deg) translateZ(90px); }
+.rotor-wheel li:nth-child(2) { transform: rotateX(60deg) translateZ(90px); }
+.rotor-wheel li:nth-child(3) { transform: rotateX(120deg) translateZ(90px); }
+.rotor-wheel li:nth-child(4) { transform: rotateX(180deg) translateZ(90px); }
+.rotor-wheel li:nth-child(5) { transform: rotateX(240deg) translateZ(90px); }
+.rotor-wheel li:nth-child(6) { transform: rotateX(300deg) translateZ(90px); }
 
 .rotor-wheel li.active {
   font-weight: bold;
@@ -640,25 +652,20 @@ body.dark #import-default-btn {
   border-radius: 6px;
 }
 
-.rotor-mask::before,
-.rotor-mask::after {
-  content: "";
+/* Maschera per l'effetto di sfocatura */
+.rotor-mask {
   position: absolute;
-  height: 32px;
+  top: 0;
   left: 0;
   right: 0;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.rotor-mask::before {
-  top: 0;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.9), transparent);
-}
-
-.rotor-mask::after {
   bottom: 0;
-  background: linear-gradient(to top, rgba(255,255,255,0.9), transparent);
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(to bottom, 
+    rgba(255,255,255,0.9) 0%, 
+    rgba(255,255,255,0) 32px, 
+    rgba(255,255,255,0) calc(100% - 32px), 
+    rgba(255,255,255,0.9) 100%);
 }
 
 /* Dark mode */
@@ -667,15 +674,20 @@ body.dark .rotor-wrapper {
   border: 1px solid #666;
   box-shadow: inset 0 1px 4px rgba(255,255,255,0.1);
 }
+
 body.dark .rotor-wheel li {
   color: #eee;
 }
-body.dark .rotor-mask::before {
-  background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+
+body.dark .rotor-mask {
+  background: linear-gradient(to bottom, 
+    rgba(0,0,0,0.8) 0%, 
+    rgba(0,0,0,0) 32px, 
+    rgba(0,0,0,0) calc(100% - 32px), 
+    rgba(0,0,0,0.8) 100%);
 }
-body.dark .rotor-mask::after {
-  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-}
+
+
 
     
   /* Fix globale per iOS */
@@ -757,6 +769,9 @@ body.dark .rotor-mask::after {
     <li data-value="default">By Input</li>
     <li data-value="category">By Category</li>
     <li data-value="date">By Date</li>
+    <li data-value="dummy1">Dummy 1</li> <!-- Voce fittizia -->
+    <li data-value="dummy2">Dummy 2</li> <!-- Voce fittizia -->
+    <li data-value="dummy3">Dummy 3</li> <!-- Voce fittizia -->
   </ul>
 </div>
 
