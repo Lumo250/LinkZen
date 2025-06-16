@@ -1482,256 +1482,69 @@ function showAlert(title, message, showCopyButton = false) {
 
 // ESEMPIO DI USO
 function showBookmarkletInstructions() {
-  // 1. Genera l'URL base in modo dinamico e sicuro (mantenuto uguale)
+//  const currentUrl = window.location.href.split('?')[0].replace(/#.*$/, '').replace(/\/[^\/]*$/, '/');
+  
+//  const bookmarkletCode = `javascript:(function(){
+//    window.open('${currentUrl}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href),'_blank');
+//  })();`;
+
+ // 1. Genera l'URL base in modo dinamico e sicuro
   const getBaseUrl = () => {
     const url = new URL(window.location.href);
     return `${url.origin}${url.pathname.split('/').slice(0, 2).join('/')}/`;
   };
 
-  // 2. Crea il bookmarklet con la sintassi che funziona (mantenuto uguale)
+  // 2. Crea il bookmarklet con la sintassi che funziona
   const rawBookmarklet = `javascript:(function(){
     var titolo=encodeURIComponent(document.title);
     var url=encodeURIComponent(window.location.href);
     window.location.href='${getBaseUrl()}?bookmarklet&titolo='+titolo+'&url='+url;
   })();`;
 
-  // 3. Codifica correttamente per l'uso in HTML (mantenuto uguale)
+  // 3. Codifica correttamente per l'uso in HTML
   const bookmarkletCode = rawBookmarklet
     .replace(/ /g, '%20')
     .replace(/'/g, '%27')
     .replace(/"/g, '%22');
 
-  // 4. NUOVA IMPLEMENTAZIONE DELLA FINESTRA
-  const isDark = document.body.classList.contains("dark");
-  const bgColor = isDark ? "#2d3748" : "#ffffff";
-  const textColor = isDark ? "#f7fafc" : "#1a202c";
-  const borderColor = isDark ? "#4a5568" : "#e2e8f0";
-  const accentColor = isDark ? "#4299e1" : "#3182ce";
-  const codeBg = isDark ? "#4a5568" : "#edf2f7";
-  const codeText = isDark ? "#f7fafc" : "#2d3748";
-
-  const dialog = document.createElement("div");
-  dialog.style.position = "fixed";
-  dialog.style.top = "0";
-  dialog.style.left = "0";
-  dialog.style.right = "0";
-  dialog.style.bottom = "0";
-  dialog.style.backgroundColor = "rgba(0,0,0,0.5)";
-  dialog.style.zIndex = "1000";
-  dialog.style.display = "flex";
-  dialog.style.justifyContent = "center";
-  dialog.style.alignItems = "center";
-  dialog.style.backdropFilter = "blur(4px)";
-  dialog.style.opacity = "0";
-  dialog.style.transition = "opacity 0.3s ease";
-
-  dialog.innerHTML = `
-    <div style="
-      background: ${bgColor};
-      color: ${textColor};
-      padding: 24px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-      border: 1px solid ${borderColor};
-      transform: translateY(20px);
-      transition: transform 0.3s ease;
+    // 4. Mostra la finestra con pulsante di copia
+  showAlert("How to Use Bookmarklet", `
+    1. Copy this code:<br><br>
+    <code id="bookmarklet-code" style="
+      background:#4A5568;
+      padding:10px;
+      border-radius:6px;
+      color:#F7FAFC;
+      display:block;
+      margin:10px 0;
+      font-family:monospace;
+      word-break:break-all;
+      border:1px solid #718096;
+      user-select:all;
+      -webkit-user-select:all;
+    ">${bookmarkletCode}</code>
+    
+    <button onclick="
+      navigator.clipboard.writeText(document.getElementById('bookmarklet-code').innerText);
+      this.textContent = '✓ Copied!';
+      setTimeout(() => this.textContent = 'Copy Code', 2000);
+    " style="
+      padding:8px 16px;
+      background:#4CAF50;
+      color:white;
+      border:none;
+      border-radius:4px;
+      font-size:14px;
+      cursor:pointer;
+      margin-top:5px;
     ">
-      <div style="
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 20px;
-      ">
-        <div style="
-          width: 40px;
-          height: 40px;
-          border-radius: 8px;
-          background: ${accentColor}20;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        ">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${accentColor}" stroke-width="2">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-          </svg>
-        </div>
-        <h3 style="
-          margin: 0;
-          font-size: 18px;
-          font-weight: 600;
-          color: ${textColor};
-        ">
-          How to Use Bookmarklet
-        </h3>
-      </div>
-
-      <div style="margin-bottom: 16px; line-height: 1.5;">
-        <p style="margin: 0 0 12px 0; font-size: 14px;">
-          To save links quickly from any webpage:
-        </p>
-        <ol style="
-          margin: 0 0 16px 0;
-          padding-left: 20px;
-          font-size: 14px;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        ">
-          <li>Copy this bookmarklet code:</li>
-        </ol>
-      </div>
-
-      <div style="
-        position: relative;
-        margin-bottom: 16px;
-      ">
-        <pre id="bookmarklet-code" style="
-          margin: 0;
-          padding: 12px;
-          background: ${codeBg};
-          color: ${codeText};
-          border-radius: 8px;
-          border: 1px solid ${borderColor};
-          font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-          font-size: 13px;
-          overflow-x: auto;
-          white-space: pre-wrap;
-          word-break: break-all;
-          user-select: all;
-          -webkit-user-select: all;
-        ">${bookmarkletCode}</pre>
-        <button id="copy-bookmarklet" style="
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          padding: 4px 8px;
-          background: ${accentColor}20;
-          color: ${accentColor};
-          border: none;
-          border-radius: 4px;
-          font-size: 12px;
-          font-weight: 500;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          transition: all 0.2s ease;
-        ">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${accentColor}" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-          Copy
-        </button>
-      </div>
-
-      <div style="margin-bottom: 24px; line-height: 1.5;">
-        <ol start="2" style="
-          margin: 0;
-          padding-left: 20px;
-          font-size: 14px;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        ">
-          <li>Create a new bookmark in Safari</li>
-          <li>Paste as URL</li>
-          <li>Use from any page by tapping the bookmark</li>
-        </ol>
-      </div>
-
-      <div style="display: flex; justify-content: flex-end;">
-        <button id="close-bookmarklet" style="
-          padding: 10px 20px;
-          font-size: 14px;
-          font-weight: 500;
-          background: ${accentColor};
-          color: white;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1);
-        ">
-          Got it!
-        </button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(dialog);
-
-  // Animazione di entrata
-  setTimeout(() => {
-    dialog.style.opacity = "1";
-    dialog.querySelector("div").style.transform = "translateY(0)";
-  }, 10);
-
-  // Aggiungi effetti hover
-  const closeBtn = document.getElementById("close-bookmarklet");
-  const copyBtn = document.getElementById("copy-bookmarklet");
-  
-  closeBtn.addEventListener("mouseenter", () => {
-    closeBtn.style.transform = "translateY(-1px)";
-    closeBtn.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)";
-  });
-  closeBtn.addEventListener("mouseleave", () => {
-    closeBtn.style.transform = "translateY(0)";
-    closeBtn.style.boxShadow = "0 1px 3px 0 rgba(0,0,0,0.1)";
-  });
-  
-  copyBtn.addEventListener("mouseenter", () => {
-    copyBtn.style.background = `${accentColor}30`;
-  });
-  copyBtn.addEventListener("mouseleave", () => {
-    copyBtn.style.background = `${accentColor}20`;
-  });
-
-  // Copia il bookmarklet (stessa logica di prima ma con nuovo stile)
-  copyBtn.addEventListener("click", () => {
-    navigator.clipboard.writeText(bookmarkletCode).then(() => {
-      copyBtn.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${accentColor}" stroke-width="2">
-          <path d="M20 6L9 17l-5-5"></path>
-        </svg>
-        Copied!
-      `;
-      setTimeout(() => {
-        copyBtn.innerHTML = `
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${accentColor}" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-          Copy
-        `;
-      }, 2000);
-    });
-  });
-
-  // Chiudi la finestra
-  closeBtn.addEventListener("click", () => {
-    // Animazione di uscita
-    dialog.style.opacity = "0";
-    dialog.querySelector("div").style.transform = "translateY(20px)";
-    setTimeout(() => {
-      document.body.removeChild(dialog);
-    }, 300);
-  });
-
-  // Chiudi al click fuori dal dialogo
-  dialog.addEventListener("click", (e) => {
-    if (e.target === dialog) {
-      // Animazione di uscita
-      dialog.style.opacity = "0";
-      dialog.querySelector("div").style.transform = "translateY(20px)";
-      setTimeout(() => {
-        document.body.removeChild(dialog);
-      }, 300);
-    }
-  });
+      Copy Code
+    </button><br>
+    
+    2. Create a new bookmark in Safari<br>
+    3. Paste as URL<br>
+    4. Use from any page by tapping the bookmark
+  `, true);
 }
   
 // ============================================
