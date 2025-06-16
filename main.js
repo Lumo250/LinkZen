@@ -411,8 +411,9 @@ const importOptions = document.getElementById("import-options");
 
   // Import
 importBtn.addEventListener("click", (e) => {
-  importBtn.style.display = "none";
-  importOptions.classList.remove("hidden");
+document.getElementById("import-defaultview").style.display = "flex";
+importOptions.classList.add("hidden");
+
   e.stopPropagation();
 });
 
