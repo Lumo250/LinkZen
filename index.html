@@ -632,6 +632,40 @@
       background-color: #444;
       color: #eee;
     }
+
+/* Stili per il drag & drop */
+.link-row.dragging {
+  opacity: 0.5;
+  background-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.link-row:active {
+  cursor: grabbing;
+}
+
+/* Miglioramenti per il feedback visivo */
+.link-row {
+  transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.link-row:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.dark .link-row:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Stile per l'ordinamento personalizzato selezionato */
+input[value="custom"]:checked + span {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+body.dark input[value="custom"]:checked + span {
+  color: lightgreen;
+}
     
     /* Fix per iOS - previene lo zoom automatico sui campi input */
     input, textarea, select {
@@ -713,9 +747,10 @@
     <div class="sort-undo-bar">
       <!-- Opzioni di ordinamento -->
       <div class="sort-options">
-        <label><input type="radio" name="sort" value="default" checked> By Input</label>
-        <label><input type="radio" name="sort" value="category"> By Category</label>
-      </div>
+       <label><input type="radio" name="sort" value="default" checked> By Input</label>
+       <label><input type="radio" name="sort" value="category"> By Category</label>
+       <label><input type="radio" name="sort" value="custom"> By Custom</label>
+     </div>
 
       <!-- Controlli per lo zoom e conoscenza IA -->
       <div id="zoom-controls">
