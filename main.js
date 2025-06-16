@@ -14,6 +14,8 @@ let undoData = null;
 let undoTimeout = null;
 let undoBtn, themeToggleWrapper;
 let fontScale = 1;
+let justClickedImportCustom = false;
+
 
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
@@ -386,8 +388,8 @@ document.addEventListener("click", (e) => {
     exportOptions.classList.add("hidden");
   }
 
-  // Chiudi menu Import se clic fuori (già presente, ma utile consolidarlo qui)
-  if (!e.target.closest("#import-container")) {
+    // Chiudi import solo se non si è appena cliccato su "Custom"
+  if (!e.target.closest("#import-container") && !justClickedImportCustom) {
     importDefault.style.display = "flex";
     importOptions.classList.add("hidden");
   }
@@ -436,7 +438,9 @@ importBtn.addEventListener("click", (e) => {
 
 
 document.getElementById("import-custom").addEventListener("click", () => {
+  justClickedImportCustom = true;
   document.getElementById("import-file").click();
+  setTimeout(() => justClickedImportCustom = false, 500); // reset dopo mezzo secondo
 });
 
 document.getElementById("import-default-btn").addEventListener("click", async () => {
