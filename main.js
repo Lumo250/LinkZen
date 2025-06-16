@@ -404,30 +404,85 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Import
-  document.getElementById("import-btn").addEventListener("click", () => {
-    document.getElementById("import-file").click();
-  });
+const importBtn = document.getElementById("import-btn");
+const importDefault = document.getElementById("import-default");
+const importOptions = document.getElementById("import-options");
+const importCustom = document.getElementById("import-custom");
+const importDefaultData = document.getElementById("import-default-data");
+const importFile = document.getElementById("import-file");
 
-  document.getElementById("import-file").addEventListener("change", async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+// Mostra le opzioni di import quando si clicca sul pulsante principale
+importBtn.addEventListener("click", (e) => {
+  importDefault.style.display = "none";
+  importOptions.classList.remove("hidden");
+  e.stopPropagation();
+});
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const data = JSON.parse(e.target.result);
-        if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
-          await storage.set(data);
-          await loadUrls();
-        } else {
-          alert("File non valido. Nessuna lista trovata.");
-        }
-      } catch (err) {
-        alert("Errore nel file: " + err.message);
+// Gestione click esterno per chiudere il menu
+document.addEventListener("click", (event) => {
+  if (!importBtn.contains(event.target) && !importOptions.contains(event.target)) {
+    importDefault.style.display = "flex";
+    importOptions.classList.add("hidden");
+  }
+});
+
+// Importazione da file personalizzato
+importCustom.addEventListener("click", () => {
+  importFile.click();
+  importDefault.style.display = "flex";
+  importOptions.classList.add("hidden");
+});
+
+importFile.addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
+        await storage.set(data);
+        await loadUrls();
+        showAlert("Success", "Custom configuration imported successfully!");
+      } else {
+        showAlert("Error", "Invalid file format. No link list found.");
       }
-    };
-    reader.readAsText(file);
-  });
+    } catch (err) {
+      showAlert("Error", "File error: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Importazione database iniziale da GitHub
+importDefaultData.addEventListener("click", async () => {
+  try {
+    // Modifica questo URL con il percorso corretto del tuo file nel repository
+    const response = await fetch('https://raw.githubusercontent.com/Lumo250.github.io/LinkZen/default-config.json');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
+      await storage.set(data);
+      await loadUrls();
+      showAlert("Success", "Default configuration imported successfully!");
+    } else {
+      showAlert("Error", "Invalid default configuration format");
+    }
+  } catch (err) {
+    showAlert("Error", "Failed to load default configuration: " + err.message);
+  }
+  
+  importDefault.style.display = "flex";
+  importOptions.classList.add("hidden");
+});
+
+  
 
 // Categorie - Versione migliorata con [x] e dropdown persistente
 const input = document.getElementById("new-category-input");
