@@ -1593,53 +1593,77 @@ async function saveCurrentTab() {
 /**
  * Loads and displays bookmarks from storage
  */
+
 async function loadUrls() {
-    const {
-        visitedUrls = [],
-        clickedUrls = [],
-        userCategories = [],
-        sortOrder = "default",
-        lastAddedUrl = null,
-        highlightColor = "green"
-    } = await storage.get({
-        visitedUrls: [],
-        clickedUrls: [],
-        userCategories: [],
-        sortOrder: "default",
-        lastAddedUrl: null,
-        highlightColor: "green"
+  const {
+    visitedUrls = [],
+    clickedUrls = [],
+    userCategories = [],
+    sortOrder = "default",
+    lastAddedUrl = null,
+    highlightColor = "green",
+    customOrder = []
+  } = await storage.get({
+    visitedUrls: [],
+    clickedUrls: [],
+    userCategories: [],
+    sortOrder: "default",
+    lastAddedUrl: null,
+    highlightColor: "green",
+    customOrder: []
+  });
+
+  const list = document.getElementById("url-list");
+  list.innerHTML = "";
+
+  // Set current sort order
+  document.querySelectorAll('input[name="sort"]').forEach(radio => {
+    radio.checked = (radio.value === sortOrder);
+  });
+
+  // Sort URLs based on selected order
+  let urls = [...visitedUrls];
+  
+  if (sortOrder === "category") {
+    urls.sort((a, b) => (a.category || "Other").localeCompare(b.category || "Other"));
+  } else if (sortOrder === "custom" && customOrder.length > 0) {
+    // Create a map for quick lookup
+    const urlMap = new Map(urls.map(item => [item.url, item]));
+    
+    // Reorder based on customOrder, then append any new items
+    urls = customOrder
+      .map(url => urlMap.get(url))
+      .filter(item => item !== undefined)
+      .concat(urls.filter(item => !customOrder.includes(item.url)));
+  }
+
+  // Create list items for each URL
+  urls.forEach((item, index) => {
+    const url = item.url;
+    const currentCategory = item.category;
+    const title = item.title || "";
+
+    const li = document.createElement("li");
+    li.className = "link-row";
+    li.dataset.url = url;
+    li.dataset.index = index;
+    li.draggable = true;
+    
+    // Stile per l'elemento trascinato
+    li.style.cursor = "grab";
+    li.style.userSelect = "none";
+    li.style.touchAction = "none";
+    li.style.transition = "transform 0.2s ease";
+    
+    li.addEventListener("dragstart", () => {
+      li.style.opacity = "0.5";
+      li.style.transform = "scale(1.05)";
     });
-
-    const list = document.getElementById("url-list");
-    list.innerHTML = "";
-
-    // Set current sort order
-    document.querySelectorAll('input[name="sort"]').forEach(radio => {
-        radio.checked = (radio.value === sortOrder);
+    
+    li.addEventListener("dragend", () => {
+      li.style.opacity = "1";
+      li.style.transform = "scale(1)";
     });
-
-    // Sort URLs if needed
-    const urls = [...visitedUrls];
-    if (sortOrder === "category") {
-        urls.sort((a, b) => (a.category || "Other").localeCompare(b.category || "Other"));
-    }
-
-    // Define categories
-    const defaultCategories = [
-        "News", "Video", "Finance", "Social", "E-mail", "Store", "Commerce",
-        "Productivity", "Entertainment", "Education", "Sports",
-        "AI", "Search", "Design", "Weather", "Other"
-    ];
-    const allCategories = [...defaultCategories, ...userCategories];
-
-    // Create list items for each URL
-    urls.forEach((item, index) => {
-        const url = item.url;
-        const currentCategory = item.category;
-        const title = item.title || "";
-
-        const li = document.createElement("li");
-        li.className = "link-row";
 
         // Highlight newly added items
         if (url === lastAddedUrl) {
@@ -1764,6 +1788,9 @@ async function loadUrls() {
         list.appendChild(li);
     });
 
+ // Abilita il drag & drop dopo aver creato la lista
+  enableDragAndDrop();
+    
     // Scroll to last added item if exists
     if (lastAddedUrl) {
         const lastLink = Array.from(list.children).find(li =>
