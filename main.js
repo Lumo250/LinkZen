@@ -257,20 +257,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   undoBtn = document.getElementById("undo-btn");
   themeToggleWrapper = document.getElementById("theme-toggle");
 
-  // Tema dark
-  const toggleTheme = document.getElementById("toggle-theme");
-  const { darkMode = false } = await storage.get({ darkMode: false });
-  if (darkMode) {
-    document.body.classList.add("dark");
-    toggleTheme.checked = true;
-  }
+// Tema dark
+const toggleTheme = document.getElementById("toggle-theme");
+const darkMode = localStorage.getItem("darkMode") === "true"; // ✅ Legge solo da localStorage
+if (darkMode) {
+  document.body.classList.add("dark");
+  toggleTheme.checked = true;
+}
 
-  toggleTheme.addEventListener("change", () => {
-    const enabled = toggleTheme.checked;
-    document.body.classList.toggle("dark", enabled);
-    storage.set({ darkMode: enabled });
-    localStorage.setItem("darkMode", enabled.toString());
-  });
+toggleTheme.addEventListener("change", () => {
+  const enabled = toggleTheme.checked;
+  document.body.classList.toggle("dark", enabled);
+  localStorage.setItem("darkMode", enabled.toString()); // ✅ Scrive solo in localStorage
+});
 
   // Zoom
   document.getElementById("zoom-in").addEventListener("click", () => {
