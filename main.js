@@ -651,185 +651,224 @@ dropdown.addEventListener("click", async (event) => {
 
 
 
-  // Inizializzazione del rotore
+// Sostituisci il codice esistente del rotore con questo:
+
+// Inizializzazione rotore
 const rotor = document.getElementById("sortRotor");
-const rotorWrapper = document.querySelector(".rotor-wrapper");
-const rotorItems = [
-  { value: "default", label: "By Input" },
-  { value: "dummy1", label: "By Priority" },
-  { value: "category", label: "By Category" },
-  { value: "dummy2", label: "By Usage" },
-  { value: "date", label: "By Date" },
-  { value: "dummy3", label: "By Size" },
-  { value: "dummy4", label: "By Type" },
-  { value: "dummy5", label: "By Name" },
-  { value: "dummy6", label: "By Rating" },
-  { value: "dummy7", label: "By Color" }
-];
-
-// Popola il rotore
-rotor.innerHTML = rotorItems.map(item => 
-  `<li data-value="${item.value}">${item.label}</li>`
-).join('');
-
-const items = Array.from(rotor.querySelectorAll("li"));
-const itemCount = items.length;
-const angleStep = 360 / itemCount;
+const rotorItems = Array.from(rotor.querySelectorAll("li"));
+const angleStep = 360 / rotorItems.length;
 let selectedIndex = 0;
-let currentRotation = 0;
 let isDragging = false;
 let startY = 0;
-let startRotation = 0;
+let currentRotation = 0;
+let targetRotation = 0;
+let velocity = 0;
+let lastTimestamp = 0;
+let animationFrameId = null;
+
+// Posiziona ogni voce sulla ruota
+rotorItems.forEach((item, i) => {
+  item.style.transform = `rotateX(${i * angleStep}deg) translateZ(90px)`;
+});
 
 // Imposta lo stato iniziale
-async function initRotor() {
-  const { sortOrder = "default" } = await storage.get({ sortOrder: "default" });
-  const foundIndex = rotorItems.findIndex(i => i.value === sortOrder);
-  selectedIndex = foundIndex >= 0 ? foundIndex : 0;
-  updateRotor(true);
-}
+const { sortOrder = "default" } = await storage.get({ sortOrder: "default" });
+const foundIndex = rotorItems.findIndex(i => i.dataset.value === sortOrder);
+selectedIndex = foundIndex >= 0 ? foundIndex : 0;
+updateRotor(true);
 
-// Aggiorna la posizione del rotore
+// Funzione per aggiornare la posizione del rotore
 function updateRotor(skipSave = false) {
-  // Calcola la rotazione per centrare l'elemento selezionato
-  currentRotation = -selectedIndex * angleStep;
+  selectedIndex = (selectedIndex % rotorItems.length + rotorItems.length) % rotorItems.length;
   
-  // Applica la rotazione con animazione fluida
-  rotor.style.transform = `rotateX(${currentRotation}deg)`;
+  // Calcola la rotazione target
+  targetRotation = -selectedIndex * angleStep;
   
-  // Aggiorna le classi active
-  items.forEach((item, i) => {
-    const diff = Math.abs(((i - selectedIndex + itemCount/2) % itemCount) - itemCount/2);
-    const opacity = 1 - (diff / (itemCount/2)) * 0.7;
-    const scale = 1 - (diff / (itemCount/2)) * 0.2;
+  // Aggiorna le classi degli elementi
+  rotorItems.forEach((item, i) => {
+    const itemAngle = (i * angleStep + currentRotation) % 360;
+    const distance = Math.min(Math.abs(itemAngle), 360 - Math.abs(itemAngle));
+    
+    // Calcola l'opacità in base alla distanza dall'elemento attivo
+    let opacity = 0.3;
+    if (distance < 30) {
+      opacity = 0.3 + (0.7 * (1 - distance / 30));
+    }
     
     item.style.opacity = opacity;
-    item.style.transform = `rotateX(${i * angleStep}deg) translateZ(90px) scale(${scale})`;
     item.classList.toggle("active", i === selectedIndex);
+    
+    // Aggiusta la prospettiva per gli elementi vicini
+    const scale = distance < 45 ? 1 + (0.1 * (1 - distance / 45)) : 1;
+    item.style.transform = `rotateX(${i * angleStep}deg) translateZ(90px) scale(${scale})`;
   });
   
-  // Salva la selezione se non è un'inizializzazione
-  if (!skipSave && rotorItems[selectedIndex].value !== "dummy") {
-    const val = rotorItems[selectedIndex].value;
+  // Applica la rotazione
+  rotor.style.transform = `rotateX(${currentRotation}deg)`;
+  
+  // Salva lo stato se necessario
+  if (!skipSave && rotorItems[selectedIndex].dataset.value !== "dummy1" && 
+      rotorItems[selectedIndex].dataset.value !== "dummy2" && 
+      rotorItems[selectedIndex].dataset.value !== "dummy3") {
+    const val = rotorItems[selectedIndex].dataset.value;
     storage.set({ sortOrder: val });
     loadUrls();
   }
 }
 
-// Gestione scroll mouse
-let lastScrollTime = 0;
-let scrollVelocity = 0;
-let scrollAnimationId = null;
-
-function handleScroll(e) {
-  e.preventDefault();
-  
-  const now = Date.now();
-  const deltaTime = now - lastScrollTime;
-  lastScrollTime = now;
-  
-  // Calcola la velocità basata sullo scroll
-  const deltaY = e.deltaY;
-  scrollVelocity = deltaY * 0.2;
-  
-  // Ferma qualsiasi animazione precedente
-  if (scrollAnimationId) {
-    cancelAnimationFrame(scrollAnimationId);
-  }
+// Animazione fluida
+function animate(timestamp) {
+  if (!lastTimestamp) lastTimestamp = timestamp;
+  const deltaTime = timestamp - lastTimestamp;
+  lastTimestamp = timestamp;
   
   // Applica l'inerzia
-  applyInertia();
-}
-
-function applyInertia() {
-  if (Math.abs(scrollVelocity) < 0.1) {
-    scrollVelocity = 0;
-    snapToNearest();
-    return;
+  if (Math.abs(velocity) > 0.01) {
+    currentRotation += velocity * deltaTime / 16;
+    velocity *= 0.95; // Attrito
+    
+    // Normalizza la rotazione
+    currentRotation = (currentRotation % 360 + 360) % 360;
+    
+    // Calcola l'indice selezionato in base alla rotazione
+    const newIndex = Math.round(((360 - currentRotation) % 360) / angleStep) % rotorItems.length;
+    if (newIndex !== selectedIndex) {
+      selectedIndex = newIndex;
+      updateRotor();
+    }
   }
   
-  // Applica la velocità
-  selectedIndex = (selectedIndex + Math.sign(scrollVelocity)) % itemCount;
-  if (selectedIndex < 0) selectedIndex += itemCount;
+  // Interpolazione verso la rotazione target
+  if (!isDragging && Math.abs(currentRotation - targetRotation) > 0.1) {
+    currentRotation += (targetRotation - currentRotation) * 0.2;
+  } else if (!isDragging) {
+    currentRotation = targetRotation;
+  }
   
-  updateRotor();
+  rotor.style.transform = `rotateX(${currentRotation}deg)`;
   
-  // Riduci la velocità con attrito
-  scrollVelocity *= 0.9;
-  
-  // Continua l'animazione
-  scrollAnimationId = requestAnimationFrame(applyInertia);
-}
-
-function snapToNearest() {
-  const targetRotation = -selectedIndex * angleStep;
-  const diff = (targetRotation - currentRotation + 180) % 360 - 180;
-  
-  if (Math.abs(diff) > 1) {
-    currentRotation += diff * 0.2;
-    rotor.style.transform = `rotateX(${currentRotation}deg)`;
-    requestAnimationFrame(snapToNearest);
+  // Continua l'animazione se necessario
+  if (Math.abs(velocity) > 0.01 || Math.abs(currentRotation - targetRotation) > 0.1) {
+    animationFrameId = requestAnimationFrame(animate);
   } else {
-    updateRotor();
+    animationFrameId = null;
   }
 }
 
-// Gestione touch
-function handleTouchStart(e) {
+// Gestione scroll mouse
+rotor.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  
+  // Calcola la direzione dello scroll
+  const direction = Math.sign(e.deltaY);
+  
+  // Applica la velocità in base alla forza dello scroll
+  velocity = direction * angleStep * 0.5;
+  
+  // Avvia l'animazione se non è già in corso
+  if (!animationFrameId) {
+    lastTimestamp = performance.now();
+    animationFrameId = requestAnimationFrame(animate);
+  }
+});
+
+// Touch (mobile)
+rotor.addEventListener("touchstart", (e) => {
   e.preventDefault();
   isDragging = true;
   startY = e.touches[0].clientY;
-  startRotation = currentRotation;
+  velocity = 0;
   
-  // Ferma qualsiasi animazione in corso
-  if (scrollAnimationId) {
-    cancelAnimationFrame(scrollAnimationId);
-    scrollAnimationId = null;
+  // Ferma l'animazione in corso
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
   }
-}
+});
 
-function handleTouchMove(e) {
+rotor.addEventListener("touchmove", (e) => {
   if (!isDragging) return;
   e.preventDefault();
   
-  const y = e.touches[0].clientY;
-  const deltaY = startY - y;
-  const rotationDelta = deltaY * 0.5;
+  const currentY = e.touches[0].clientY;
+  const deltaY = currentY - startY;
+  startY = currentY;
   
-  currentRotation = startRotation + rotationDelta;
+  // Calcola la rotazione in base al movimento
+  currentRotation += deltaY * 0.5;
+  
+  // Calcola l'indice selezionato in base alla rotazione
+  const newIndex = Math.round(((360 - currentRotation) % 360) / angleStep) % rotorItems.length;
+  if (newIndex !== selectedIndex) {
+    selectedIndex = newIndex;
+    updateRotor();
+  }
+  
   rotor.style.transform = `rotateX(${currentRotation}deg)`;
-  
-  // Aggiorna l'elemento selezionato in base alla rotazione
-  const tempIndex = Math.round((-currentRotation % 360) / angleStep);
-  selectedIndex = (tempIndex % itemCount + itemCount) % itemCount;
-  
-  // Aggiorna l'aspetto degli elementi
-  items.forEach((item, i) => {
-    const diff = Math.abs(((i - selectedIndex + itemCount/2) % itemCount) - itemCount/2);
-    const opacity = 1 - (diff / (itemCount/2)) * 0.7;
-    const scale = 1 - (diff / (itemCount/2)) * 0.2;
-    
-    item.style.opacity = opacity;
-    item.style.transform = `rotateX(${i * angleStep}deg) translateZ(90px) scale(${scale})`;
-    item.classList.toggle("active", i === selectedIndex);
-  });
-}
+});
 
-function handleTouchEnd() {
+rotor.addEventListener("touchend", (e) => {
+  if (!isDragging) return;
+  e.preventDefault();
   isDragging = false;
-  snapToNearest();
-}
+  
+  // Calcola la rotazione target più vicina
+  targetRotation = -selectedIndex * angleStep;
+  
+  // Avvia l'animazione per lo snap
+  if (!animationFrameId) {
+    lastTimestamp = performance.now();
+    animationFrameId = requestAnimationFrame(animate);
+  }
+});
 
-// Aggiungi event listeners
-rotorWrapper.addEventListener("wheel", handleScroll, { passive: false });
-rotorWrapper.addEventListener("touchstart", handleTouchStart, { passive: false });
-rotorWrapper.addEventListener("touchmove", handleTouchMove, { passive: false });
-rotorWrapper.addEventListener("touchend", handleTouchEnd);
-rotorWrapper.addEventListener("touchcancel", handleTouchEnd);
+// Click (desktop)
+rotor.addEventListener("mousedown", (e) => {
+  e.preventDefault();
+  isDragging = true;
+  startY = e.clientY;
+  velocity = 0;
+  
+  // Ferma l'animazione in corso
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+});
 
-// Inizializza il rotore
-initRotor();
+document.addEventListener("mousemove", (e) => {
+  if (!isDragging) return;
+  
+  const currentY = e.clientY;
+  const deltaY = currentY - startY;
+  startY = currentY;
+  
+  // Calcola la rotazione in base al movimento
+  currentRotation += deltaY * 0.5;
+  
+  // Calcola l'indice selezionato in base alla rotazione
+  const newIndex = Math.round(((360 - currentRotation) % 360) / angleStep) % rotorItems.length;
+  if (newIndex !== selectedIndex) {
+    selectedIndex = newIndex;
+    updateRotor();
+  }
+  
+  rotor.style.transform = `rotateX(${currentRotation}deg)`;
+});
 
+document.addEventListener("mouseup", (e) => {
+  if (!isDragging) return;
+  isDragging = false;
+  
+  // Calcola la rotazione target più vicina
+  targetRotation = -selectedIndex * angleStep;
+  
+  // Avvia l'animazione per lo snap
+  if (!animationFrameId) {
+    lastTimestamp = performance.now();
+    animationFrameId = requestAnimationFrame(animate);
+  }
+});
   
 // ==============================================
 // 1. FUNZIONE PRINCIPALE DI SALVATAGGIO (COMPLETA)
