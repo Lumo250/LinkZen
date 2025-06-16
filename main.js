@@ -650,62 +650,59 @@ dropdown.addEventListener("click", async (event) => {
 // ==============================
 // iOS-Style 3D Sort Picker
 // ==============================
-const iosPicker = document.getElementById("ios-sort-picker");
-const sortOptions = Array.from(iosPicker.querySelectorAll("li"));
-const anglePerItem = 360 / sortOptions.length;
-let currentSortIndex = 0;
 
-// Posiziona gli elementi sulla ruota 3D
-sortOptions.forEach((opt, i) => {
-  opt.style.transform = `rotateX(${i * anglePerItem}deg) translateZ(48px)`;
+const picker = document.getElementById("sortPicker");
+const items = Array.from(picker.querySelectorAll("li"));
+const itemAngle = 360 / items.length;
+let currentIndex = 0;
+
+// Posiziona ogni item nella ruota
+items.forEach((item, i) => {
+  item.style.transform = `rotateX(${i * itemAngle}deg) translateZ(90px)`;
 });
 
-// Carica la scelta salvata
+// Carica valore salvato
 const { sortOrder = "default" } = await storage.get({ sortOrder: "default" });
-const savedIndex = sortOptions.findIndex(opt => opt.dataset.value === sortOrder);
+const savedIndex = items.findIndex(i => i.dataset.value === sortOrder);
 if (savedIndex >= 0) {
-  currentSortIndex = savedIndex;
-  iosPicker.style.transform = `rotateX(-${currentSortIndex * anglePerItem}deg)`;
+  currentIndex = savedIndex;
+  picker.style.transform = `rotateX(-${itemAngle * currentIndex}deg)`;
 }
 
-// Funzione per aggiornare la selezione
-function updateSortSelection() {
-  iosPicker.style.transform = `rotateX(-${currentSortIndex * anglePerItem}deg)`;
-  const selected = sortOptions[currentSortIndex].dataset.value;
+// Funzione per aggiornare visuale e logica
+function updatePicker() {
+  picker.style.transform = `rotateX(-${itemAngle * currentIndex}deg)`;
+  const selected = items[currentIndex].dataset.value;
   storage.set({ sortOrder: selected });
   loadUrls();
 }
 
-// Scroll con mouse
-iosPicker.addEventListener("wheel", (e) => {
+// Eventi
+picker.addEventListener("wheel", (e) => {
   e.preventDefault();
-  if (e.deltaY > 0 && currentSortIndex < sortOptions.length - 1) {
-    currentSortIndex++;
-    updateSortSelection();
-  } else if (e.deltaY < 0 && currentSortIndex > 0) {
-    currentSortIndex--;
-    updateSortSelection();
+  if (e.deltaY > 0 && currentIndex < items.length - 1) {
+    currentIndex++;
+    updatePicker();
+  } else if (e.deltaY < 0 && currentIndex > 0) {
+    currentIndex--;
+    updatePicker();
   }
 });
 
-// Touch per mobile
-let touchStartY = null;
+let touchStart = null;
 
-iosPicker.addEventListener("touchstart", (e) => {
-  touchStartY = e.touches[0].clientY;
+picker.addEventListener("touchstart", (e) => {
+  touchStart = e.touches[0].clientY;
 });
 
-iosPicker.addEventListener("touchmove", (e) => {
-  if (touchStartY === null) return;
-  const deltaY = e.touches[0].clientY - touchStartY;
-  if (Math.abs(deltaY) > 20) {
-    if (deltaY > 0 && currentSortIndex > 0) {
-      currentSortIndex--;
-    } else if (deltaY < 0 && currentSortIndex < sortOptions.length - 1) {
-      currentSortIndex++;
-    }
-    updateSortSelection();
-    touchStartY = null;
+picker.addEventListener("touchmove", (e) => {
+  if (touchStart === null) return;
+  const delta = e.touches[0].clientY - touchStart;
+  if (Math.abs(delta) > 20) {
+    if (delta > 0 && currentIndex > 0) currentIndex--;
+    else if (delta < 0 && currentIndex < items.length - 1) currentIndex++;
+    updatePicker();
+    touchStart = null;
   }
 });
 
