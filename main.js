@@ -7,6 +7,7 @@
  * - QR code scanning
  * - Bookmarklet support
  * - Dark/light theme
+ * - Drag and drop reordering
  */
 
 // ============================================
@@ -306,80 +307,74 @@ function isValidUrl(string) {
     }
 }
 
-
-// Aggiungere queste funzioni nella sezione 4. CORE FUNCTIONS
-
 /**
  * Abilita il drag & drop per gli elementi della lista
  */
 function enableDragAndDrop() {
-  const list = document.getElementById("url-list");
-  
-  list.addEventListener("dragstart", (e) => {
-    if (e.target.classList.contains("link-row")) {
-      e.target.classList.add("dragging");
-      e.dataTransfer.setData("text/plain", e.target.dataset.index);
-      e.dataTransfer.effectAllowed = "move";
-    }
-  });
-  
-  list.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    const draggingItem = document.querySelector(".dragging");
-    if (!draggingItem) return;
+    const list = document.getElementById("url-list");
     
-    const afterElement = getDragAfterElement(list, e.clientY);
-    if (afterElement) {
-      list.insertBefore(draggingItem, afterElement);
-    } else {
-      list.appendChild(draggingItem);
-    }
-  });
-  
-  list.addEventListener("dragend", (e) => {
-    const draggedItem = document.querySelector(".dragging");
-    if (draggedItem) {
-      draggedItem.classList.remove("dragging");
-      saveCustomOrder();
-    }
-  });
+    list.addEventListener("dragstart", (e) => {
+        if (e.target.classList.contains("link-row")) {
+            e.target.classList.add("dragging");
+            e.dataTransfer.setData("text/plain", e.target.dataset.index);
+            e.dataTransfer.effectAllowed = "move";
+        }
+    });
+    
+    list.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        const draggingItem = document.querySelector(".dragging");
+        if (!draggingItem) return;
+        
+        const afterElement = getDragAfterElement(list, e.clientY);
+        if (afterElement) {
+            list.insertBefore(draggingItem, afterElement);
+        } else {
+            list.appendChild(draggingItem);
+        }
+    });
+    
+    list.addEventListener("dragend", (e) => {
+        const draggedItem = document.querySelector(".dragging");
+        if (draggedItem) {
+            draggedItem.classList.remove("dragging");
+            saveCustomOrder();
+        }
+    });
 }
 
 /**
  * Trova la posizione corretta per l'elemento trascinato
  */
 function getDragAfterElement(container, y) {
-  const draggableElements = [...container.querySelectorAll(".link-row:not(.dragging)")];
-  
-  return draggableElements.reduce((closest, child) => {
-    const box = child.getBoundingClientRect();
-    const offset = y - box.top - box.height / 2;
+    const draggableElements = [...container.querySelectorAll(".link-row:not(.dragging)")];
     
-    if (offset < 0 && offset > closest.offset) {
-      return { offset: offset, element: child };
-    } else {
-      return closest;
-    }
-  }, { offset: Number.NEGATIVE_INFINITY }).element;
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
 /**
  * Salva l'ordine personalizzato
  */
 async function saveCustomOrder() {
-  const list = document.getElementById("url-list");
-  const items = [...list.querySelectorAll(".link-row")];
-  const customOrder = items.map(item => item.dataset.url);
-  
-  await storage.set({ customOrder });
-  
-  // Imposta automaticamente l'ordinamento su "custom"
-  document.querySelector('input[value="custom"]').checked = true;
-  await storage.set({ sortOrder: "custom" });
+    const list = document.getElementById("url-list");
+    const items = [...list.querySelectorAll(".link-row")];
+    const customOrder = items.map(item => item.dataset.url);
+    
+    await storage.set({ customOrder });
+    
+    // Imposta automaticamente l'ordinamento su "custom"
+    document.querySelector('input[value="custom"]').checked = true;
+    await storage.set({ sortOrder: "custom" });
 }
-
-
-
 
 // ============================================
 // 5. MAIN EVENT LISTENERS AND INITIALIZATION
@@ -524,9 +519,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         box.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
-      // Abilita il drag & drop
-  enableDragAndDrop();
-    
     // Export functionality
     const exportBtn = document.getElementById("export-btn");
     const exportDefault = document.getElementById("export-default");
@@ -690,7 +682,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Add new category
-    document.getElementById("add-category-btn").addEventListener("click", async (e) => {
+    document.getElementById("add-category-btn").addEventListener("click", (e) => {
         e.stopPropagation();
         
         const newCategory = input.value.trim();
@@ -814,6 +806,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             showAlert("Error", "Failed to save: " + error.message);
         }
     });
+
+    // Abilita il drag & drop
+    enableDragAndDrop();
 
     // Initial load
     await loadUrls();
@@ -1596,77 +1591,76 @@ async function saveCurrentTab() {
 /**
  * Loads and displays bookmarks from storage
  */
-
 async function loadUrls() {
-  const {
-    visitedUrls = [],
-    clickedUrls = [],
-    userCategories = [],
-    sortOrder = "default",
-    lastAddedUrl = null,
-    highlightColor = "green",
-    customOrder = []
-  } = await storage.get({
-    visitedUrls: [],
-    clickedUrls: [],
-    userCategories: [],
-    sortOrder: "default",
-    lastAddedUrl: null,
-    highlightColor: "green",
-    customOrder: []
-  });
-
-  const list = document.getElementById("url-list");
-  list.innerHTML = "";
-
-  // Set current sort order
-  document.querySelectorAll('input[name="sort"]').forEach(radio => {
-    radio.checked = (radio.value === sortOrder);
-  });
-
-  // Sort URLs based on selected order
-  let urls = [...visitedUrls];
-  
-  if (sortOrder === "category") {
-    urls.sort((a, b) => (a.category || "Other").localeCompare(b.category || "Other"));
-  } else if (sortOrder === "custom" && customOrder.length > 0) {
-    // Create a map for quick lookup
-    const urlMap = new Map(urls.map(item => [item.url, item]));
-    
-    // Reorder based on customOrder, then append any new items
-    urls = customOrder
-      .map(url => urlMap.get(url))
-      .filter(item => item !== undefined)
-      .concat(urls.filter(item => !customOrder.includes(item.url)));
-  }
-
-  // Create list items for each URL
-  urls.forEach((item, index) => {
-    const url = item.url;
-    const currentCategory = item.category;
-    const title = item.title || "";
-
-    const li = document.createElement("li");
-    li.className = "link-row";
-    li.dataset.url = url;
-    li.dataset.index = index;
-    li.draggable = true;
-    
-    // Stile per l'elemento trascinato
-    li.style.cursor = "grab";
-    li.style.userSelect = "none";
-    li.style.touchAction = "none";
-    li.style.transition = "transform 0.2s ease";
-    
-    li.addEventListener("dragstart", () => {
-      li.style.opacity = "0.5";
-      li.style.transform = "scale(1.05)";
+    const {
+        visitedUrls = [],
+        clickedUrls = [],
+        userCategories = [],
+        sortOrder = "default",
+        lastAddedUrl = null,
+        highlightColor = "green",
+        customOrder = []
+    } = await storage.get({
+        visitedUrls: [],
+        clickedUrls: [],
+        userCategories: [],
+        sortOrder: "default",
+        lastAddedUrl: null,
+        highlightColor: "green",
+        customOrder: []
     });
-    
-    li.addEventListener("dragend", () => {
-      li.style.opacity = "1";
-      li.style.transform = "scale(1)";
+
+    const list = document.getElementById("url-list");
+    list.innerHTML = "";
+
+    // Set current sort order
+    document.querySelectorAll('input[name="sort"]').forEach(radio => {
+        radio.checked = (radio.value === sortOrder);
     });
+
+    // Sort URLs based on selected order
+    let urls = [...visitedUrls];
+    
+    if (sortOrder === "category") {
+        urls.sort((a, b) => (a.category || "Other").localeCompare(b.category || "Other"));
+    } else if (sortOrder === "custom" && customOrder.length > 0) {
+        // Create a map for quick lookup
+        const urlMap = new Map(urls.map(item => [item.url, item]));
+        
+        // Reorder based on customOrder, then append any new items
+        urls = customOrder
+            .map(url => urlMap.get(url))
+            .filter(item => item !== undefined)
+            .concat(urls.filter(item => !customOrder.includes(item.url)));
+    }
+
+    // Create list items for each URL
+    urls.forEach((item, index) => {
+        const url = item.url;
+        const currentCategory = item.category;
+        const title = item.title || "";
+
+        const li = document.createElement("li");
+        li.className = "link-row";
+        li.dataset.url = url;
+        li.dataset.index = index;
+        li.draggable = true;
+        
+        // Stile per l'elemento trascinato
+        li.style.cursor = "grab";
+        li.style.userSelect = "none";
+        li.style.touchAction = "none";
+        li.style.transition = "transform 0.2s ease";
+        
+        li.addEventListener("dragstart", () => {
+            li.style.opacity = "0.5";
+            li.style.transform = "scale(1.05)";
+        });
+        
+        li.addEventListener("dragend", () => {
+            li.style.opacity = "1";
+            li.style.transform = "scale(1)";
+        });
 
         // Highlight newly added items
         if (url === lastAddedUrl) {
@@ -1683,6 +1677,13 @@ async function loadUrls() {
         // Create category dropdown
         const select = document.createElement("select");
         select.className = "category";
+        const defaultCategories = [
+            "News", "Video", "Finance", "Social", "E-mail", "Store", "Commerce",
+            "Productivity", "Entertainment", "Education", "Sports",
+            "AI", "Search", "Design", "Weather", "Other"
+        ];
+        const allCategories = [...defaultCategories, ...userCategories];
+        
         allCategories.forEach(opt => {
             const option = document.createElement("option");
             option.value = opt;
@@ -1791,9 +1792,6 @@ async function loadUrls() {
         list.appendChild(li);
     });
 
- // Abilita il drag & drop dopo aver creato la lista
-  enableDragAndDrop();
-    
     // Scroll to last added item if exists
     if (lastAddedUrl) {
         const lastLink = Array.from(list.children).find(li =>
@@ -1881,4 +1879,7 @@ async function loadUrls() {
             dropdown.appendChild(row);
         });
     }
+
+    // Abilita il drag & drop dopo aver creato la lista
+    enableDragAndDrop();
 }
