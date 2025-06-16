@@ -610,28 +610,34 @@ function showSaveOptionsDialog() {
     dialog.style.alignItems = "center";
     dialog.style.gap = "15px";
     
-    dialog.innerHTML = `
+   dialog.innerHTML = `
       <div style="background:#2c2c2c; padding:20px; border-radius:10px; width:80%; max-width:300px">
         <h3 style="color:white; margin-top:0">Save Link</h3>
         <button style="width:100%; padding:12px; background:#4CAF50; color:white; border:none; border-radius:6px; margin-bottom:10px" 
                 data-choice="bookmarklet">Use Bookmarklet</button>
         <button style="width:100%; padding:12px; background:#2196F3; color:white; border:none; border-radius:6px; margin-bottom:10px" 
                 data-choice="manual">Enter Manually</button>
-        <button style="width:100%; padding:12px; background:#9C27B0; color:white; border:none; border-radius:6px; margin-bottom:10px" 
+        <button style="width:100%; padding:12px; background:#9C27B0; color:white; border:none; border-radius:6px" 
                 data-choice="qr">Scan QR Code</button>
-        <button style="width:100%; padding:12px; background:#f44336; color:white; border:none; border-radius:6px" 
-                data-choice="cancel">Cancel</button>
       </div>
     `;
     
-    document.body.appendChild(dialog);
+     document.body.appendChild(dialog);
     
     // Chiudi al click su un'opzione
     dialog.querySelectorAll("button").forEach(btn => {
       btn.addEventListener("click", () => {
         document.body.removeChild(dialog);
-        resolve(btn.dataset.choice === "cancel" ? null : btn.dataset.choice);
+        resolve(btn.dataset.choice);
       });
+    });
+    
+    // Chiudi al click fuori dal menu
+    dialog.addEventListener("click", (e) => {
+      if (e.target === dialog) {
+        document.body.removeChild(dialog);
+        resolve(null);
+      }
     });
   });
 }
