@@ -1141,60 +1141,258 @@ function showBookmarkletInstructions() {
 
 async function showManualInputDialog() {
   return new Promise((resolve) => {
+    const isDark = document.body.classList.contains("dark");
+    const bgColor = isDark ? "#2d3748" : "#ffffff";
+    const textColor = isDark ? "#f7fafc" : "#1a202c";
+    const borderColor = isDark ? "#4a5568" : "#e2e8f0";
+    const accentColor = isDark ? "#4299e1" : "#3182ce";
+    const inputBg = isDark ? "#4a5568" : "#edf2f7";
+    const inputText = isDark ? "#f7fafc" : "#2d3748";
+
     const dialog = document.createElement("div");
     dialog.style.position = "fixed";
     dialog.style.top = "0";
     dialog.style.left = "0";
     dialog.style.right = "0";
     dialog.style.bottom = "0";
-    dialog.style.backgroundColor = "rgba(0,0,0,0.7)";
+    dialog.style.backgroundColor = "rgba(0,0,0,0.5)";
     dialog.style.zIndex = "1000";
     dialog.style.display = "flex";
     dialog.style.justifyContent = "center";
     dialog.style.alignItems = "center";
-    
+    dialog.style.backdropFilter = "blur(4px)";
+    dialog.style.opacity = "0";
+    dialog.style.transition = "opacity 0.3s ease";
+
     dialog.innerHTML = `
-      <div style="background:white;padding:20px;border-radius:8px;width:90%;max-width:400px">
-        <h3 style="margin-top:0">Enter Link</h3>
-        <input type="url" id="manual-url" placeholder="https://example.com" 
-               style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;font-size:16px"
-               required>
-        <input type="text" id="manual-title" placeholder="Title (optional)" 
-               style="width:100%;padding:10px;margin-bottom:15px;border:1px solid #ddd;font-size:16px">
-        <div style="display:flex;justify-content:flex-end;gap:10px">
-          <button id="manual-cancel" style="padding:8px 16px;background:#f44336;color:white;border:none;border-radius:4px">Cancel</button>
-          <button id="manual-confirm" style="padding:8px 16px;background:#4CAF50;color:white;border:none;border-radius:4px">Save</button>
+      <div style="
+        background: ${bgColor};
+        color: ${textColor};
+        padding: 24px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        border: 1px solid ${borderColor};
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+      ">
+        <div style="
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 20px;
+        ">
+          <div style="
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: ${accentColor}20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${accentColor}" stroke-width="2">
+              <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+              <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+              <path d="M2 2l7.586 7.586"></path>
+              <circle cx="11" cy="11" r="2"></circle>
+            </svg>
+          </div>
+          <h3 style="
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: ${textColor};
+          ">
+            Add Link Manually
+          </h3>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: ${isDark ? '#a0aec0' : '#4a5568'};
+          ">
+            URL
+          </label>
+          <input type="url" id="manual-url" placeholder="https://example.com" 
+                 style="
+                   width: 100%;
+                   padding: 12px 14px;
+                   font-size: 14px;
+                   background: ${inputBg};
+                   color: ${inputText};
+                   border: 1px solid ${borderColor};
+                   border-radius: 8px;
+                   outline: none;
+                   transition: all 0.2s ease;
+                 "
+                 required>
+        </div>
+
+        <div style="margin-bottom: 24px;">
+          <label style="
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: ${isDark ? '#a0aec0' : '#4a5568'};
+          ">
+            Title (optional)
+          </label>
+          <input type="text" id="manual-title" placeholder="My Awesome Website" 
+                 style="
+                   width: 100%;
+                   padding: 12px 14px;
+                   font-size: 14px;
+                   background: ${inputBg};
+                   color: ${inputText};
+                   border: 1px solid ${borderColor};
+                   border-radius: 8px;
+                   outline: none;
+                   transition: all 0.2s ease;
+                 ">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button id="manual-cancel" style="
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            background: transparent;
+            color: ${isDark ? '#a0aec0' : '#718096'};
+            border: 1px solid ${borderColor};
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          ">
+            Cancel
+          </button>
+          <button id="manual-confirm" style="
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            background: ${accentColor};
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1);
+          ">
+            Save Link
+          </button>
         </div>
       </div>
     `;
-    
+
     document.body.appendChild(dialog);
-    dialog.querySelector("#manual-url").focus();
+
+    // Animazione di entrata
+    setTimeout(() => {
+      dialog.style.opacity = "1";
+      dialog.querySelector("div").style.transform = "translateY(0)";
+      document.getElementById("manual-url").focus();
+    }, 10);
+
+    // Aggiungi effetti hover
+    const confirmBtn = document.getElementById("manual-confirm");
+    const cancelBtn = document.getElementById("manual-cancel");
     
+    confirmBtn.addEventListener("mouseenter", () => {
+      confirmBtn.style.transform = "translateY(-1px)";
+      confirmBtn.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)";
+    });
+    confirmBtn.addEventListener("mouseleave", () => {
+      confirmBtn.style.transform = "translateY(0)";
+      confirmBtn.style.boxShadow = "0 1px 3px 0 rgba(0,0,0,0.1)";
+    });
+    
+    cancelBtn.addEventListener("mouseenter", () => {
+      cancelBtn.style.backgroundColor = isDark ? "rgba(160, 174, 192, 0.1)" : "rgba(113, 128, 150, 0.1)";
+    });
+    cancelBtn.addEventListener("mouseleave", () => {
+      cancelBtn.style.backgroundColor = "transparent";
+    });
+
+    // Focus styles
+    const inputs = dialog.querySelectorAll("input");
+    inputs.forEach(input => {
+      input.addEventListener("focus", () => {
+        input.style.borderColor = accentColor;
+        input.style.boxShadow = `0 0 0 2px ${accentColor}40`;
+      });
+      input.addEventListener("blur", () => {
+        input.style.borderColor = borderColor;
+        input.style.boxShadow = "none";
+      });
+    });
+
     const confirm = () => {
       const url = dialog.querySelector("#manual-url").value.trim();
-      if (!url) return;
+      if (!url) {
+        // Aggiungi feedback visivo per campo obbligatorio
+        const urlInput = dialog.querySelector("#manual-url");
+        urlInput.style.borderColor = "#e53e3e";
+        urlInput.style.boxShadow = "0 0 0 2px rgba(229, 62, 62, 0.2)";
+        setTimeout(() => {
+          urlInput.style.borderColor = borderColor;
+          urlInput.style.boxShadow = "none";
+        }, 1000);
+        return;
+      }
       
       resolve({
         url: url,
         title: dialog.querySelector("#manual-title").value.trim() || url
       });
-      document.body.removeChild(dialog);
+      
+      // Animazione di uscita
+      dialog.style.opacity = "0";
+      dialog.querySelector("div").style.transform = "translateY(20px)";
+      setTimeout(() => {
+        document.body.removeChild(dialog);
+      }, 300);
     };
+
+    confirmBtn.addEventListener("click", confirm);
     
-    dialog.querySelector("#manual-confirm").addEventListener("click", confirm);
+    // Conferma con Enter
     dialog.querySelector("#manual-url").addEventListener("keypress", (e) => {
       if (e.key === "Enter") confirm();
     });
-    
-    dialog.querySelector("#manual-cancel").addEventListener("click", () => {
-      resolve(null);
-      document.body.removeChild(dialog);
+    dialog.querySelector("#manual-title").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") confirm();
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      // Animazione di uscita
+      dialog.style.opacity = "0";
+      dialog.querySelector("div").style.transform = "translateY(20px)";
+      setTimeout(() => {
+        document.body.removeChild(dialog);
+        resolve(null);
+      }, 300);
+    });
+
+    // Chiudi al click fuori dal dialogo
+    dialog.addEventListener("click", (e) => {
+      if (e.target === dialog) {
+        // Animazione di uscita
+        dialog.style.opacity = "0";
+        dialog.querySelector("div").style.transform = "translateY(20px)";
+        setTimeout(() => {
+          document.body.removeChild(dialog);
+          resolve(null);
+        }, 300);
+      }
     });
   });
 }
-
-
 
 function showAlert(title, message, showCopyButton = false) {
   const alertDiv = document.createElement("div");
