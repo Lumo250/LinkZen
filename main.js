@@ -647,17 +647,19 @@ dropdown.addEventListener("click", async (event) => {
 //    });
 //  });
 
-// ==============================
-// iOS-Style 3D Sort Picker
-// ==============================
-
-
+// Inizializzazione rotore
 const rotor = document.getElementById("sortRotor");
 const rotorItems = Array.from(rotor.querySelectorAll("li"));
 const angleStep = 360 / rotorItems.length;
 let selectedIndex = 0;
+let isDragging = false;
+let startY = 0;
+let currentY = 0;
+let velocity = 0;
+let animationFrameId = null;
+let lastTimestamp = 0;
 
-// Posiziona ogni voce sulla ruota
+// Posiziona ogni voce sulla ruota in 3D
 rotorItems.forEach((item, i) => {
   item.style.transform = `rotateX(${i * angleStep}deg) translateZ(90px)`;
 });
@@ -670,10 +672,22 @@ updateRotor(true);
 
 function updateRotor(skipSave = false) {
   selectedIndex = Math.max(0, Math.min(rotorItems.length - 1, selectedIndex));
-  rotor.style.transform = `rotateX(-${selectedIndex * angleStep}deg)`;
+  const targetRotation = -selectedIndex * angleStep;
+  
+  // Applica l'animazione fluida
+  rotor.style.transform = `rotateX(${targetRotation}deg)`;
+  
+  // Aggiorna lo stato attivo
   rotorItems.forEach((item, i) => {
+    const distance = Math.abs(i - selectedIndex);
+    const opacity = 1 - (distance * 0.3);
+    const scale = 1 - (distance * 0.05);
+    
+    item.style.opacity = opacity;
+    item.style.transform = `rotateX(${i * angleStep}deg) translateZ(90px) scale(${scale})`;
     item.classList.toggle("active", i === selectedIndex);
   });
+  
   if (!skipSave) {
     const val = rotorItems[selectedIndex].dataset.value;
     storage.set({ sortOrder: val });
@@ -681,42 +695,90 @@ function updateRotor(skipSave = false) {
   }
 }
 
-
-// Scroll mouse
-let wheelTimeout;
-
-rotor.addEventListener("wheel", (e) => {
+// Scroll mouse con inerzia
+function handleWheel(e) {
   e.preventDefault();
-  clearTimeout(wheelTimeout);
-
-  if (e.deltaY > 0 && selectedIndex < rotorItems.length - 1) {
-    selectedIndex++;
-  } else if (e.deltaY < 0 && selectedIndex > 0) {
-    selectedIndex--;
+  
+  // Calcola la direzione (invertita per un movimento più naturale)
+  const delta = e.deltaY > 0 ? 1 : -1;
+  
+  // Applica l'inerzia
+  velocity = delta * 5;
+  if (!animationFrameId) {
+    lastTimestamp = performance.now();
+    animationFrameId = requestAnimationFrame(animateInertia);
   }
-
-  updateRotor();
-
-  // debounce per fluido snapping
-  wheelTimeout = setTimeout(() => updateRotor(), 100);
-});
+}
 
 // Touch (mobile)
-let touchStartY = null;
-rotor.addEventListener("touchstart", (e) => {
-  touchStartY = e.touches[0].clientY;
-});
-rotor.addEventListener("touchmove", (e) => {
-  if (touchStartY === null) return;
-  const delta = e.touches[0].clientY - touchStartY;
-  if (Math.abs(delta) > 20) {
-    if (delta > 0 && selectedIndex > 0) selectedIndex--;
-    else if (delta < 0 && selectedIndex < rotorItems.length - 1) selectedIndex++;
-    updateRotor();
-    touchStartY = null;
-  }
-});
+function handleTouchStart(e) {
+  isDragging = true;
+  startY = e.touches[0].clientY;
+  currentY = startY;
+  cancelAnimationFrame(animationFrameId);
+  velocity = 0;
+}
 
+function handleTouchMove(e) {
+  if (!isDragging) return;
+  
+  const newY = e.touches[0].clientY;
+  const deltaY = newY - currentY;
+  currentY = newY;
+  
+  // Converti il movimento in pixel a un cambiamento di indice
+  const pixelsPerItem = 30; // Sensibilità del drag
+  const deltaIndex = deltaY / pixelsPerItem;
+  
+  selectedIndex -= deltaIndex;
+  updateRotor();
+}
+
+function handleTouchEnd() {
+  isDragging = false;
+  
+  // Snap all'elemento più vicino
+  selectedIndex = Math.round(selectedIndex);
+  updateRotor();
+}
+
+// Animazione inerzia
+function animateInertia(timestamp) {
+  const deltaTime = timestamp - lastTimestamp;
+  lastTimestamp = timestamp;
+  
+  if (Math.abs(velocity) > 0.1) {
+    selectedIndex += velocity * (deltaTime / 16);
+    velocity *= 0.95; // Attrito
+    
+    // Limiti
+    if (selectedIndex < 0) {
+      selectedIndex = 0;
+      velocity = 0;
+    } else if (selectedIndex > rotorItems.length - 1) {
+      selectedIndex = rotorItems.length - 1;
+      velocity = 0;
+    }
+    
+    updateRotor();
+    animationFrameId = requestAnimationFrame(animateInertia);
+  } else {
+    // Snap all'elemento più vicino
+    selectedIndex = Math.round(selectedIndex);
+    updateRotor();
+    animationFrameId = null;
+  }
+}
+
+// Event listeners
+rotor.addEventListener("wheel", handleWheel, { passive: false });
+rotor.addEventListener("touchstart", handleTouchStart, { passive: false });
+rotor.addEventListener("touchmove", handleTouchMove, { passive: false });
+rotor.addEventListener("touchend", handleTouchEnd);
+rotor.addEventListener("touchcancel", handleTouchEnd);
+
+
+  
 // ==============================================
 // 1. FUNZIONE PRINCIPALE DI SALVATAGGIO (COMPLETA)
 // ==============================================
