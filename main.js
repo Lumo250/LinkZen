@@ -602,41 +602,168 @@ function showSaveOptionsDialog() {
     dialog.style.left = "0";
     dialog.style.right = "0";
     dialog.style.bottom = "0";
-    dialog.style.backgroundColor = "rgba(0,0,0,0.8)";
+    dialog.style.backgroundColor = "rgba(0,0,0,0.5)";
     dialog.style.zIndex = "1000";
     dialog.style.display = "flex";
-    dialog.style.flexDirection = "column";
     dialog.style.justifyContent = "center";
     dialog.style.alignItems = "center";
-    dialog.style.gap = "15px";
+    dialog.style.backdropFilter = "blur(4px)";
+    dialog.style.opacity = "0";
+    dialog.style.transition = "opacity 0.3s ease";
     
-   dialog.innerHTML = `
-      <div style="background:#2c2c2c; padding:20px; border-radius:10px; width:80%; max-width:300px">
-        <h3 style="color:white; margin-top:0">Save Link</h3>
-        <button style="width:100%; padding:12px; background:#4CAF50; color:white; border:none; border-radius:6px; margin-bottom:10px" 
-                data-choice="bookmarklet">Use Bookmarklet</button>
-        <button style="width:100%; padding:12px; background:#2196F3; color:white; border:none; border-radius:6px; margin-bottom:10px" 
-                data-choice="manual">Enter Manually</button>
-        <button style="width:100%; padding:12px; background:#9C27B0; color:white; border:none; border-radius:6px" 
-                data-choice="qr">Scan QR Code</button>
+    const isDark = document.body.classList.contains("dark");
+    const bgColor = isDark ? "#2d3748" : "#ffffff";
+    const textColor = isDark ? "#f7fafc" : "#1a202c";
+    const borderColor = isDark ? "#4a5568" : "#e2e8f0";
+    const hoverBg = isDark ? "#4a5568" : "#edf2f7";
+    
+    dialog.innerHTML = `
+      <div style="
+        background: ${bgColor};
+        color: ${textColor};
+        padding: 24px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 320px;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        border: 1px solid ${borderColor};
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+      ">
+        <h3 style="
+          margin: 0 0 20px 0;
+          font-size: 18px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        ">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          Save Link
+        </h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <button data-choice="bookmarklet" style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            background: transparent;
+            color: inherit;
+            border: 1px solid ${borderColor};
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          ">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <span>Use Bookmarklet</span>
+          </button>
+          
+          <button data-choice="manual" style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            background: transparent;
+            color: inherit;
+            border: 1px solid ${borderColor};
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          ">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+              <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+              <path d="M2 2l7.586 7.586"></path>
+              <circle cx="11" cy="11" r="2"></circle>
+            </svg>
+            <span>Enter Manually</span>
+          </button>
+          
+          <button data-choice="qr" style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            background: transparent;
+            color: inherit;
+            border: 1px solid ${borderColor};
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          ">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Scan QR Code</span>
+          </button>
+        </div>
       </div>
     `;
     
-     document.body.appendChild(dialog);
+    document.body.appendChild(dialog);
+    
+    // Animazione di entrata
+    setTimeout(() => {
+      dialog.style.opacity = "1";
+      dialog.querySelector("div").style.transform = "translateY(0)";
+    }, 10);
+    
+    // Gestione hover
+    const buttons = dialog.querySelectorAll("button[data-choice]");
+    buttons.forEach(btn => {
+      btn.addEventListener("mouseenter", () => {
+        btn.style.backgroundColor = hoverBg;
+      });
+      btn.addEventListener("mouseleave", () => {
+        btn.style.backgroundColor = "transparent";
+      });
+    });
     
     // Chiudi al click su un'opzione
-    dialog.querySelectorAll("button").forEach(btn => {
+    buttons.forEach(btn => {
       btn.addEventListener("click", () => {
-        document.body.removeChild(dialog);
-        resolve(btn.dataset.choice);
+        // Animazione di uscita
+        dialog.style.opacity = "0";
+        dialog.querySelector("div").style.transform = "translateY(20px)";
+        
+        setTimeout(() => {
+          document.body.removeChild(dialog);
+          resolve(btn.dataset.choice);
+        }, 300);
       });
     });
     
     // Chiudi al click fuori dal menu
     dialog.addEventListener("click", (e) => {
       if (e.target === dialog) {
-        document.body.removeChild(dialog);
-        resolve(null);
+        // Animazione di uscita
+        dialog.style.opacity = "0";
+        dialog.querySelector("div").style.transform = "translateY(20px)";
+        
+        setTimeout(() => {
+          document.body.removeChild(dialog);
+          resolve(null);
+        }, 300);
       }
     });
   });
