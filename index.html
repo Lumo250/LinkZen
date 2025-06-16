@@ -591,12 +591,13 @@ body.dark #import-default-btn {
   color: #eee;
 }
 
-/* Aggiungi queste regole CSS */
+
+    
 .rotor-wrapper {
   position: relative;
   width: 140px;
   height: 96px;
-  perspective: 1000px;
+  perspective: 800px;
   margin-right: 12px;
   overflow: hidden;
   border-radius: 8px;
@@ -604,13 +605,13 @@ body.dark #import-default-btn {
   flex-shrink: 0;
   border: 1px solid #bbb;
   box-shadow: inset 0 1px 4px rgba(0,0,0,0.1), 0 0 4px rgba(0,0,0,0.05);
-  touch-action: none; /* Previene lo scroll accidentale */
-  -webkit-overflow-scrolling: auto; /* Disabilita lo scroll elastico su iOS */
+  touch-action: none; /* Previene lo scroll della pagina */
+  -webkit-overflow-scrolling: touch;
 }
 
 .rotor-wheel {
   transform-style: preserve-3d;
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   transform: rotateX(0deg);
   list-style: none;
   padding: 0;
@@ -618,8 +619,8 @@ body.dark #import-default-btn {
   position: absolute;
   top: 32px;
   width: 100%;
-  height: 96px;
-  will-change: transform; /* Ottimizzazione per le animazioni */
+  height: 100%;
+  will-change: transform;
 }
 
 .rotor-wheel li {
@@ -633,40 +634,26 @@ body.dark #import-default-btn {
   backface-visibility: hidden;
   transform-origin: center center -90px;
   opacity: 0.6;
-  transition: opacity 0.3s ease, transform 0.4s ease;
+  transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
-  user-select: none;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
-
-.rotor-wheel li:nth-child(1) { transform: rotateX(0deg) translateZ(90px); }
-.rotor-wheel li:nth-child(2) { transform: rotateX(60deg) translateZ(90px); }
-.rotor-wheel li:nth-child(3) { transform: rotateX(120deg) translateZ(90px); }
-.rotor-wheel li:nth-child(4) { transform: rotateX(180deg) translateZ(90px); }
-.rotor-wheel li:nth-child(5) { transform: rotateX(240deg) translateZ(90px); }
-.rotor-wheel li:nth-child(6) { transform: rotateX(300deg) translateZ(90px); }
 
 .rotor-wheel li.active {
   font-weight: bold;
   opacity: 1;
   background: rgba(0, 0, 0, 0.05);
   border-radius: 6px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
-/* Maschera per l'effetto di sfocatura */
-.rotor-mask {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 2;
-  background: linear-gradient(to bottom, 
-    rgba(255,255,255,0.9) 0%, 
-    rgba(255,255,255,0) 32px, 
-    rgba(255,255,255,0) calc(100% - 32px), 
-    rgba(255,255,255,0.9) 100%);
-}
+/* Effetti 3D migliorati */
+.rotor-wheel li:nth-child(1) { transform: rotateX(0deg) translateZ(90px); }
+.rotor-wheel li:nth-child(2) { transform: rotateX(60deg) translateZ(90px); }
+.rotor-wheel li:nth-child(3) { transform: rotateX(120deg) translateZ(90px); }
+.rotor-wheel li:nth-child(4) { transform: rotateX(180deg) translateZ(90px); }
+.rotor-wheel li:nth-child(5) { transform: rotateX(240deg) translateZ(90px); }
+.rotor-wheel li:nth-child(6) { transform: rotateX(300deg) translateZ(90px); }
 
 /* Dark mode */
 body.dark .rotor-wrapper {
@@ -679,14 +666,35 @@ body.dark .rotor-wheel li {
   color: #eee;
 }
 
-body.dark .rotor-mask {
-  background: linear-gradient(to bottom, 
-    rgba(0,0,0,0.8) 0%, 
-    rgba(0,0,0,0) 32px, 
-    rgba(0,0,0,0) calc(100% - 32px), 
-    rgba(0,0,0,0.8) 100%);
+/* Maschera superiore/inferiore migliorata */
+.rotor-mask::before,
+.rotor-mask::after {
+  content: "";
+  position: absolute;
+  height: 32px;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  pointer-events: none;
 }
 
+.rotor-mask::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.4));
+}
+
+.rotor-mask::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0.4));
+}
+
+body.dark .rotor-mask::before {
+  background: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.3));
+}
+
+body.dark .rotor-mask::after {
+  background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.3));
+}
 
 
     
@@ -763,16 +771,10 @@ body.dark .rotor-mask {
     </div>
 
     <div class="sort-undo-bar">
-<div class="rotor-wrapper">
+
+<div class="rotor-wrapper" id="sortRotorContainer">
   <div class="rotor-mask"></div>
-  <ul class="rotor-wheel" id="sortRotor">
-    <li data-value="default">By Input</li>
-    <li data-value="category">By Category</li>
-    <li data-value="date">By Date</li>
-    <li data-value="dummy1">Dummy 1</li> <!-- Voce fittizia -->
-    <li data-value="dummy2">Dummy 2</li> <!-- Voce fittizia -->
-    <li data-value="dummy3">Dummy 3</li> <!-- Voce fittizia -->
-  </ul>
+  <!-- Il contenuto sarà generato dinamicamente da JavaScript -->
 </div>
 
 
