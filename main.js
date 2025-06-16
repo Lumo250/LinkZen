@@ -225,20 +225,22 @@ function openLinkSafari(url) {
 // ============================================
 document.addEventListener("DOMContentLoaded", async () => {
    
-   // ✅ 1. Controlla il tema dark all'avvio (usando storage, non localStorage)
-    const { darkMode = false } = await storage.get({ darkMode: false });
-    if (darkMode) {
-        document.body.classList.add("dark");
-        document.getElementById("toggle-theme").checked = true;
-    }
+ // 1. Inizializzazione tema dark (usa SOLO storage, non localStorage)
+  const { darkMode = false } = await storage.get({ darkMode: false });
+  const toggleTheme = document.getElementById("toggle-theme");
+  
+  if (darkMode) {
+    document.body.classList.add("dark");
+    toggleTheme.checked = true;
+  }
 
-    // ✅ 2. Aggiorna solo storage (rimuovi localStorage)
-    const toggleTheme = document.getElementById("toggle-theme");
-    toggleTheme.addEventListener("change", () => {
-        const enabled = toggleTheme.checked;
-        document.body.classList.toggle("dark", enabled);
-        storage.set({ darkMode: enabled }); // <-- Solo qui, niente localStorage
-    });
+  // 2. Gestione cambio tema
+  toggleTheme.addEventListener("change", () => {
+    const enabled = toggleTheme.checked;
+    document.body.classList.toggle("dark", enabled);
+    storage.set({ darkMode: enabled }); // Usa solo storage.set()
+  });
+
    
   
   // Processa il bookmarklet se presente
