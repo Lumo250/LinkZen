@@ -367,6 +367,34 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Export/Import
+
+
+// Funzione per uniformare le dimensioni
+function uniformButtonSizes() {
+  const primaryButtons = document.querySelectorAll('.btn-wrapper, #export-container, #import-container');
+  let maxWidth = 0;
+  
+  // Calcola la larghezza massima
+  primaryButtons.forEach(btn => {
+    const width = btn.getBoundingClientRect().width;
+    if (width > maxWidth) maxWidth = width;
+  });
+  
+  // Applica la larghezza uniforme
+  primaryButtons.forEach(btn => {
+    btn.style.minWidth = `${maxWidth}px`;
+    btn.style.flex = '1 1 auto';
+  });
+}
+
+// Esegui al caricamento e al resize
+window.addEventListener('load', uniformButtonSizes);
+window.addEventListener('resize', uniformButtonSizes);
+
+// Esegui dopo che l'UI è stata aggiornata
+setTimeout(uniformButtonSizes, 500);
+
+  
   const exportBtn = document.getElementById("export-btn");
   const exportDefault = document.getElementById("export-default");
   const exportOptions = document.getElementById("export-options");
