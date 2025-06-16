@@ -2,6 +2,17 @@
 <html>
 <head>
 
+
+<script>
+  // Deve essere il PRIMO script nella pagina
+  const savedMode = localStorage.getItem("darkMode") === "true";
+  if (savedMode) {
+    document.documentElement.classList.add('dark');
+    document.body.classList.add('dark');
+  }
+</script>
+
+  
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/InstaScan/1.0.0/instascan.min.js"></script>
   
@@ -22,6 +33,12 @@
       box-sizing: border-box;
     }
 
+body {
+  transition: background-color 0.3s, color 0.3s;
+  /* Ritarda la transizione per evitare flash durante il load */
+  transition-delay: 0.1s;
+}
+    
 body {
   font-family: Arial, sans-serif;
   font-size: 12px;
