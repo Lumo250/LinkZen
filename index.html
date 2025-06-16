@@ -591,6 +591,46 @@ body.dark #import-default-btn {
   color: #eee;
 }
 
+
+#sort-rotator-container {
+  position: relative;
+  width: 140px;
+  height: 32px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e0e0e0;
+  font-size: 13px;
+  user-select: none;
+  margin-right: 12px;
+}
+
+#sort-rotator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.3s ease;
+  will-change: transform;
+}
+
+.rotator-option {
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
+  width: 100%;
+  transform: rotateX(0deg);
+  backface-visibility: hidden;
+}
+
+body.dark #sort-rotator-container {
+  background: #444;
+  color: #eee;
+}
+
+
+
+
+
+
     
   /* Fix globale per iOS */
   input, textarea, select {
@@ -665,10 +705,14 @@ body.dark #import-default-btn {
     </div>
 
     <div class="sort-undo-bar">
-      <div class="sort-options">
-        <label><input type="radio" name="sort" value="default" checked> By Input</label>
-        <label><input type="radio" name="sort" value="category"> By Category</label>
-      </div>
+<div id="sort-rotator-container">
+  <div id="sort-rotator">
+    <div class="rotator-option" data-value="default">By Input</div>
+    <div class="rotator-option" data-value="category">By Category</div>
+    <div class="rotator-option" data-value="date">By Date</div>
+  </div>
+</div>
+
 
       <div id="zoom-controls">
         <button id="zoom-in" title="Increase text size">A+</button>
