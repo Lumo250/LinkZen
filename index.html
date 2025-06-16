@@ -2,6 +2,20 @@
 <html>
 <head>
 
+<style>
+  body.dark-ready { background-color: #1e1e1e; color: #e0e0e0; }
+</style>
+<script>
+  // Controlla localStorage direttamente SOLO per il primo rendering
+  // (poi main.js gestirà tutto con storage)
+  if (localStorage.getItem("darkMode") === "true") {
+    document.documentElement.classList.add("dark-ready");
+    document.body?.classList?.add("dark");
+  }
+</script>
+
+
+  
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/InstaScan/1.0.0/instascan.min.js"></script>
   
