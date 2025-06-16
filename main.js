@@ -377,6 +377,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     e.stopPropagation();
   });
 
+
+  
+document.addEventListener("click", (e) => {
+  // Chiudi menu Export se clic fuori
+  if (!e.target.closest("#export-container")) {
+    exportDefault.style.display = "flex";
+    exportOptions.classList.add("hidden");
+  }
+
+  // Chiudi menu Import se clic fuori (già presente, ma utile consolidarlo qui)
+  if (!e.target.closest("#import-container")) {
+    importDefault.style.display = "flex";
+    importOptions.classList.add("hidden");
+  }
+});
+
+
+
+  
   document.getElementById("export-basic").addEventListener("click", async () => {
     const { visitedUrls = [], userCategories = [] } = await storage.get({ visitedUrls: [], userCategories: [] });
     const blob = new Blob([JSON.stringify({ visitedUrls, userCategories }, null, 2)], { type: "application/json" });
@@ -414,12 +433,7 @@ importBtn.addEventListener("click", (e) => {
   e.stopPropagation();
 });
 
-document.addEventListener("click", (e) => {
-  if (!e.target.closest("#import-container")) {
-    importDefault.style.display = "flex";
-    importOptions.classList.add("hidden");
-  }
-});
+
 
 document.getElementById("import-custom").addEventListener("click", () => {
   document.getElementById("import-file").click();
