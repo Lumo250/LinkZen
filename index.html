@@ -543,6 +543,14 @@ body.dark .delete-btn {
       background-color: #444;
       color: #eee;
     }
+
+/* Allinea la larghezza di tutti i contenitori principali */
+.btn-wrapper, #export-container, #import-container {
+  flex: 1;
+  height: 36px;
+  position: relative;
+}
+    
 #import-options {
   display: flex;
   gap: 4px;
@@ -575,9 +583,14 @@ body.dark .delete-btn {
   border-radius: 4px;
 }
 
-body.dark #import-custom,
-body.dark #import-default-data {
+/* Dark mode */
+body.dark #import-custom {
   background-color: #444;
+  color: #eee;
+}
+
+body.dark #import-default-data {
+  background-color: #555;
   color: #eee;
 }
     
@@ -629,19 +642,19 @@ body.dark #import-default-data {
         </div>
       </div>
 
-   <div class="btn-wrapper" id="import-container">
-    <div id="import-default">
-      <button id="import-btn">
-        <span class="btn-icon">📥</span>
-        <span class="btn-label">Import</span>
-      </button>
-    </div>
-    <div id="import-options" class="hidden">
-      <button id="import-custom">Custom</button>
-      <button id="import-default-data">Default</button>
-    </div>
-    <input type="file" id="import-file" accept=".json" />
-   </div>
+<div class="btn-wrapper" id="import-container">
+  <div id="import-default">
+    <button id="import-btn">
+      <span class="btn-icon">📥</span>
+      <span class="btn-label">Import</span>
+    </button>
+  </div>
+  <div id="import-options" class="hidden">
+    <button id="import-custom">Custom</button>
+    <button id="import-default-data">Default</button>
+  </div>
+  <input type="file" id="import-file" accept=".json" style="display: none;" />
+</div>
 
     <div class="custom-category-container">
       <div class="custom-input-wrapper">
