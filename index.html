@@ -592,38 +592,73 @@ body.dark #import-default-btn {
 }
 
 
-#sort-rotator-container {
+.ios-picker-container {
   position: relative;
   width: 140px;
-  height: 32px;
+  height: 96px; /* 3 elementi visibili */
   overflow: hidden;
-  border-radius: 8px;
-  background: #e0e0e0;
-  font-size: 13px;
-  user-select: none;
+  perspective: 1000px;
   margin-right: 12px;
+  border-radius: 8px;
+  background: #f2f2f2;
 }
 
-#sort-rotator {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: transform 0.3s ease;
-  will-change: transform;
+.ios-picker-wheel {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease-out;
+  transform: rotateX(0deg);
 }
 
-.rotator-option {
+.ios-picker-wheel li {
   height: 32px;
   line-height: 32px;
   text-align: center;
-  width: 100%;
-  transform: rotateX(0deg);
+  transform-origin: center center -48px;
+  transform-style: preserve-3d;
+  font-size: 13px;
+  color: #333;
   backface-visibility: hidden;
 }
 
-body.dark #sort-rotator-container {
-  background: #444;
+.ios-picker-mask::before,
+.ios-picker-mask::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 32px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ios-picker-mask::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.9), transparent);
+}
+
+.ios-picker-mask::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(255,255,255,0.9), transparent);
+}
+
+/* Dark mode */
+body.dark .ios-picker-container {
+  background: #333;
+}
+
+body.dark .ios-picker-wheel li {
   color: #eee;
+}
+
+body.dark .ios-picker-mask::before {
+  background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+}
+
+body.dark .ios-picker-mask::after {
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
 }
 
 
