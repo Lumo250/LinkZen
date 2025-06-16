@@ -292,6 +292,9 @@ body {
       overflow-y: auto;
       overflow-x: hidden;
       scrollbar-gutter: stable;
+      -webkit-overflow-scrolling: touch; /* Scorrimento fluido su iOS */
+      overscroll-behavior: contain; /* Previene l'effetto rimbalzo */
+      scroll-snap-type: y proximity; /* Migliora lo scorrimento */
     }
 
     ul {
