@@ -480,23 +480,37 @@ importFileInput.addEventListener("blur", () => {
   
 document.getElementById("import-default-btn").addEventListener("click", async () => {
   try {
+    const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+
+    if (visitedUrls.length > 0) {
+      const proceed = confirm("This will overwrite your current links. You may want to export them first");
+      if (!proceed) {
+        importDefault.style.display = "flex";
+        importOptions.classList.add("hidden");
+        return;
+      }
+    }
+
     const response = await fetch("https://lumo250.github.io/LinkZen/default-config.json");
-    if (!response.ok) throw new Error("Errore nel download del file.");
+    if (!response.ok) throw new Error("Failed to download default config.");
+
     const data = await response.json();
     if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
       await storage.set(data);
       await loadUrls();
-      // alert("Importazione da default-config.json completata con successo.");
+      // No success alert needed
     } else {
-      alert("File di default non valido.");
+      alert("Invalid default config file.");
     }
+
   } catch (err) {
-    alert("Errore durante l'importazione di default-config.json: " + err.message);
+    alert("Error importing default config: " + err.message);
   } finally {
     importDefault.style.display = "flex";
     importOptions.classList.add("hidden");
   }
 });
+  
 
 
 // Categorie - Versione migliorata con [x] e dropdown persistente
