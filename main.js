@@ -306,6 +306,81 @@ function isValidUrl(string) {
     }
 }
 
+
+// Aggiungere queste funzioni nella sezione 4. CORE FUNCTIONS
+
+/**
+ * Abilita il drag & drop per gli elementi della lista
+ */
+function enableDragAndDrop() {
+  const list = document.getElementById("url-list");
+  
+  list.addEventListener("dragstart", (e) => {
+    if (e.target.classList.contains("link-row")) {
+      e.target.classList.add("dragging");
+      e.dataTransfer.setData("text/plain", e.target.dataset.index);
+      e.dataTransfer.effectAllowed = "move";
+    }
+  });
+  
+  list.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    const draggingItem = document.querySelector(".dragging");
+    if (!draggingItem) return;
+    
+    const afterElement = getDragAfterElement(list, e.clientY);
+    if (afterElement) {
+      list.insertBefore(draggingItem, afterElement);
+    } else {
+      list.appendChild(draggingItem);
+    }
+  });
+  
+  list.addEventListener("dragend", (e) => {
+    const draggedItem = document.querySelector(".dragging");
+    if (draggedItem) {
+      draggedItem.classList.remove("dragging");
+      saveCustomOrder();
+    }
+  });
+}
+
+/**
+ * Trova la posizione corretta per l'elemento trascinato
+ */
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll(".link-row:not(.dragging)")];
+  
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+/**
+ * Salva l'ordine personalizzato
+ */
+async function saveCustomOrder() {
+  const list = document.getElementById("url-list");
+  const items = [...list.querySelectorAll(".link-row")];
+  const customOrder = items.map(item => item.dataset.url);
+  
+  await storage.set({ customOrder });
+  
+  // Imposta automaticamente l'ordinamento su "custom"
+  document.querySelector('input[value="custom"]').checked = true;
+  await storage.set({ sortOrder: "custom" });
+}
+
+
+
+
 // ============================================
 // 5. MAIN EVENT LISTENERS AND INITIALIZATION
 // ============================================
