@@ -592,7 +592,8 @@ body.dark #import-default-btn {
 }
 
 
-    
+<style>
+/* Nuovo stile per il rotore */
 .rotor-wrapper {
   position: relative;
   width: 140px;
@@ -606,11 +607,12 @@ body.dark #import-default-btn {
   border: 1px solid #bbb;
   box-shadow: inset 0 1px 4px rgba(0,0,0,0.1), 0 0 4px rgba(0,0,0,0.05);
   touch-action: none; /* Previene lo scroll della pagina */
+  user-select: none; /* Previene la selezione del testo */
 }
 
 .rotor-wheel {
   transform-style: preserve-3d;
-  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   transform: rotateX(0deg);
   list-style: none;
   padding: 0;
@@ -618,10 +620,13 @@ body.dark #import-default-btn {
   position: absolute;
   top: 32px;
   width: 100%;
+  height: 32px;
   will-change: transform; /* Ottimizzazione per animazioni fluide */
 }
 
 .rotor-wheel li {
+  position: absolute;
+  width: 100%;
   height: 32px;
   line-height: 32px;
   text-align: center;
@@ -630,10 +635,9 @@ body.dark #import-default-btn {
   backface-visibility: hidden;
   transform-origin: center center -90px;
   transform-style: preserve-3d;
-  opacity: 0.5;
+  opacity: 0.3;
   transition: opacity 0.3s ease, transform 0.3s ease;
-  position: absolute;
-  width: 100%;
+  pointer-events: none;
 }
 
 .rotor-wheel li.active {
@@ -644,17 +648,27 @@ body.dark #import-default-btn {
   transform: rotateX(0deg) translateZ(90px) scale(1.1);
 }
 
-/* Posizionamento degli elementi nella ruota 3D */
-.rotor-wheel li:nth-child(1) { transform: rotateX(0deg) translateZ(90px); }
-.rotor-wheel li:nth-child(2) { transform: rotateX(36deg) translateZ(90px); }
-.rotor-wheel li:nth-child(3) { transform: rotateX(72deg) translateZ(90px); }
-.rotor-wheel li:nth-child(4) { transform: rotateX(108deg) translateZ(90px); }
-.rotor-wheel li:nth-child(5) { transform: rotateX(144deg) translateZ(90px); }
-.rotor-wheel li:nth-child(6) { transform: rotateX(180deg) translateZ(90px); }
-.rotor-wheel li:nth-child(7) { transform: rotateX(216deg) translateZ(90px); }
-.rotor-wheel li:nth-child(8) { transform: rotateX(252deg) translateZ(90px); }
-.rotor-wheel li:nth-child(9) { transform: rotateX(288deg) translateZ(90px); }
-.rotor-wheel li:nth-child(10) { transform: rotateX(324deg) translateZ(90px); }
+/* Miglioramento del gradiente per la maschera */
+.rotor-mask::before,
+.rotor-mask::after {
+  content: "";
+  position: absolute;
+  height: 32px;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.rotor-mask::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.95), transparent);
+}
+
+.rotor-mask::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(255,255,255,0.95), transparent);
+}
 
 /* Dark mode */
 body.dark .rotor-wrapper {
@@ -662,11 +676,19 @@ body.dark .rotor-wrapper {
   border: 1px solid #666;
   box-shadow: inset 0 1px 4px rgba(255,255,255,0.1);
 }
+
 body.dark .rotor-wheel li {
   color: #eee;
 }
-    
 
+body.dark .rotor-mask::before {
+  background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+}
+
+body.dark .rotor-mask::after {
+  background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+
+    
     
   /* Fix globale per iOS */
   input, textarea, select {
@@ -742,15 +764,19 @@ body.dark .rotor-wheel li {
 
     <div class="sort-undo-bar">
 
-<div class="rotor-wrapper" id="sortRotorContainer">
+<div class="rotor-wrapper">
   <div class="rotor-mask"></div>
-  <!-- Il contenuto sarà generato dinamicamente da JavaScript -->
+  <ul class="rotor-wheel" id="sortRotor">
+    <li data-value="default">By Input</li>
+    <li data-value="category">By Category</li>
+    <li data-value="date">By Date</li>
+    <li data-value="dummy1">Custom Sort 1</li>
+    <li data-value="dummy2">Custom Sort 2</li>
+    <li data-value="dummy3">Custom Sort 3</li>
+  </ul>
 </div>
-
-
-
-
-      <div id="zoom-controls">
+      
+       <div id="zoom-controls">
         <button id="zoom-in" title="Increase text size">A+</button>
         <button id="zoom-out" title="Decrease text size">A−</button>
         <button id="ia-knowledge-btn" title="Mostra parole chiave apprese">📚 IA</button>
