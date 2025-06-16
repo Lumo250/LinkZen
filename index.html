@@ -592,66 +592,84 @@ body.dark #import-default-btn {
 }
 
 
-.wheel-picker-container {
+
+
+.rotor-wrapper {
+  position: relative;
   width: 140px;
   height: 96px;
-  position: relative;
-  perspective: 1000px;
+  perspective: 800px;
   margin-right: 12px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f0f0f0;
   flex-shrink: 0;
 }
 
-.wheel-picker-wrapper {
-  height: 96px;
-  overflow: hidden;
-  position: relative;
-}
-
-.wheel-picker {
+.rotor-wheel {
   transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.33, 1, 0.68, 1);
   transform: rotateX(0deg);
-  transition: transform 0.3s ease-out;
+  list-style: none;
   padding: 0;
   margin: 0;
-  list-style: none;
   position: absolute;
-  top: 32px; /* center the middle item */
-  left: 0;
+  top: 32px; /* centrato su 3 righe da 32px */
   width: 100%;
 }
 
-.wheel-picker li {
+.rotor-wheel li {
   height: 32px;
   line-height: 32px;
   text-align: center;
   font-size: 13px;
-  transform-origin: center center -90px;
+  color: #333;
   backface-visibility: hidden;
-  color: #222;
+  transform-origin: center center -90px;
   transform-style: preserve-3d;
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
 }
 
-.wheel-picker-highlight {
+.rotor-wheel li.active {
+  font-weight: bold;
+  opacity: 1;
+}
+
+.rotor-mask::before,
+.rotor-mask::after {
+  content: "";
   position: absolute;
-  top: 32px;
+  height: 32px;
   left: 0;
   right: 0;
-  height: 32px;
-  border-top: 1px solid #999;
-  border-bottom: 1px solid #999;
+  z-index: 2;
   pointer-events: none;
-  z-index: 1;
 }
 
-body.dark .wheel-picker li {
+.rotor-mask::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.9), transparent);
+}
+
+.rotor-mask::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(255,255,255,0.9), transparent);
+}
+
+/* Dark mode */
+body.dark .rotor-wrapper {
+  background: #333;
+}
+body.dark .rotor-wheel li {
   color: #eee;
 }
-
-body.dark .wheel-picker-highlight {
-  border-color: #666;
+body.dark .rotor-mask::before {
+  background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
 }
-
-
+body.dark .rotor-mask::after {
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+}
 
 
 
@@ -729,16 +747,15 @@ body.dark .wheel-picker-highlight {
     </div>
 
     <div class="sort-undo-bar">
-<div class="wheel-picker-container">
-  <div class="wheel-picker-wrapper">
-    <ul class="wheel-picker" id="sortPicker">
-      <li data-value="default">By Input</li>
-      <li data-value="category">By Category</li>
-      <li data-value="date">By Date</li>
-    </ul>
-  </div>
-  <div class="wheel-picker-highlight"></div>
+<div class="rotor-wrapper">
+  <div class="rotor-mask"></div>
+  <ul class="rotor-wheel" id="sortRotor">
+    <li data-value="default">By Input</li>
+    <li data-value="category">By Category</li>
+    <li data-value="date">By Date</li>
+  </ul>
 </div>
+
 
 
 
