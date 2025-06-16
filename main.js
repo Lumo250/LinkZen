@@ -524,6 +524,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         box.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
+      // Abilita il drag & drop
+  enableDragAndDrop();
+    
     // Export functionality
     const exportBtn = document.getElementById("export-btn");
     const exportDefault = document.getElementById("export-default");
