@@ -648,53 +648,41 @@ dropdown.addEventListener("click", async (event) => {
 //  });
 
 
-// ==============================
-// iOS-Style 3D Sort Picker - Versione migliorata
-// ==============================
 
+
+
+  // Inizializzazione del rotore
 const rotor = document.getElementById("sortRotor");
+const rotorWrapper = document.querySelector(".rotor-wrapper");
 const rotorItems = [
   { value: "default", label: "By Input" },
-  { value: "favorite", label: "★ Favorite" }, // Voce fittizia
+  { value: "dummy1", label: "By Priority" },
   { value: "category", label: "By Category" },
-  { value: "recent", label: "Recently Used" }, // Voce fittizia
+  { value: "dummy2", label: "By Usage" },
   { value: "date", label: "By Date" },
-  { value: "random", label: "Random Order" } // Voce fittizia
+  { value: "dummy3", label: "By Size" },
+  { value: "dummy4", label: "By Type" },
+  { value: "dummy5", label: "By Name" },
+  { value: "dummy6", label: "By Rating" },
+  { value: "dummy7", label: "By Color" }
 ];
 
+// Popola il rotore
+rotor.innerHTML = rotorItems.map(item => 
+  `<li data-value="${item.value}">${item.label}</li>`
+).join('');
+
+const items = Array.from(rotor.querySelectorAll("li"));
+const itemCount = items.length;
+const angleStep = 360 / itemCount;
 let selectedIndex = 0;
+let currentRotation = 0;
 let isDragging = false;
 let startY = 0;
-let currentRotation = 0;
-let velocity = 0;
-let lastY = 0;
-let lastTime = 0;
-let animationFrameId = null;
+let startRotation = 0;
 
-// Inizializzazione del rotore
-function initRotor() {
-  const rotorUl = document.createElement('ul');
-  rotorUl.className = 'rotor-wheel';
-  
-  rotorItems.forEach((item, i) => {
-    const li = document.createElement('li');
-    li.textContent = item.label;
-    li.dataset.value = item.value;
-    rotorUl.appendChild(li);
-  });
-  
-  rotor.innerHTML = '<div class="rotor-mask"></div>';
-  rotor.appendChild(rotorUl);
-  
-  // Carica lo stato salvato
-  loadRotorState();
-  
-  // Aggiungi event listeners
-  setupEventListeners();
-}
-
-// Carica lo stato salvato
-async function loadRotorState() {
+// Imposta lo stato iniziale
+async function initRotor() {
   const { sortOrder = "default" } = await storage.get({ sortOrder: "default" });
   const foundIndex = rotorItems.findIndex(i => i.value === sortOrder);
   selectedIndex = foundIndex >= 0 ? foundIndex : 0;
@@ -702,201 +690,145 @@ async function loadRotorState() {
 }
 
 // Aggiorna la posizione del rotore
-function updateRotor(skipSave = false, immediate = false) {
-  const wheel = rotor.querySelector('.rotor-wheel');
-  const items = Array.from(wheel.querySelectorAll('li'));
+function updateRotor(skipSave = false) {
+  // Calcola la rotazione per centrare l'elemento selezionato
+  currentRotation = -selectedIndex * angleStep;
   
-  // Calcola la rotazione basata sull'indice selezionato
-  const targetRotation = -selectedIndex * (360 / rotorItems.length);
+  // Applica la rotazione con animazione fluida
+  rotor.style.transform = `rotateX(${currentRotation}deg)`;
   
-  if (immediate) {
-    currentRotation = targetRotation;
-    wheel.style.transition = 'none';
-    wheel.style.transform = `rotateX(${currentRotation}deg)`;
+  // Aggiorna le classi active
+  items.forEach((item, i) => {
+    const diff = Math.abs(((i - selectedIndex + itemCount/2) % itemCount) - itemCount/2);
+    const opacity = 1 - (diff / (itemCount/2)) * 0.7;
+    const scale = 1 - (diff / (itemCount/2)) * 0.2;
+    
+    item.style.opacity = opacity;
+    item.style.transform = `rotateX(${i * angleStep}deg) translateZ(90px) scale(${scale})`;
+    item.classList.toggle("active", i === selectedIndex);
+  });
+  
+  // Salva la selezione se non è un'inizializzazione
+  if (!skipSave && rotorItems[selectedIndex].value !== "dummy") {
+    const val = rotorItems[selectedIndex].value;
+    storage.set({ sortOrder: val });
+    loadUrls();
+  }
+}
+
+// Gestione scroll mouse
+let lastScrollTime = 0;
+let scrollVelocity = 0;
+let scrollAnimationId = null;
+
+function handleScroll(e) {
+  e.preventDefault();
+  
+  const now = Date.now();
+  const deltaTime = now - lastScrollTime;
+  lastScrollTime = now;
+  
+  // Calcola la velocità basata sullo scroll
+  const deltaY = e.deltaY;
+  scrollVelocity = deltaY * 0.2;
+  
+  // Ferma qualsiasi animazione precedente
+  if (scrollAnimationId) {
+    cancelAnimationFrame(scrollAnimationId);
+  }
+  
+  // Applica l'inerzia
+  applyInertia();
+}
+
+function applyInertia() {
+  if (Math.abs(scrollVelocity) < 0.1) {
+    scrollVelocity = 0;
+    snapToNearest();
     return;
   }
   
-  // Normalizza la rotazione per essere sempre tra 0 e 360
-  currentRotation = ((currentRotation % 360) + 360) % 360;
+  // Applica la velocità
+  selectedIndex = (selectedIndex + Math.sign(scrollVelocity)) % itemCount;
+  if (selectedIndex < 0) selectedIndex += itemCount;
   
-  // Calcola la rotazione più breve
-  let diff = targetRotation - currentRotation;
-  if (diff > 180) diff -= 360;
-  if (diff < -180) diff += 360;
+  updateRotor();
   
-  currentRotation += diff;
-  wheel.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-  wheel.style.transform = `rotateX(${currentRotation}deg)`;
+  // Riduci la velocità con attrito
+  scrollVelocity *= 0.9;
   
-  // Aggiorna gli stati degli elementi
+  // Continua l'animazione
+  scrollAnimationId = requestAnimationFrame(applyInertia);
+}
+
+function snapToNearest() {
+  const targetRotation = -selectedIndex * angleStep;
+  const diff = (targetRotation - currentRotation + 180) % 360 - 180;
+  
+  if (Math.abs(diff) > 1) {
+    currentRotation += diff * 0.2;
+    rotor.style.transform = `rotateX(${currentRotation}deg)`;
+    requestAnimationFrame(snapToNearest);
+  } else {
+    updateRotor();
+  }
+}
+
+// Gestione touch
+function handleTouchStart(e) {
+  e.preventDefault();
+  isDragging = true;
+  startY = e.touches[0].clientY;
+  startRotation = currentRotation;
+  
+  // Ferma qualsiasi animazione in corso
+  if (scrollAnimationId) {
+    cancelAnimationFrame(scrollAnimationId);
+    scrollAnimationId = null;
+  }
+}
+
+function handleTouchMove(e) {
+  if (!isDragging) return;
+  e.preventDefault();
+  
+  const y = e.touches[0].clientY;
+  const deltaY = startY - y;
+  const rotationDelta = deltaY * 0.5;
+  
+  currentRotation = startRotation + rotationDelta;
+  rotor.style.transform = `rotateX(${currentRotation}deg)`;
+  
+  // Aggiorna l'elemento selezionato in base alla rotazione
+  const tempIndex = Math.round((-currentRotation % 360) / angleStep);
+  selectedIndex = (tempIndex % itemCount + itemCount) % itemCount;
+  
+  // Aggiorna l'aspetto degli elementi
   items.forEach((item, i) => {
-    const angle = (currentRotation + i * (360 / rotorItems.length)) % 360;
-    const absAngle = Math.abs(angle > 180 ? angle - 360 : angle);
+    const diff = Math.abs(((i - selectedIndex + itemCount/2) % itemCount) - itemCount/2);
+    const opacity = 1 - (diff / (itemCount/2)) * 0.7;
+    const scale = 1 - (diff / (itemCount/2)) * 0.2;
     
-    // Calcola l'opacità in base alla posizione
-    const opacity = 1 - Math.min(absAngle / 90, 0.6);
-    item.style.opacity = opacity.toFixed(2);
-    item.style.transform = `rotateX(${i * (360 / rotorItems.length)}deg) translateZ(90px)`;
-    
-    // Elemento attivo è quello più vicino al centro
-    const isActive = absAngle < 30;
-    item.classList.toggle('active', isActive);
-    
-    // Leggibilità migliorata per l'elemento attivo
-    if (isActive) {
-      item.style.fontWeight = 'bold';
-      item.style.color = document.body.classList.contains('dark') ? '#fff' : '#000';
-    } else {
-      item.style.fontWeight = 'normal';
-      item.style.color = document.body.classList.contains('dark') ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)';
-    }
+    item.style.opacity = opacity;
+    item.style.transform = `rotateX(${i * angleStep}deg) translateZ(90px) scale(${scale})`;
+    item.classList.toggle("active", i === selectedIndex);
   });
-  
-  if (!skipSave) {
-    const val = rotorItems[selectedIndex].value;
-    // Salva solo se è un'opzione reale (non fittizia)
-    if (['default', 'category', 'date'].includes(val)) {
-      storage.set({ sortOrder: val });
-      loadUrls();
-    }
-  }
 }
 
-// Configura gli event listeners
-function setupEventListeners() {
-  // Touch events
-  rotor.addEventListener('touchstart', handleTouchStart, { passive: false });
-  rotor.addEventListener('touchmove', handleTouchMove, { passive: false });
-  rotor.addEventListener('touchend', handleTouchEnd);
-  
-  // Mouse events
-  rotor.addEventListener('mousedown', handleMouseDown);
-  rotor.addEventListener('mousemove', handleMouseMove);
-  rotor.addEventListener('mouseup', handleMouseUp);
-  rotor.addEventListener('mouseleave', handleMouseUp);
-  
-  // Wheel event
-  rotor.addEventListener('wheel', handleWheel, { passive: false });
-  
-  // Inertia animation
-  function animate() {
-    if (Math.abs(velocity) > 0.1) {
-      currentRotation += velocity;
-      velocity *= 0.95; // Attrito
-      updateRotor(true);
-      animationFrameId = requestAnimationFrame(animate);
-    } else {
-      // Snap all'elemento più vicino
-      const anglePerItem = 360 / rotorItems.length;
-      const normalizedRotation = ((currentRotation % 360) + 360) % 360;
-      const closestIndex = Math.round(normalizedRotation / anglePerItem) % rotorItems.length;
-      
-      if (closestIndex !== selectedIndex) {
-        selectedIndex = closestIndex;
-        updateRotor();
-      }
-      animationFrameId = null;
-    }
-  }
-  
-  // Avvia l'animazione
-  function startAnimation() {
-    if (!animationFrameId) {
-      animationFrameId = requestAnimationFrame(animate);
-    }
-  }
-  
-  // Gestione touch
-  function handleTouchStart(e) {
-    e.preventDefault();
-    isDragging = true;
-    startY = e.touches[0].clientY;
-    lastY = startY;
-    lastTime = e.timeStamp;
-    velocity = 0;
-    rotor.querySelector('.rotor-wheel').style.transition = 'none';
-  }
-  
-  function handleTouchMove(e) {
-    if (!isDragging) return;
-    e.preventDefault();
-    
-    const y = e.touches[0].clientY;
-    const deltaY = y - lastY;
-    const timeDelta = e.timeStamp - lastTime;
-    
-    if (timeDelta > 0) {
-      velocity = (deltaY / timeDelta) * 15; // Sensibilità
-    }
-    
-    currentRotation += deltaY * 0.8; // Riduci la sensibilità per un controllo più preciso
-    updateRotor(true);
-    
-    lastY = y;
-    lastTime = e.timeStamp;
-  }
-  
-  function handleTouchEnd() {
-    isDragging = false;
-    rotor.querySelector('.rotor-wheel').style.transition = '';
-    startAnimation();
-  }
-  
-  // Gestione mouse (simile al touch)
-  function handleMouseDown(e) {
-    e.preventDefault();
-    isDragging = true;
-    startY = e.clientY;
-    lastY = startY;
-    lastTime = e.timeStamp;
-    velocity = 0;
-    rotor.querySelector('.rotor-wheel').style.transition = 'none';
-    document.body.style.userSelect = 'none'; // Previene la selezione del testo durante il drag
-  }
-  
-  function handleMouseMove(e) {
-    if (!isDragging) return;
-    e.preventDefault();
-    
-    const y = e.clientY;
-    const deltaY = y - lastY;
-    const timeDelta = e.timeStamp - lastTime;
-    
-    if (timeDelta > 0) {
-      velocity = (deltaY / timeDelta) * 15;
-    }
-    
-    currentRotation += deltaY * 0.8;
-    updateRotor(true);
-    
-    lastY = y;
-    lastTime = e.timeStamp;
-  }
-  
-  function handleMouseUp() {
-    if (!isDragging) return;
-    isDragging = false;
-    rotor.querySelector('.rotor-wheel').style.transition = '';
-    document.body.style.userSelect = '';
-    startAnimation();
-  }
-  
-  // Gestione rotellina del mouse
-  function handleWheel(e) {
-    e.preventDefault();
-    velocity = -e.deltaY * 0.1; // Riduci la sensibilità
-    startAnimation();
-  }
+function handleTouchEnd() {
+  isDragging = false;
+  snapToNearest();
 }
 
-// Inizializza il rotore quando il DOM è pronto
-document.addEventListener("DOMContentLoaded", () => {
-  initRotor();
-  
-  // Aggiungi questo all'evento DOMContentLoaded esistente
-  // ... resto del codice esistente ...
-});
+// Aggiungi event listeners
+rotorWrapper.addEventListener("wheel", handleScroll, { passive: false });
+rotorWrapper.addEventListener("touchstart", handleTouchStart, { passive: false });
+rotorWrapper.addEventListener("touchmove", handleTouchMove, { passive: false });
+rotorWrapper.addEventListener("touchend", handleTouchEnd);
+rotorWrapper.addEventListener("touchcancel", handleTouchEnd);
 
+// Inizializza il rotore
+initRotor();
 
   
 // ==============================================
