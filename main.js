@@ -651,58 +651,60 @@ dropdown.addEventListener("click", async (event) => {
 // iOS-Style 3D Sort Picker
 // ==============================
 
-const picker = document.getElementById("sortPicker");
-const items = Array.from(picker.querySelectorAll("li"));
-const itemAngle = 360 / items.length;
-let currentIndex = 0;
 
-// Posiziona ogni item nella ruota
-items.forEach((item, i) => {
-  item.style.transform = `rotateX(${i * itemAngle}deg) translateZ(90px)`;
+const rotor = document.getElementById("sortRotor");
+const rotorItems = Array.from(rotor.querySelectorAll("li"));
+const angleStep = 360 / rotorItems.length;
+let selectedIndex = 0;
+
+// Posiziona ogni voce sulla ruota
+rotorItems.forEach((item, i) => {
+  item.style.transform = `rotateX(${i * angleStep}deg) translateZ(90px)`;
 });
 
-// Carica valore salvato
+// Imposta lo stato iniziale
 const { sortOrder = "default" } = await storage.get({ sortOrder: "default" });
-const savedIndex = items.findIndex(i => i.dataset.value === sortOrder);
-if (savedIndex >= 0) {
-  currentIndex = savedIndex;
-  picker.style.transform = `rotateX(-${itemAngle * currentIndex}deg)`;
+const foundIndex = rotorItems.findIndex(i => i.dataset.value === sortOrder);
+selectedIndex = foundIndex >= 0 ? foundIndex : 0;
+updateRotor(true);
+
+function updateRotor(skipSave = false) {
+  rotor.style.transform = `rotateX(-${selectedIndex * angleStep}deg)`;
+  rotorItems.forEach((item, i) => {
+    item.classList.toggle("active", i === selectedIndex);
+  });
+  if (!skipSave) {
+    const val = rotorItems[selectedIndex].dataset.value;
+    storage.set({ sortOrder: val });
+    loadUrls();
+  }
 }
 
-// Funzione per aggiornare visuale e logica
-function updatePicker() {
-  picker.style.transform = `rotateX(-${itemAngle * currentIndex}deg)`;
-  const selected = items[currentIndex].dataset.value;
-  storage.set({ sortOrder: selected });
-  loadUrls();
-}
-
-// Eventi
-picker.addEventListener("wheel", (e) => {
+// Scroll mouse
+rotor.addEventListener("wheel", (e) => {
   e.preventDefault();
-  if (e.deltaY > 0 && currentIndex < items.length - 1) {
-    currentIndex++;
-    updatePicker();
-  } else if (e.deltaY < 0 && currentIndex > 0) {
-    currentIndex--;
-    updatePicker();
+  if (e.deltaY > 0 && selectedIndex < rotorItems.length - 1) {
+    selectedIndex++;
+    updateRotor();
+  } else if (e.deltaY < 0 && selectedIndex > 0) {
+    selectedIndex--;
+    updateRotor();
   }
 });
 
-let touchStart = null;
-
-picker.addEventListener("touchstart", (e) => {
-  touchStart = e.touches[0].clientY;
+// Touch (mobile)
+let touchStartY = null;
+rotor.addEventListener("touchstart", (e) => {
+  touchStartY = e.touches[0].clientY;
 });
-
-picker.addEventListener("touchmove", (e) => {
-  if (touchStart === null) return;
-  const delta = e.touches[0].clientY - touchStart;
+rotor.addEventListener("touchmove", (e) => {
+  if (touchStartY === null) return;
+  const delta = e.touches[0].clientY - touchStartY;
   if (Math.abs(delta) > 20) {
-    if (delta > 0 && currentIndex > 0) currentIndex--;
-    else if (delta < 0 && currentIndex < items.length - 1) currentIndex++;
-    updatePicker();
-    touchStart = null;
+    if (delta > 0 && selectedIndex > 0) selectedIndex--;
+    else if (delta < 0 && selectedIndex < rotorItems.length - 1) selectedIndex++;
+    updateRotor();
+    touchStartY = null;
   }
 });
 
