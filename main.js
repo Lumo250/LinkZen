@@ -310,20 +310,21 @@ function isValidUrl(string) {
 /**
  * Abilita il drag & drop per gli elementi della lista
  */
+// FUNZIONE enableDragAndDrop CORRETTA
 function enableDragAndDrop() {
     const list = document.getElementById("url-list");
-    
+    if (!list) return;
+
     list.addEventListener("dragstart", (e) => {
         if (e.target.classList.contains("link-row")) {
             e.target.classList.add("dragging");
             e.dataTransfer.setData("text/plain", e.target.dataset.index);
-            e.dataTransfer.effectAllowed = "move";
         }
     });
-    
+
     list.addEventListener("dragover", (e) => {
         e.preventDefault();
-        const draggingItem = document.querySelector(".dragging");
+        const draggingItem = list.querySelector(".dragging");
         if (!draggingItem) return;
         
         const afterElement = getDragAfterElement(list, e.clientY);
@@ -333,15 +334,16 @@ function enableDragAndDrop() {
             list.appendChild(draggingItem);
         }
     });
-    
+
     list.addEventListener("dragend", (e) => {
-        const draggedItem = document.querySelector(".dragging");
+        const draggedItem = list.querySelector(".dragging");
         if (draggedItem) {
             draggedItem.classList.remove("dragging");
-            saveCustomOrder();
+            saveCustomOrder().catch(console.error);
         }
     });
 }
+
 
 /**
  * Trova la posizione corretta per l'elemento trascinato
