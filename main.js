@@ -1637,16 +1637,22 @@ async function loadUrls() {
     }
 
     // Create list items for each URL
-    urls.forEach((item, index) => {
-        const url = item.url;
-        const currentCategory = item.category;
-        const title = item.title || "";
-
+  urls.forEach((item, index) => {
         const li = document.createElement("li");
         li.className = "link-row";
-        li.dataset.url = url;
-        li.dataset.index = index;
+        li.dataset.url = item.url;  // Corretto
+        li.dataset.index = index;   // Corretto
         li.draggable = true;
+
+        li.addEventListener("dragstart", () => {
+            li.style.opacity = "0.5";
+            li.style.transform = "scale(1.05)";
+        });
+        
+        li.addEventListener("dragend", () => {
+            li.style.opacity = "1";
+            li.style.transform = "scale(1)";
+        });
         
         // Stile per l'elemento trascinato
         li.style.cursor = "grab";
@@ -1882,6 +1888,5 @@ async function loadUrls() {
         });
     }
 
-    // Abilita il drag & drop dopo aver creato la lista
-    enableDragAndDrop();
+  
 }
