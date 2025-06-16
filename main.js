@@ -1,7 +1,3 @@
-  if (localStorage.getItem("darkMode") === "true") {
-    document.documentElement.classList.add("dark-ready");
-    document.body?.classList?.add("dark");
-  }
 
 
 // main.js - Versione completa con supporto bookmarklet per Safari iOS
@@ -268,8 +264,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   toggleTheme.addEventListener("change", () => {
     const enabled = toggleTheme.checked;
     document.body.classList.toggle("dark", enabled);
-//    storage.set({ darkMode: enabled });
-    localStorage.setItem("darkMode", enabled.toString());
+ await storage.set({ darkMode: enabled });
+  localStorage.setItem("darkMode", enabled.toString()); // Mantieni solo per il loader iniziale
   });
 
   // Zoom
