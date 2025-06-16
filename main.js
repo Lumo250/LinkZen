@@ -14,7 +14,7 @@ let undoData = null;
 let undoTimeout = null;
 let undoBtn, themeToggleWrapper;
 let fontScale = 1;
-let justClickedImportCustom = false;
+let importFileDialogOpen = false;
 
 
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
@@ -382,14 +382,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   
 document.addEventListener("click", (e) => {
-  // Chiudi menu Export se clic fuori
+  // Export
   if (!e.target.closest("#export-container")) {
     exportDefault.style.display = "flex";
     exportOptions.classList.add("hidden");
   }
 
-    // Chiudi import solo se non si è appena cliccato su "Custom"
-  if (!e.target.closest("#import-container") && !justClickedImportCustom) {
+  // Import
+  if (!e.target.closest("#import-container") && !importFileDialogOpen) {
     importDefault.style.display = "flex";
     importOptions.classList.add("hidden");
   }
@@ -438,11 +438,46 @@ importBtn.addEventListener("click", (e) => {
 
 
 document.getElementById("import-custom").addEventListener("click", () => {
-  justClickedImportCustom = true;
+   importFileDialogOpen = true;
   document.getElementById("import-file").click();
-  setTimeout(() => justClickedImportCustom = false, 500); // reset dopo mezzo secondo
+  
 });
 
+const importFileInput = document.getElementById("import-file");
+
+importFileInput.addEventListener("change", async (event) => {
+  importFileDialogOpen = false; // dialog chiuso
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
+        await storage.set(data);
+        await loadUrls();
+        alert("Importazione completata.");
+      } else {
+        alert("File non valido. Nessuna lista trovata.");
+      }
+    } catch (err) {
+      alert("Errore nel file: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Chiude anche se l’utente annulla la selezione
+importFileInput.addEventListener("blur", () => {
+  importFileDialogOpen = false;
+});
+
+
+
+
+
+  
 document.getElementById("import-default-btn").addEventListener("click", async () => {
   try {
     const response = await fetch("https://lumo250.github.io/LinkZen/default-config.json");
