@@ -574,6 +574,42 @@
       background-color: #444;
       color: #eee;
     }
+
+    /* Stile Pill Selector */
+.pill-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.pill-option {
+  cursor: pointer;
+}
+
+.pill-option span {
+  display: block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: #e0e0e0;
+  font-size: 12px;
+  transition: all 0.3s;
+}
+
+.pill-option input:checked + span {
+  background: #4CAF50;
+  color: white;
+  font-weight: bold;
+}
+
+/* Adattamento Dark Mode */
+body.dark .pill-option span {
+  background: #444;
+  color: #eee;
+}
+
+body.dark .pill-option input:checked + span {
+  background: #388E3C;
+}
+
     
     /* Fix globale per iOS */
     input, textarea, select {
@@ -646,10 +682,16 @@
     </div>
 
     <div class="sort-undo-bar">
-      <div class="sort-options">
-        <label><input type="radio" name="sort" value="default" checked> By Input</label>
-        <label><input type="radio" name="sort" value="category"> By Category</label>
-      </div>
+<div class="sort-options pill-selector">
+  <label class="pill-option">
+    <input type="radio" name="sort" value="default" checked hidden>
+    <span>By Input</span>
+  </label>
+  <label class="pill-option">
+    <input type="radio" name="sort" value="category" hidden>
+    <span>By Category</span>
+  </label>
+</div>
 
       <div id="zoom-controls">
         <button id="zoom-in" title="Increase text size" aria-label="Increase text size">A+</button>
