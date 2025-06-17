@@ -518,48 +518,112 @@ const input = document.getElementById("new-category-input");
 const dropdown = document.getElementById("dropdown-category-list");
 
 // Funzione per caricare le categorie
-async function loadDropdownCategories() {
+async function loadTagInputCategories() {
   const { userCategories = [] } = await storage.get({ userCategories: [] });
-  dropdown.innerHTML = "";
+  const tagsContainer = document.getElementById("category-tags");
+  const suggestions = document.getElementById("category-suggestions");
   
-  userCategories.forEach((cat) => {
-    const row = document.createElement("div");
-    row.className = "dropdown-item";
-    
-    // Nome categoria
-    const nameSpan = document.createElement("span");
-    nameSpan.textContent = cat;
-    row.appendChild(nameSpan);
-    
-    // Pulsante [x]
-    const remove = document.createElement("span");
-    remove.innerHTML = "<span style='margin-left: 6px; color: red; cursor: pointer'>[x]</span>";
-    remove.className = "remove";
-    remove.title = "Elimina categoria";
-    row.appendChild(remove);
-    
-    dropdown.appendChild(row);
-  });
+  // Aggiorna i tag visualizzati
+  tagsContainer.innerHTML = userCategories.map(cat => `
+    <div class="tag" data-category="${cat}">
+      ${cat}
+      <span class="tag-remove" data-category="${cat}">×</span>
+    </div>
+  `).join("");
+  
+  // Aggiorna i suggerimenti (per autocomplete)
+  suggestions.innerHTML = userCategories.map(cat => `
+    <div class="suggestion-item" data-category="${cat}">${cat}</div>
+  `).join("");
 }
 
-// Aggiungi categoria
-document.getElementById("add-category-btn").addEventListener("click", async (e) => {
-  e.stopPropagation(); // Impedisce la chiusura del dropdown
-  
-  const newCategory = input.value.trim();
-  if (!newCategory) return;
-  
-  const { userCategories = [] } = await storage.get({ userCategories: [] });
-  if (!userCategories.includes(newCategory)) {
-    const updated = [...userCategories, newCategory];
-    await storage.set({ userCategories: updated });
-    input.value = "";
-    await loadDropdownCategories(); // Aggiorna il dropdown
+// Nuova implementazione:
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("new-category-input");
+  const tagsContainer = document.getElementById("category-tags");
+  const suggestions = document.getElementById("category-suggestions");
+
+  // Aggiungi categoria con Enter
+  input.addEventListener("keydown", async (e) => {
+    if (e.key === "Enter" && input.value.trim()) {
+      e.preventDefault();
+      await addCategory(input.value.trim());
+      input.value = "";
+      suggestions.classList.add("hidden");
+    }
+  });
+
+  // Autocomplete
+  input.addEventListener("input", () => {
+    const term = input.value.trim().toLowerCase();
+    const items = suggestions.querySelectorAll(".suggestion-item");
     
-    // Mantieni il focus sull'input per continuare a inserire
-    input.focus();
-  }
+    let hasMatches = false;
+    items.forEach(item => {
+      const matches = item.dataset.category.toLowerCase().includes(term);
+      item.style.display = matches ? "block" : "none";
+      if (matches) hasMatches = true;
+    });
+    
+    suggestions.classList.toggle("hidden", !term || !hasMatches);
+  });
+
+  // Click su suggerimento
+  suggestions.addEventListener("click", (e) => {
+    const item = e.target.closest(".suggestion-item");
+    if (item) {
+      input.value = "";
+      suggestions.classList.add("hidden");
+    }
+  });
+
+  // Rimozione tag
+  tagsContainer.addEventListener("click", async (e) => {
+    const removeBtn = e.target.closest(".tag-remove");
+    if (!removeBtn) return;
+    
+    const category = removeBtn.dataset.category;
+    await removeCategory(category);
+  });
 });
+
+async function addCategory(category) {
+  const { userCategories = [], visitedUrls = [] } = await storage.get({ 
+    userCategories: [], 
+    visitedUrls: [] 
+  });
+  
+  if (!userCategories.includes(category)) {
+    const updated = [...userCategories, category];
+    await storage.set({ userCategories: updated });
+    await loadTagInputCategories();
+  }
+}
+
+async function removeCategory(category) {
+  const { userCategories = [], visitedUrls = [] } = await storage.get({ 
+    userCategories: [], 
+    visitedUrls: [] 
+  });
+  
+  // 1. Rimuovi dalla lista categorie
+  const updatedUserCats = userCategories.filter(c => c !== category);
+  
+  // 2. Reimposta i link associati a "Other"
+  const updatedUrls = visitedUrls.map(link => ({
+    ...link,
+    category: link.category === category ? (link.originalCategory || "Other") : link.category
+  }));
+  
+  await storage.set({
+    userCategories: updatedUserCats,
+    visitedUrls: updatedUrls
+  });
+  
+  await loadTagInputCategories();
+  await loadUrls(); // Aggiorna la lista link
+}
+  
 
 // Mostra dropdown
 input.addEventListener("focus", async () => {
