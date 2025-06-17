@@ -1808,15 +1808,20 @@ async function loadUrls() {
   list.innerHTML = "";
 
  // Nuovo codice per la rotella 3D
-if (sortOrder === "default") {
-  sortWheel.style.transform = "rotateX(0deg)";
-  document.querySelector('.wheel-option[data-value="default"]').classList.add("active");
-  document.querySelector('.wheel-option[data-value="category"]').classList.remove("active");
-} else {
-  sortWheel.style.transform = "rotateX(-90deg)";
-  document.querySelector('.wheel-option[data-value="category"]').classList.add("active");
-  document.querySelector('.wheel-option[data-value="default"]').classList.remove("active");
-}
+const { sortOrder = "default" } = await storage.get({ sortOrder: "default" });
+
+  // Se la rotella esiste, aggiornala
+  if (sortWheel) {
+    if (sortOrder === "default") {
+      sortWheel.style.transform = "rotateX(0deg)";
+      document.querySelector('.wheel-option[data-value="default"]').classList.add("active");
+      document.querySelector('.wheel-option[data-value="category"]').classList.remove("active");
+    } else {
+      sortWheel.style.transform = "rotateX(-90deg)";
+      document.querySelector('.wheel-option[data-value="category"]').classList.add("active");
+      document.querySelector('.wheel-option[data-value="default"]').classList.remove("active");
+    }
+  }
 
   const urls = [...visitedUrls];
   if (sortOrder === "category") {
