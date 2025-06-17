@@ -15,7 +15,11 @@ let undoTimeout = null;
 let undoBtn, themeToggleWrapper;
 let fontScale = 1;
 let importFileDialogOpen = false;
-let sortWheel; // Variabile globale per la rotella
+let sortWheel;
+let isDragging = false;
+let startY = 0;
+let currentSortOrder = 'default';
+let currentRotation = 0;
 
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
@@ -120,6 +124,102 @@ const storage = {
     console.error("Errore elaborazione bookmarklet:", e);
   }
 }
+
+
+// ============================================
+// 3. ROTELLA 3D (NUOVA IMPLEMENTAZIONE)
+// ============================================
+function initWheel() {
+  sortWheel = document.querySelector('.sort-wheel');
+  if (!sortWheel) return;
+
+  storage.get({ sortOrder: 'default' }).then(({ sortOrder }) => {
+    currentSortOrder = sortOrder;
+    updateWheel();
+  });
+
+  // Touch (iOS)
+  sortWheel.addEventListener('touchstart', handleTouchStart, { passive: false });
+  sortWheel.addEventListener('touchmove', handleTouchMove, { passive: false });
+  sortWheel.addEventListener('touchend', handleTouchEnd);
+
+  // Mouse (Desktop)
+  sortWheel.addEventListener('mousedown', handleMouseStart);
+}
+
+function handleTouchStart(e) {
+  e.preventDefault();
+  isDragging = true;
+  startY = e.touches[0].clientY;
+  sortWheel.style.transition = 'none';
+}
+
+function handleTouchMove(e) {
+  if (!isDragging) return;
+  e.preventDefault();
+  const deltaY = e.touches[0].clientY - startY;
+  updateWheelPosition(deltaY * 0.5);
+}
+
+function handleTouchEnd() {
+  if (!isDragging) return;
+  isDragging = false;
+  finalizeWheelPosition();
+}
+
+function handleMouseStart(e) {
+  e.preventDefault();
+  isDragging = true;
+  startY = e.clientY;
+  sortWheel.style.transition = 'none';
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseEnd);
+}
+
+function handleMouseMove(e) {
+  if (!isDragging) return;
+  const deltaY = e.clientY - startY;
+  updateWheelPosition(deltaY * 0.5);
+}
+
+function handleMouseEnd() {
+  if (!isDragging) return;
+  isDragging = false;
+  document.removeEventListener('mousemove', handleMouseMove);
+  document.removeEventListener('mouseup', handleMouseEnd);
+  finalizeWheelPosition();
+}
+
+function updateWheelPosition(rotation) {
+  currentRotation = rotation;
+  const limitedRotation = Math.max(Math.min(rotation, 45), -45);
+  sortWheel.style.transform = `rotateX(${limitedRotation}deg)`;
+}
+
+function finalizeWheelPosition() {
+  const shouldToggle = Math.abs(currentRotation) > 22.5;
+  const newSortOrder = shouldToggle ? 
+    (currentSortOrder === 'default' ? 'category' : 'default') : 
+    currentSortOrder;
+
+  if (newSortOrder !== currentSortOrder) {
+    currentSortOrder = newSortOrder;
+    storage.set({ sortOrder: currentSortOrder }).then(loadUrls);
+  }
+  updateWheel();
+}
+
+function updateWheel() {
+  sortWheel.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.3, 1)';
+  sortWheel.style.transform = currentSortOrder === 'default' ? 
+    'rotateX(0deg)' : 'rotateX(-90deg)';
+  
+  document.querySelectorAll('.wheel-option').forEach(opt => {
+    opt.classList.toggle('active', opt.dataset.value === currentSortOrder);
+  });
+}
+
+
 
 // ============================================
 // 4. FUNZIONI ORIGINALI (INALTERATE)
@@ -652,78 +752,10 @@ dropdown.addEventListener("click", async (event) => {
     await loadUrls();
   });
 
-// ============================================
-// 3. GESTIONE ROTELLA 3D (nuova implementazione)
-// ============================================
-function initWheel() {
-  sortWheel = document.querySelector('.sort-wheel');
-  if (!sortWheel) return;
+  initWheel();
+});
 
-  storage.get({ sortOrder: 'default' }).then(({ sortOrder }) => {
-    currentSortOrder = sortOrder;
-    updateWheel();
-  });
 
-  // Touch (iOS)
-  sortWheel.addEventListener('touchstart', handleTouchStart, { passive: false });
-  sortWheel.addEventListener('touchmove', handleTouchMove, { passive: false });
-  sortWheel.addEventListener('touchend', handleTouchEnd);
-
-  // Mouse (Desktop)
-  sortWheel.addEventListener('mousedown', handleMouseStart);
-}
-
-function handleTouchStart(e) {
-  e.preventDefault();
-  isDragging = true;
-  startY = e.touches[0].clientY;
-  sortWheel.style.transition = 'none';
-}
-
-function handleTouchMove(e) {
-  if (!isDragging) return;
-  e.preventDefault();
-  updateWheelPosition((e.touches[0].clientY - startY) * 0.5);
-}
-
-function handleMouseStart(e) {
-  e.preventDefault();
-  isDragging = true;
-  startY = e.clientY;
-  sortWheel.style.transition = 'none';
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', handleMouseEnd);
-}
-
-function handleMouseMove(e) {
-  if (!isDragging) return;
-  updateWheelPosition((e.clientY - startY) * 0.5);
-}
-
-function handleDragEnd() {
-  isDragging = false;
-  const shouldToggle = Math.abs(currentRotation) > 22.5;
-  const newSortOrder = shouldToggle ? 
-    (currentSortOrder === 'default' ? 'category' : 'default') : 
-    currentSortOrder;
-
-  if (newSortOrder !== currentSortOrder) {
-    currentSortOrder = newSortOrder;
-    storage.set({ sortOrder: currentSortOrder }).then(loadUrls);
-  }
-  updateWheel();
-}
-
-function updateWheel() {
-  sortWheel.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.3, 1)';
-  sortWheel.style.transform = currentSortOrder === 'default' ? 
-    'rotateX(0deg)' : 'rotateX(-90deg)';
-  
-  document.querySelectorAll('.wheel-option').forEach(opt => {
-    opt.classList.toggle('active', opt.dataset.value === currentSortOrder);
-  });
-}
-   initWheel();
 // ==============================================
 // 1. FUNZIONE PRINCIPALE DI SALVATAGGIO (COMPLETA)
 // ==============================================
