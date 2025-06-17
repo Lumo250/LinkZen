@@ -664,10 +664,10 @@ body.dark #import-default-btn {
     </div>
 
     <div class="sort-undo-bar">
-      <div class="sort-options">
-        <label><input type="radio" name="sort" value="default" checked> By Input</label>
-        <label><input type="radio" name="sort" value="category"> By Category</label>
-      </div>
+<select id="sort-select" class="category" style="margin-right: 10px;">
+  <option value="default">By Input</option>
+  <option value="category">By Category</option>
+</select>
 
       <div id="zoom-controls">
         <button id="zoom-in" title="Increase text size">A+</button>
