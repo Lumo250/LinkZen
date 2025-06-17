@@ -1959,32 +1959,8 @@ async function loadUrls() {
     resetBtn.onclick = null;
   }
 
-  const dropdown = document.getElementById("dropdown-category-list");
-  if (dropdown) {
-    dropdown.innerHTML = "";
-    userCategories.forEach((cat) => {
-      const row = document.createElement("div");
-      row.className = "dropdown-item";
-      row.textContent = cat;
-
-      const remove = document.createElement("span");
-      remove.textContent = "x";
-      remove.className = "remove";
-      remove.style.marginLeft = "6px";
-      remove.style.cursor = "pointer";
-      remove.style.color = "red";
-      remove.addEventListener("click", async () => {
-        const updatedUserCats = userCategories.filter(c => c !== cat);
-        const updatedUrls = visitedUrls.map(link => {
-          if (link.category === cat) {
-            return {
-              ...link,
-              category: link.originalCategory || "Other"
-            };
-          }
-          return link;
-        });
-
+  await loadTagInputCategories();
+  
         await storage.set({
           userCategories: updatedUserCats,
           visitedUrls: updatedUrls
