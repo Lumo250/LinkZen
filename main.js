@@ -226,6 +226,22 @@ function openLinkSafari(url) {
   document.body.removeChild(a);
 }
 
+
+
+// Aggiungi queste funzioni per bloccare lo scroll su iOS
+function preventDefaultScroll(e) {
+  e.preventDefault();
+}
+
+function disablePageScroll() {
+  document.addEventListener('touchmove', preventDefaultScroll, { passive: false });
+}
+
+function enablePageScroll() {
+  document.removeEventListener('touchmove', preventDefaultScroll);
+}
+
+
 // ============================================
 // 5. EVENT LISTENERS E INIZIALIZZAZIONE
 // ============================================
@@ -697,22 +713,24 @@ sortWheel.addEventListener('touchstart', (e) => {
   isDragging = true;
   startY = e.touches[0].clientY;
   sortWheel.style.transition = 'none';
+  disablePageScroll(); // Blocca lo scroll della pagina
   e.preventDefault();
 });
 
-document.addEventListener('touchmove', (e) => {
-  if (!isDragging) return;
-  const deltaY = e.touches[0].clientY - startY;
-  const rotation = currentRotation + deltaY * 0.5;
-  const limitedRotation = Math.max(Math.min(rotation, 45), -45);
-  sortWheel.style.transform = `rotateX(${limitedRotation}deg)`;
+document.addEventListener('touchend', () => {
+  if (isDragging) {
+    enablePageScroll(); // Riabilita lo scroll
+    isDragging = false;
+  }
 });
 
-document.addEventListener('touchend', (e) => {
-  if (!isDragging) return;
-  handleDragEnd(e.changedTouches[0].clientY);
+document.addEventListener('touchcancel', () => {
+  if (isDragging) {
+    enablePageScroll(); // Riabilita se il touch viene interrotto
+    isDragging = false;
+  }
 });
-
+  
 // ===== LOGICA DI FINE DRAG =====
 function handleDragEnd(endY) {
   isDragging = false;
