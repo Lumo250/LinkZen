@@ -643,57 +643,55 @@ let startY = 0;
 let currentRotation = 0;
 let currentSortOrder = 'default';
 
-// Carica lo stato iniziale
-storage.get({ sortOrder: 'default' }).then(({ sortOrder }) => {
-  currentSortOrder = sortOrder;
-  updateWheelPosition();
-});
+// ===== [FUNZIONE PRINCIPALE] Aggiorna posizione rotella =====
+function updateWheelPosition() {
+  const options = document.querySelectorAll('.wheel-option');
+  options.forEach(option => {
+    option.classList.remove('active');
+    if (option.dataset.value === currentSortOrder) {
+      option.classList.add('active');
+    }
+  });
 
+  // Animazione fluida
+  sortWheel.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.3, 1)';
+  sortWheel.style.transform = currentSortOrder === 'default' 
+    ? 'rotateX(0deg)' 
+    : 'rotateX(-90deg)';
+}
+
+// ===== MOUSE DRAG =====
 sortWheel.addEventListener('mousedown', (e) => {
   isDragging = true;
   startY = e.clientY;
-  sortWheel.style.transition = 'none';
+  sortWheel.style.transition = 'none'; // Disabilita animazione durante il drag
   e.preventDefault();
 });
 
+// Muove la rotella durante il drag
 document.addEventListener('mousemove', (e) => {
   if (!isDragging) return;
   
   const deltaY = e.clientY - startY;
   const rotation = currentRotation + deltaY * 0.5;
   
-  // Limita la rotazione tra -45 e 45 gradi
+  // Limita la rotazione tra -45° e +45°
   const limitedRotation = Math.max(Math.min(rotation, 45), -45);
   sortWheel.style.transform = `rotateX(${limitedRotation}deg)`;
 });
 
+// Rilascia la rotella (con "mouseup" ovunque nella pagina)
 document.addEventListener('mouseup', (e) => {
   if (!isDragging) return;
-  isDragging = false;
-  
-  const deltaY = e.clientY - startY;
-  currentRotation += deltaY * 0.5;
-  
-  // Determina la nuova selezione in base alla rotazione
-  let newSortOrder = currentSortOrder;
-  if (Math.abs(currentRotation) > 22.5) {
-    newSortOrder = currentSortOrder === 'default' ? 'category' : 'default';
-  }
-  
-  // Resetta la rotazione con animazione
-  currentRotation = 0;
-  sortWheel.style.transition = 'transform 0.5s cubic-bezier(0.17, 0.84, 0.44, 1)';
-  sortWheel.style.transform = 'rotateX(0deg)';
-  
-  // Aggiorna solo se è cambiato
-  if (newSortOrder !== currentSortOrder) {
-    currentSortOrder = newSortOrder;
-    updateWheelPosition();
-    storage.set({ sortOrder: currentSortOrder }).then(loadUrls);
-  }
+  handleDragEnd(e.clientY);
 });
 
-// Supporto per touch
+// Se il mouse esce dalla finestra, annulla il drag
+document.addEventListener('mouseleave', () => {
+  if (isDragging) handleDragEnd(startY); // Resetta senza cambiare stato
+});
+
+// ===== TOUCH DRAG (per mobile) =====
 sortWheel.addEventListener('touchstart', (e) => {
   isDragging = true;
   startY = e.touches[0].clientY;
@@ -703,57 +701,39 @@ sortWheel.addEventListener('touchstart', (e) => {
 
 document.addEventListener('touchmove', (e) => {
   if (!isDragging) return;
-  
   const deltaY = e.touches[0].clientY - startY;
   const rotation = currentRotation + deltaY * 0.5;
-  
-  // Limita la rotazione tra -45 e 45 gradi
   const limitedRotation = Math.max(Math.min(rotation, 45), -45);
   sortWheel.style.transform = `rotateX(${limitedRotation}deg)`;
 });
 
 document.addEventListener('touchend', (e) => {
   if (!isDragging) return;
-  isDragging = false;
-  
-  const deltaY = e.changedTouches[0].clientY - startY;
-  currentRotation += deltaY * 0.5;
-  
-  // Determina la nuova selezione in base alla rotazione
-  let newSortOrder = currentSortOrder;
-  if (Math.abs(currentRotation) > 22.5) {
-    newSortOrder = currentSortOrder === 'default' ? 'category' : 'default';
-  }
-  
-  // Resetta la rotazione con animazione
-  currentRotation = 0;
-  sortWheel.style.transition = 'transform 0.5s cubic-bezier(0.17, 0.84, 0.44, 1)';
-  sortWheel.style.transform = 'rotateX(0deg)';
-  
-  // Aggiorna solo se è cambiato
-  if (newSortOrder !== currentSortOrder) {
-    currentSortOrder = newSortOrder;
-    updateWheelPosition();
-    storage.set({ sortOrder: currentSortOrder }).then(loadUrls);
-  }
+  handleDragEnd(e.changedTouches[0].clientY);
 });
 
-function updateWheelPosition() {
-  const options = document.querySelectorAll('.wheel-option');
-  options.forEach(option => {
-    option.classList.remove('active');
-    if (option.dataset.value === currentSortOrder) {
-      option.classList.add('active');
-    }
-  });
-  
-  if (currentSortOrder === 'default') {
-    sortWheel.style.transform = 'rotateX(0deg)';
-  } else {
-    sortWheel.style.transform = 'rotateX(-90deg)';
-  }
-}
+// ===== LOGICA DI FINE DRAG =====
+function handleDragEnd(endY) {
+  isDragging = false;
+  const deltaY = endY - startY;
+  currentRotation += deltaY * 0.5;
 
+  // Cambia stato solo se supera la soglia (22.5°)
+  const shouldToggle = Math.abs(currentRotation) > 22.5;
+  const newSortOrder = shouldToggle 
+    ? (currentSortOrder === 'default' ? 'category' : 'default') 
+    : currentSortOrder;
+
+  // Resetta animazione
+  currentRotation = 0;
+  
+  if (newSortOrder !== currentSortOrder) {
+    currentSortOrder = newSortOrder;
+    storage.set({ sortOrder: currentSortOrder }).then(loadUrls);
+  }
+
+  updateWheelPosition();
+}
 
 // ==============================================
 // 1. FUNZIONE PRINCIPALE DI SALVATAGGIO (COMPLETA)
