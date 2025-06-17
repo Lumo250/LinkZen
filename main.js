@@ -636,13 +636,123 @@ dropdown.addEventListener("click", async (event) => {
     await loadUrls();
   });
 
-  // Sort
-  document.querySelectorAll('input[name="sort"]').forEach(radio => {
-    radio.addEventListener("change", async () => {
-      await storage.set({ sortOrder: radio.value });
-      await loadUrls();
-    });
+// Gestione rotella di selezione
+const sortWheel = document.querySelector('.sort-wheel');
+let isDragging = false;
+let startY = 0;
+let currentRotation = 0;
+let currentSortOrder = 'default';
+
+// Carica lo stato iniziale
+storage.get({ sortOrder: 'default' }).then(({ sortOrder }) => {
+  currentSortOrder = sortOrder;
+  updateWheelPosition();
+});
+
+sortWheel.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  startY = e.clientY;
+  sortWheel.style.transition = 'none';
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  
+  const deltaY = e.clientY - startY;
+  const rotation = currentRotation + deltaY * 0.5;
+  
+  // Limita la rotazione tra -45 e 45 gradi
+  const limitedRotation = Math.max(Math.min(rotation, 45), -45);
+  sortWheel.style.transform = `rotateX(${limitedRotation}deg)`;
+});
+
+document.addEventListener('mouseup', (e) => {
+  if (!isDragging) return;
+  isDragging = false;
+  
+  const deltaY = e.clientY - startY;
+  currentRotation += deltaY * 0.5;
+  
+  // Determina la nuova selezione in base alla rotazione
+  let newSortOrder = currentSortOrder;
+  if (Math.abs(currentRotation) > 22.5) {
+    newSortOrder = currentSortOrder === 'default' ? 'category' : 'default';
+  }
+  
+  // Resetta la rotazione con animazione
+  currentRotation = 0;
+  sortWheel.style.transition = 'transform 0.5s cubic-bezier(0.17, 0.84, 0.44, 1)';
+  sortWheel.style.transform = 'rotateX(0deg)';
+  
+  // Aggiorna solo se è cambiato
+  if (newSortOrder !== currentSortOrder) {
+    currentSortOrder = newSortOrder;
+    updateWheelPosition();
+    storage.set({ sortOrder: currentSortOrder }).then(loadUrls);
+  }
+});
+
+// Supporto per touch
+sortWheel.addEventListener('touchstart', (e) => {
+  isDragging = true;
+  startY = e.touches[0].clientY;
+  sortWheel.style.transition = 'none';
+  e.preventDefault();
+});
+
+document.addEventListener('touchmove', (e) => {
+  if (!isDragging) return;
+  
+  const deltaY = e.touches[0].clientY - startY;
+  const rotation = currentRotation + deltaY * 0.5;
+  
+  // Limita la rotazione tra -45 e 45 gradi
+  const limitedRotation = Math.max(Math.min(rotation, 45), -45);
+  sortWheel.style.transform = `rotateX(${limitedRotation}deg)`;
+});
+
+document.addEventListener('touchend', (e) => {
+  if (!isDragging) return;
+  isDragging = false;
+  
+  const deltaY = e.changedTouches[0].clientY - startY;
+  currentRotation += deltaY * 0.5;
+  
+  // Determina la nuova selezione in base alla rotazione
+  let newSortOrder = currentSortOrder;
+  if (Math.abs(currentRotation) > 22.5) {
+    newSortOrder = currentSortOrder === 'default' ? 'category' : 'default';
+  }
+  
+  // Resetta la rotazione con animazione
+  currentRotation = 0;
+  sortWheel.style.transition = 'transform 0.5s cubic-bezier(0.17, 0.84, 0.44, 1)';
+  sortWheel.style.transform = 'rotateX(0deg)';
+  
+  // Aggiorna solo se è cambiato
+  if (newSortOrder !== currentSortOrder) {
+    currentSortOrder = newSortOrder;
+    updateWheelPosition();
+    storage.set({ sortOrder: currentSortOrder }).then(loadUrls);
+  }
+});
+
+function updateWheelPosition() {
+  const options = document.querySelectorAll('.wheel-option');
+  options.forEach(option => {
+    option.classList.remove('active');
+    if (option.dataset.value === currentSortOrder) {
+      option.classList.add('active');
+    }
   });
+  
+  if (currentSortOrder === 'default') {
+    sortWheel.style.transform = 'rotateX(0deg)';
+  } else {
+    sortWheel.style.transform = 'rotateX(-90deg)';
+  }
+}
 
 
 // ==============================================
@@ -1716,9 +1826,16 @@ async function loadUrls() {
   const list = document.getElementById("url-list");
   list.innerHTML = "";
 
-  document.querySelectorAll('input[name="sort"]').forEach(radio => {
-    radio.checked = (radio.value === sortOrder);
-  });
+ // Nuovo codice per la rotella 3D
+if (sortOrder === "default") {
+  sortWheel.style.transform = "rotateX(0deg)";
+  document.querySelector('.wheel-option[data-value="default"]').classList.add("active");
+  document.querySelector('.wheel-option[data-value="category"]').classList.remove("active");
+} else {
+  sortWheel.style.transform = "rotateX(-90deg)";
+  document.querySelector('.wheel-option[data-value="category"]').classList.add("active");
+  document.querySelector('.wheel-option[data-value="default"]').classList.remove("active");
+}
 
   const urls = [...visitedUrls];
   if (sortOrder === "category") {
