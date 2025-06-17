@@ -15,7 +15,7 @@ let undoTimeout = null;
 let undoBtn, themeToggleWrapper;
 let fontScale = 1;
 let importFileDialogOpen = false;
-
+let sortWheel; // Variabile globale per la rotella
 
 const stopwords = ["the", "and", "with", "this", "from", "that", "have", "for", "your", "you", "are"];
 
