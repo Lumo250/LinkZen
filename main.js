@@ -638,6 +638,7 @@ dropdown.addEventListener("click", async (event) => {
 
 // Gestione rotella di selezione
 const sortWheel = document.querySelector('.sort-wheel');
+if (sortWheel) {
 let isDragging = false;
 let startY = 0;
 let currentRotation = 0;
@@ -734,7 +735,7 @@ function handleDragEnd(endY) {
 
   updateWheelPosition();
 }
-
+}
 // ==============================================
 // 1. FUNZIONE PRINCIPALE DI SALVATAGGIO (COMPLETA)
 // ==============================================
