@@ -575,7 +575,7 @@
       color: #eee;
     }
 
-    /* Stile Pill Selector */
+/* Stile Pill Selector aggiornato */
 .pill-selector {
   display: flex;
   gap: 8px;
@@ -589,25 +589,37 @@
   display: block;
   padding: 6px 12px;
   border-radius: 16px;
-  background: #e0e0e0;
+  background: #f0f0f0; /* Colore di base più neutro */
   font-size: 12px;
   transition: all 0.3s;
+  color: #888; /* Testo "spento" */
+  font-weight: normal;
 }
 
 .pill-option input:checked + span {
-  background: #4CAF50;
-  color: white;
+  background: #4CAF50; /* Colore acceso */
+  color: white; /* Testo in evidenza */
   font-weight: bold;
 }
 
-/* Adattamento Dark Mode */
+/* Dark Mode */
 body.dark .pill-option span {
-  background: #444;
-  color: #eee;
+  background: #333;
+  color: #666; /* Testo ancora più smorzato in dark mode */
 }
 
 body.dark .pill-option input:checked + span {
   background: #388E3C;
+  color: #fff;
+}
+
+/* Effetto hover per mantenere l'interattività */
+.pill-option:hover span {
+  color: #555; /* Leggermente più visibile al passaggio del mouse */
+}
+
+body.dark .pill-option:hover span {
+  color: #999;
 }
 
     
