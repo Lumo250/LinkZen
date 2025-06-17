@@ -622,6 +622,118 @@ body.dark .pill-option:hover span {
   color: #999;
 }
 
+/* Stile Tag Input */
+.tag-input-container {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px;
+  background: #f9f9f9;
+  margin-bottom: 10px;
+  transition: all 0.3s;
+}
+
+.tag-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.tag-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  padding: 4px 20px 4px 4px;
+  font-size: 12px;
+}
+
+.input-icon {
+  position: absolute;
+  right: 6px;
+  color: #666;
+  font-size: 12px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.tag {
+  background: #e0e0e0;
+  padding: 3px 8px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  animation: fadeIn 0.3s;
+}
+
+.tag-remove {
+  margin-left: 4px;
+  cursor: pointer;
+  color: #888;
+  font-size: 10px;
+}
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.suggestion-item {
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.suggestion-item:hover {
+  background: #f0f0f0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark Mode */
+body.dark .tag-input-container {
+  background: #2c2c2c;
+  border-color: #444;
+}
+
+body.dark .tag {
+  background: #444;
+  color: #eee;
+}
+
+body.dark .tag-remove {
+  color: #aaa;
+}
+
+body.dark .tag-input {
+  color: #eee;
+}
+
+body.dark .suggestions {
+  background: #333;
+  border-color: #555;
+}
+
+body.dark .suggestion-item:hover {
+  background: #444;
+}
     
     /* Fix globale per iOS */
     input, textarea, select {
@@ -685,14 +797,19 @@ body.dark .pill-option:hover span {
       </div>
     </div>
 
-    <div class="custom-category-container">
-      <div class="custom-input-wrapper">
-        <input type="text" id="new-category-input" placeholder="New Category" />
-        <button id="add-category-btn">Add</button>
-      </div>
-      <div id="dropdown-category-list" class="dropdown-list hidden"></div>
-    </div>
-
+<div class="tag-input-container">
+  <div class="tags" id="category-tags"></div>
+  <div class="tag-input-wrapper">
+    <input type="text" 
+           id="new-category-input" 
+           placeholder="+ Aggiungi categoria" 
+           autocomplete="off"
+           class="tag-input">
+    <i class="fas fa-plus input-icon"></i>
+  </div>
+  <div id="category-suggestions" class="suggestions hidden"></div>
+</div>
+    
     <div class="sort-undo-bar">
 <div class="sort-options pill-selector">
   <label class="pill-option">
