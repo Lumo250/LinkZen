@@ -652,108 +652,78 @@ dropdown.addEventListener("click", async (event) => {
     await loadUrls();
   });
 
-// Gestione rotella di selezione
-const sortWheel = document.querySelector('.sort-wheel');
-if (sortWheel) {
-let isDragging = false;
-let startY = 0;
-let currentRotation = 0;
-let currentSortOrder = 'default';
+// ============================================
+// 3. GESTIONE ROTELLA 3D (nuova implementazione)
+// ============================================
+function initWheel() {
+  sortWheel = document.querySelector('.sort-wheel');
+  if (!sortWheel) return;
 
-// ===== [FUNZIONE PRINCIPALE] Aggiorna posizione rotella =====
-function updateWheelPosition() {
-  const options = document.querySelectorAll('.wheel-option');
-  options.forEach(option => {
-    option.classList.remove('active');
-    if (option.dataset.value === currentSortOrder) {
-      option.classList.add('active');
-    }
+  storage.get({ sortOrder: 'default' }).then(({ sortOrder }) => {
+    currentSortOrder = sortOrder;
+    updateWheel();
   });
 
-  // Animazione fluida
-  sortWheel.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.3, 1)';
-  sortWheel.style.transform = currentSortOrder === 'default' 
-    ? 'rotateX(0deg)' 
-    : 'rotateX(-90deg)';
+  // Touch (iOS)
+  sortWheel.addEventListener('touchstart', handleTouchStart, { passive: false });
+  sortWheel.addEventListener('touchmove', handleTouchMove, { passive: false });
+  sortWheel.addEventListener('touchend', handleTouchEnd);
+
+  // Mouse (Desktop)
+  sortWheel.addEventListener('mousedown', handleMouseStart);
 }
 
-// ===== MOUSE DRAG =====
-sortWheel.addEventListener('mousedown', (e) => {
-  isDragging = true;
-  startY = e.clientY;
-  sortWheel.style.transition = 'none'; // Disabilita animazione durante il drag
+function handleTouchStart(e) {
   e.preventDefault();
-});
-
-// Muove la rotella durante il drag
-document.addEventListener('mousemove', (e) => {
-  if (!isDragging) return;
-  
-  const deltaY = e.clientY - startY;
-  const rotation = currentRotation + deltaY * 0.5;
-  
-  // Limita la rotazione tra -45° e +45°
-  const limitedRotation = Math.max(Math.min(rotation, 45), -45);
-  sortWheel.style.transform = `rotateX(${limitedRotation}deg)`;
-});
-
-// Rilascia la rotella (con "mouseup" ovunque nella pagina)
-document.addEventListener('mouseup', (e) => {
-  if (!isDragging) return;
-  handleDragEnd(e.clientY);
-});
-
-// Se il mouse esce dalla finestra, annulla il drag
-document.addEventListener('mouseleave', () => {
-  if (isDragging) handleDragEnd(startY); // Resetta senza cambiare stato
-});
-
-// ===== TOUCH DRAG (per mobile) =====
-sortWheel.addEventListener('touchstart', (e) => {
   isDragging = true;
   startY = e.touches[0].clientY;
   sortWheel.style.transition = 'none';
-  disablePageScroll(); // Blocca lo scroll della pagina
+}
+
+function handleTouchMove(e) {
+  if (!isDragging) return;
   e.preventDefault();
-});
+  updateWheelPosition((e.touches[0].clientY - startY) * 0.5);
+}
 
-document.addEventListener('touchend', () => {
-  if (isDragging) {
-    enablePageScroll(); // Riabilita lo scroll
-    isDragging = false;
-  }
-});
+function handleMouseStart(e) {
+  e.preventDefault();
+  isDragging = true;
+  startY = e.clientY;
+  sortWheel.style.transition = 'none';
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseEnd);
+}
 
-document.addEventListener('touchcancel', () => {
-  if (isDragging) {
-    enablePageScroll(); // Riabilita se il touch viene interrotto
-    isDragging = false;
-  }
-});
-  
-// ===== LOGICA DI FINE DRAG =====
-function handleDragEnd(endY) {
+function handleMouseMove(e) {
+  if (!isDragging) return;
+  updateWheelPosition((e.clientY - startY) * 0.5);
+}
+
+function handleDragEnd() {
   isDragging = false;
-  const deltaY = endY - startY;
-  currentRotation += deltaY * 0.5;
-
-  // Cambia stato solo se supera la soglia (22.5°)
   const shouldToggle = Math.abs(currentRotation) > 22.5;
-  const newSortOrder = shouldToggle 
-    ? (currentSortOrder === 'default' ? 'category' : 'default') 
-    : currentSortOrder;
+  const newSortOrder = shouldToggle ? 
+    (currentSortOrder === 'default' ? 'category' : 'default') : 
+    currentSortOrder;
 
-  // Resetta animazione
-  currentRotation = 0;
-  
   if (newSortOrder !== currentSortOrder) {
     currentSortOrder = newSortOrder;
     storage.set({ sortOrder: currentSortOrder }).then(loadUrls);
   }
+  updateWheel();
+}
 
-  updateWheelPosition();
+function updateWheel() {
+  sortWheel.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.3, 1)';
+  sortWheel.style.transform = currentSortOrder === 'default' ? 
+    'rotateX(0deg)' : 'rotateX(-90deg)';
+  
+  document.querySelectorAll('.wheel-option').forEach(opt => {
+    opt.classList.toggle('active', opt.dataset.value === currentSortOrder);
+  });
 }
-}
+   initWheel();
 // ==============================================
 // 1. FUNZIONE PRINCIPALE DI SALVATAGGIO (COMPLETA)
 // ==============================================
