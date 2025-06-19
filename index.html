@@ -641,7 +641,7 @@ body.dark .pill-option:hover span {
 
 <body id="main-body">
   <div class="panel">
-    <!-- Righe modificate con ordine: Save, Export, Import, Reset -->
+    <!-- Prima riga - Pulsanti principali -->
     <div class="button-row">
       <div class="btn-wrapper">
         <button id="save-btn" aria-label="Save current page">
@@ -656,10 +656,6 @@ body.dark .pill-option:hover span {
             <span class="btn-label">Export</span>
           </button>
         </div>
-        <div id="export-options" class="hidden">
-          <button id="export-basic" aria-label="Export basic data">🔹 Basic</button>
-          <button id="export-full" aria-label="Export full data with AI keywords">🔸 With IA</button>
-        </div>
       </div>
       <div class="btn-wrapper" id="import-container">
         <div id="import-default">
@@ -668,11 +664,6 @@ body.dark .pill-option:hover span {
             <span class="btn-label">Import</span>
           </button>
         </div>
-        <div id="import-options" class="hidden">
-          <button id="import-custom" aria-label="Import custom file">🔹 Custom</button>
-          <button id="import-default-btn" aria-label="Import default configuration">🔸 Default</button>
-        </div>
-        <input type="file" id="import-file" accept=".json" />
       </div>
       <div class="btn-wrapper">
         <button id="reset-btn" aria-label="Reset visited links">
@@ -681,40 +672,54 @@ body.dark .pill-option:hover span {
         </button>
       </div>
     </div>
-    
 
-    <div class="custom-category-container">
-      <div class="custom-input-wrapper">
-        <input type="text" id="new-category-input" placeholder="New Category" />
-        <button id="add-category-btn">Add</button>
+    <!-- Seconda riga - Sottopulsanti (inizialmente nascosti) -->
+    <div id="sub-buttons-row" class="button-row hidden">
+      <div id="export-sub-buttons" class="hidden" style="display: none;">
+        <button id="export-basic" class="sub-btn">🔹 Basic</button>
+        <button id="export-full" class="sub-btn">🔸 With IA</button>
       </div>
-      <div id="dropdown-category-list" class="dropdown-list hidden"></div>
+      <div id="import-sub-buttons" class="hidden" style="display: none;">
+        <button id="import-custom" class="sub-btn">🔹 Custom</button>
+        <button id="import-default-btn" class="sub-btn">🔸 Default</button>
+      </div>
     </div>
 
-    <div class="sort-undo-bar">
-<div class="sort-options pill-selector">
-  <label class="pill-option">
-    <input type="radio" name="sort" value="default" checked hidden>
-    <span>By Input</span>
-  </label>
-  <label class="pill-option">
-    <input type="radio" name="sort" value="category" hidden>
-    <span>By Category</span>
-  </label>
-</div>
-
-      <div id="zoom-controls">
-        <button id="zoom-in" title="Increase text size" aria-label="Increase text size">A+</button>
-        <button id="zoom-out" title="Decrease text size" aria-label="Decrease text size">A−</button>
-        <button id="ia-knowledge-btn" title="Show learned keywords" aria-label="Show AI learned keywords">📚 IA</button>
+    <!-- Controlli principali (saranno nascosti quando i sottopulsanti sono attivi) -->
+    <div id="main-controls">
+      <div class="custom-category-container">
+        <div class="custom-input-wrapper">
+          <input type="text" id="new-category-input" placeholder="New Category" />
+          <button id="add-category-btn">Add</button>
+        </div>
+        <div id="dropdown-category-list" class="dropdown-list hidden"></div>
       </div>
 
-      <div id="undo-or-toggle">
-        <button id="undo-btn" title="Undo removal" aria-label="Undo last removal">&#8630;</button>
-        <label id="theme-toggle" aria-label="Toggle dark mode">
-          <input type="checkbox" id="toggle-theme" />
-          <span class="slider"></span>
-        </label>
+      <div class="sort-undo-bar">
+        <div class="sort-options pill-selector">
+          <label class="pill-option">
+            <input type="radio" name="sort" value="default" checked hidden>
+            <span>By Input</span>
+          </label>
+          <label class="pill-option">
+            <input type="radio" name="sort" value="category" hidden>
+            <span>By Category</span>
+          </label>
+        </div>
+
+        <div id="zoom-controls">
+          <button id="zoom-in" title="Increase text size">A+</button>
+          <button id="zoom-out" title="Decrease text size">A−</button>
+          <button id="ia-knowledge-btn" title="Show learned keywords">📚 IA</button>
+        </div>
+
+        <div id="undo-or-toggle">
+          <button id="undo-btn" title="Undo removal">&#8630;</button>
+          <label id="theme-toggle">
+            <input type="checkbox" id="toggle-theme" />
+            <span class="slider"></span>
+          </label>
+        </div>
       </div>
     </div>
   </div>
