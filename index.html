@@ -641,18 +641,12 @@ body.dark .pill-option:hover span {
 
 <body id="main-body">
   <div class="panel">
-    <!-- Modifica principale: Unica riga con tutti e 4 i pulsanti -->
+    <!-- Righe modificate con ordine: Save, Export, Import, Reset -->
     <div class="button-row">
       <div class="btn-wrapper">
         <button id="save-btn" aria-label="Save current page">
           <span class="btn-icon">💾</span>
           <span class="btn-label">Save</span>
-        </button>
-      </div>
-      <div class="btn-wrapper">
-        <button id="reset-btn" aria-label="Reset visited links">
-          <span class="btn-icon">♻️</span>
-          <span class="btn-label">Reset</span>
         </button>
       </div>
       <div class="btn-wrapper" id="export-container">
@@ -680,7 +674,14 @@ body.dark .pill-option:hover span {
         </div>
         <input type="file" id="import-file" accept=".json" />
       </div>
+      <div class="btn-wrapper">
+        <button id="reset-btn" aria-label="Reset visited links">
+          <span class="btn-icon">♻️</span>
+          <span class="btn-label">Reset</span>
+        </button>
+      </div>
     </div>
+    
 
     <div class="custom-category-container">
       <div class="custom-input-wrapper">
