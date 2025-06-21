@@ -1187,7 +1187,6 @@ async function scanQRCode() {
     scannerDiv.style.zIndex = '10000';
     
     scannerDiv.innerHTML = `
- scannerDiv.innerHTML = `
   <video autoplay playsinline muted style="width:100%;height:100%;object-fit:cover"></video>
   <div style="position:absolute;top:20px;left:0;right:0;text-align:center;color:white;padding:10px">
     <h3 style="margin:0">Scan QR Code</h3>
