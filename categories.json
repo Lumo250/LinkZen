@@ -1,0 +1,9 @@
+{
+  "version": "1.0",
+  "defaultCategories": [
+    "News", "Video", "Finance", "Social", "E-mail", "Store", "Commerce",
+    "Productivity", "Entertainment", "Education", "Sports",
+    "AI", "Search", "Design", "Weather", "Other"
+  ],
+  "userCategories": []
+}
