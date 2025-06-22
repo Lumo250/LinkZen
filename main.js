@@ -68,11 +68,6 @@ const storage = {
  const urlParams = new URLSearchParams(window.location.search);
   if (!urlParams.has('url')) return; // Exit se non è un bookmarklet
 
-  // Pulisci IMMEDIATAMENTE l'URL
-  window.history.replaceState({}, document.title, window.location.pathname);
-
-
-
  try {
     const urlParams = new URLSearchParams(window.location.search);
     const title = urlParams.get('title');
