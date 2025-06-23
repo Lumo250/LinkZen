@@ -641,12 +641,26 @@ document.getElementById("categories-btn").addEventListener("click", async () => 
   defaultTitle.style.color = document.body.classList.contains("dark") ? "#e0e0e0" : "#333";
   box.appendChild(defaultTitle);
 
+
+
+      
+
+
+  
   // Mostra le categorie predefinite
   const defaultList = document.createElement("div");
   defaultList.style.display = "flex";
   defaultList.style.flexWrap = "wrap";
   defaultList.style.gap = "6px";
   defaultList.style.marginBottom = "20px";
+  defaultList.style.fontSize = "16px";
+  defaultList.style.fontWeight = "bold";
+ defaultList.style.padding = "4px 8px";
+defaultList.style.borderRadius = "6px";
+  defaultList.style..display = "inline-block";
+  
+ 
+
   
   defaultCategories.forEach(category => {
     const chip = document.createElement("div");
@@ -725,9 +739,7 @@ document.addEventListener("click", (e) => {
   }
 });
 
-
-
-  
+ 
   document.getElementById("export-basic").addEventListener("click", async () => {
     const { visitedUrls = [], userCategories = [] } = await storage.get({ visitedUrls: [], userCategories: [] });
     const blob = new Blob([JSON.stringify({ visitedUrls, userCategories }, null, 2)], { type: "application/json" });
@@ -765,8 +777,6 @@ importBtn.addEventListener("click", (e) => {
   e.stopPropagation();
 });
 
-
-
 document.getElementById("import-custom").addEventListener("click", () => {
    importFileDialogOpen = true;
   document.getElementById("import-file").click();
@@ -803,10 +813,6 @@ importFileInput.addEventListener("blur", () => {
   importFileDialogOpen = false;
 });
 
-
-
-
-
   
 document.getElementById("import-default-btn").addEventListener("click", async () => {
   try {
@@ -841,8 +847,6 @@ document.getElementById("import-default-btn").addEventListener("click", async ()
   }
 });
   
-
-
 // Categorie - Versione con autocomplete e chips
 const input = document.getElementById("new-category-input");
 
@@ -990,17 +994,17 @@ function showSaveOptionsDialog() {
     
     // Nuova palette di colori per i pulsanti
     const buttonColors = {
-      manual: { // Spostato in prima posizione
+      manual: { 
         bg: isDark ? '#38a169' : '#48bb78',
         hover: isDark ? '#2f855a' : '#38a169',
         icon: '#f0fff4'
       },
-      qr: { // Spostato in seconda posizione
+      qr: { 
         bg: isDark ? '#9f7aea' : '#9f7aea',
         hover: isDark ? '#805ad5' : '#805ad5',
         icon: '#faf5ff'
       },
-      bookmarklet: { // Spostato in terza posizione
+      bookmarklet: { 
         bg: isDark ? '#2b6cb0' : '#3182ce',
         hover: isDark ? '#2c5282' : '#2b6cb0',
         icon: '#ebf8ff'
@@ -1148,7 +1152,7 @@ function showSaveOptionsDialog() {
       </div>
     `;
     
-    // ... (resto del codice rimane identico)
+
     document.body.appendChild(dialog);
     
     // Animazione di entrata
@@ -1440,9 +1444,6 @@ async function scanQRCode() {
 }
 
 
-
-
-
 // ==============================================
 // FUNZIONE PER MOSTRARE CONTENUTI NON-URL
 // ==============================================
@@ -1528,11 +1529,6 @@ function showQRContentDialog(content) {
     document.body.removeChild(dialog);
   });
 }
-
-// Opzionale: Preload quando l'utente interagisce con l'app
-// document.addEventListener('mousemove', preloadQRScanner, { once: true });
-// document.addEventListener('touchstart', preloadQRScanner, { once: true });
-
 
   
  // ==============================================
@@ -1913,12 +1909,6 @@ function showAlert(title, message, showCopyButton = false) {
   `;
 
 
-
-
-
-
-  
-
   // Funzione di chiusura
   const closeAlert = () => {
     document.body.removeChild(overlay);
@@ -1950,13 +1940,6 @@ function showAlert(title, message, showCopyButton = false) {
 
 // ESEMPIO DI USO
 function showBookmarkletInstructions() {
-//  const currentUrl = window.location.href.split('?')[0].replace(/#.*$/, '').replace(/\/[^\/]*$/, '/');
-  
-//  const bookmarkletCode = `javascript:(function(){
-//    window.open('${currentUrl}?bookmarklet=1&title='+encodeURIComponent(document.title)+'&url='+encodeURIComponent(location.href),'_blank');
-//  })();`;
-
- // 1. Genera l'URL base in modo dinamico e sicuro
   const getBaseUrl = () => {
     const url = new URL(window.location.href);
     return `${url.origin}${url.pathname.split('/').slice(0, 2).join('/')}/`;
@@ -2135,8 +2118,6 @@ try {
       "AI", "Search", "Design", "Weather", "Other"
     ];
   }
-
-
 
   const allCategories = [...defaultCategories, ...userCategories];
 
