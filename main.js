@@ -434,10 +434,7 @@ document.getElementById('new-category-input').addEventListener('input', (e) => {
   renderCategoriesList(e.target.value);
 });
 
-
 document.getElementById('close-popup').addEventListener('click', hideCategoriesPopup);
-
-
 
 // Chiudi il popup solo se si clicca fuori da tutte le aree rilevanti
 document.addEventListener("click", (e) => {
@@ -454,8 +451,6 @@ document.addEventListener("click", (e) => {
     hideCategoriesPopup();
   }
 });
-
-
 
 
 // Aggiungi categoria con Enter
@@ -481,9 +476,6 @@ document.getElementById('new-category-input').addEventListener('keydown', async 
 // 5. EVENT LISTENERS E INIZIALIZZAZIONE
 // ============================================
 document.addEventListener("DOMContentLoaded", async () => {
-
-    
-
 
   // ✅ Gestione centralizzata del bookmarklet
   await processBookmarkletRequest();
@@ -605,28 +597,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     box.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  // Export/Import
-  const exportBtn = document.getElementById("export-btn");
-  const exportDefault = document.getElementById("export-default");
-  const exportOptions = document.getElementById("export-options");
-
-  exportBtn.addEventListener("click", (e) => {
-    exportDefault.style.display = "none";
-    exportOptions.classList.remove("hidden");
-    e.stopPropagation();
-  });
-
-
-
 
 // Aggiungi questo codice nella sezione degli event listeners
 document.getElementById("categories-btn").addEventListener("click", async () => {
   const ctBtn = document.getElementById("categories-btn");
-  const box = document.getElementById("categories-box");
+  const box1 = document.getElementById("categories-box");
   const isVisible = !box.classList.contains("hidden");
 
   if (isVisible) {
-    box.classList.add("hidden");
+    box1.classList.add("hidden");
     ctBtn.classList.remove("active");
     return;
   }
@@ -645,7 +624,7 @@ document.getElementById("categories-btn").addEventListener("click", async () => 
   defaultTitle.textContent = "Default Categories";
   defaultTitle.style.marginTop = "0";
   defaultTitle.style.color = document.body.classList.contains("dark") ? "#e0e0e0" : "#333";
-  box.appendChild(defaultTitle);
+  box1.appendChild(defaultTitle);
 
   // Mostra le categorie predefinite
   const defaultList = document.createElement("div");
@@ -664,20 +643,20 @@ document.getElementById("categories-btn").addEventListener("click", async () => 
     defaultList.appendChild(chip);
   });
   
-  box.appendChild(defaultList);
+  box1.appendChild(defaultList);
 
   // Aggiungi titolo per le categorie personalizzate
   const customTitle = document.createElement("h3");
   customTitle.textContent = "Your Custom Categories";
   customTitle.style.color = document.body.classList.contains("dark") ? "#e0e0e0" : "#333";
-  box.appendChild(customTitle);
+  box1.appendChild(customTitle);
 
   // Mostra le categorie personalizzate
   if (userCategories.length === 0) {
     const emptyMsg = document.createElement("div");
     emptyMsg.textContent = "No custom categories yet. Add some using the input above.";
     emptyMsg.style.color = document.body.classList.contains("dark") ? "#aaa" : "#666";
-    box.appendChild(emptyMsg);
+    box1.appendChild(emptyMsg);
   } else {
     const customList = document.createElement("div");
     customList.style.display = "flex";
@@ -695,12 +674,12 @@ document.getElementById("categories-btn").addEventListener("click", async () => 
       customList.appendChild(chip);
     });
     
-    box.appendChild(customList);
+    box1.appendChild(customList);
   }
 
-  box.classList.remove("hidden");
+  box1.classList.remove("hidden");
   ctBtn.classList.add("active");
-  box.scrollIntoView({ behavior: "smooth", block: "start" });
+  box1.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 // Funzione helper per ottenere le categorie predefinite
@@ -717,6 +696,18 @@ async function getDefaultCategories() {
 }
   
 
+
+  // Export/Import
+  const exportBtn = document.getElementById("export-btn");
+  const exportDefault = document.getElementById("export-default");
+  const exportOptions = document.getElementById("export-options");
+
+  exportBtn.addEventListener("click", (e) => {
+    exportDefault.style.display = "none";
+    exportOptions.classList.remove("hidden");
+    e.stopPropagation();
+  });
+  
 document.addEventListener("click", (e) => {
   // Export
   if (!e.target.closest("#export-container")) {
