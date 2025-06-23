@@ -650,14 +650,12 @@ document.getElementById("categories-btn").addEventListener("click", async () => 
   // Mostra le categorie predefinite
   const defaultList = document.createElement("div");
   defaultList.style.display = "flex";
-  defaultList.style.flexWrap = "wrap";
+//  defaultList.style.flexWrap = "wrap";
   defaultList.style.gap = "6px";
   defaultList.style.marginBottom = "20px";
   defaultList.style.fontSize = "16px";
   defaultList.style.fontWeight = "bold";
- defaultList.style.padding = "4px 8px";
-defaultList.style.borderRadius = "6px";
-  defaultList.style.display = "inline-block";
+
   
  
 
