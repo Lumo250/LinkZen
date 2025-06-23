@@ -206,10 +206,11 @@ function applyFontSize(scale) {
   const box = document.getElementById("ia-knowledge-box");
   if (box) {
     box.style.fontSize = `${scale}em`;
+  }
 
   const box1 = document.getElementById("categories-box");
-    if (box1) {
-    box.style.fontSize = `${scale}em`;
+  if (box1) {
+    box1.style.fontSize = `${scale}em`;
   }
 }
 
