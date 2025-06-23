@@ -657,7 +657,7 @@ document.getElementById("categories-btn").addEventListener("click", async () => 
   defaultList.style.fontWeight = "bold";
  defaultList.style.padding = "4px 8px";
 defaultList.style.borderRadius = "6px";
-  defaultList.style..display = "inline-block";
+  defaultList.style.display = "inline-block";
   
  
 
