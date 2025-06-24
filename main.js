@@ -685,7 +685,6 @@ document.getElementById("import-default-btn").addEventListener("click", async ()
  document.getElementById("reset-btn").addEventListener("click", async () => {
  localStorage.removeItem("defaultCategories");
  localStorage.removeItem("userCategories");
-  await loadUrls();
  await showCategories();
   location.reload(); // forza il ricaricamento e reset dell'app
  });
