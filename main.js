@@ -675,19 +675,19 @@ document.getElementById("import-default-btn").addEventListener("click", async ()
     await loadUrls();
   });
 
-//  Reset
-//  document.getElementById("reset-btn").addEventListener("click", async () => {
-//    await storage.set({ clickedUrls: [] });
-//    await loadUrls();
-//   });
+//  Reset lista link letti
+  document.getElementById("reset-btn").addEventListener("click", async () => {
+    await storage.set({ clickedUrls: [] });
+    await loadUrls();
+   });
 
 // Reset nuovo
- document.getElementById("reset-btn").addEventListener("click", async () => {
- localStorage.removeItem("defaultCategories");
- localStorage.removeItem("userCategories");
-  await loadUrls();
-  location.reload(); // forza il ricaricamento e reset dell'app
- });
+// document.getElementById("reset-btn").addEventListener("click", async () => {
+// localStorage.removeItem("defaultCategories");
+// localStorage.removeItem("userCategories");
+//  await loadUrls();
+//  location.reload(); // forza il ricaricamento e reset dell'app
+// });
 
 const sortToggle = document.getElementById("sort-toggle");
 
