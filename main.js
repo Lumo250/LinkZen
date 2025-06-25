@@ -598,13 +598,6 @@ document.getElementById("import-default-btn").addEventListener("click", async ()
 if (!iaBox.classList.contains("hidden")) {
   await renderIAKeywords();
 }
-
-
-
-      if (!iaBox.classList.contains("hidden")) {
-        await showIA?.();
-      }
-
       await loadUrls();
     } else {
       alert("Invalid default config file.");
