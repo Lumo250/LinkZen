@@ -683,10 +683,10 @@ document.getElementById("import-default-btn").addEventListener("click", async ()
 
 // Reset nuovo
  document.getElementById("reset-btn").addEventListener("click", async () => {
- localStorage.removeItem("defaultCategories");
- localStorage.removeItem("userCategories");
+// localStorage.removeItem("defaultCategories");
+// localStorage.removeItem("userCategories");
   await loadUrls();
-  location.reload(); // forza il ricaricamento e reset dell'app
+//  location.reload(); // forza il ricaricamento e reset dell'app
  });
 
 const sortToggle = document.getElementById("sort-toggle");
@@ -758,6 +758,18 @@ resetBtn.className = "reset-defaults-btn";
 resetBtn.textContent = "Reset";
 resetBtn.title = "Restore default categories and remove all custom ones";
 
+const defaultTitleWrapper = document.createElement("div");
+defaultTitleWrapper.className = "custom-title-wrapper";
+
+const defaultTitle = document.createElement("h3");
+defaultTitle.className = "category-section-title";
+defaultTitle.textContent = "📁 Default Categories";
+
+const resetBtn = document.createElement("button");
+resetBtn.className = "reset-defaults-btn";
+resetBtn.textContent = "Reset";
+resetBtn.title = "Restore default categories and remove all custom ones";
+
 resetBtn.addEventListener("click", async () => {
   const confirmed = confirm("Are you sure you want to reset all custom categories?\nThis will delete any category you've added.");
   if (!confirmed) return;
@@ -769,6 +781,7 @@ resetBtn.addEventListener("click", async () => {
 
 defaultTitleWrapper.appendChild(defaultTitle);
 defaultTitleWrapper.appendChild(resetBtn);
+
 
 
 
