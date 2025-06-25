@@ -396,79 +396,8 @@ document.getElementById("ia-knowledge-btn").addEventListener("click", async () =
   }
 
   // Apriamo la finestra IA
-  const { keywordToCategory = {} } = await storage.get({ keywordToCategory: {} });
-  const map = keywordToCategory;
-  const entries = Object.entries(map);
-  iaBox.innerHTML = "";
-
-  if (entries.length === 0) {
-    iaBox.textContent = "Nessuna parola chiave appresa.";
-  } else {
-    const grouped = {};
-    entries.forEach(([keyword, category]) => {
-      if (!grouped[category]) grouped[category] = [];
-      grouped[category].push(keyword);
-    });
-
-    for (const category in grouped) {
-      const catBlock = document.createElement("div");
-      catBlock.style.marginBottom = "12px";
-
-      const catTitle = document.createElement("div");
-      catTitle.textContent = `📁 ${category}`;
-      catTitle.style.fontWeight = "bold";
-      catTitle.style.marginBottom = "4px";
-      catTitle.style.fontSize = "16px";
-      catTitle.style.padding = "4px 8px";
-      catTitle.style.borderRadius = "6px";
-      catTitle.style.display = "inline-block";
-
-      const isDark = document.body.classList.contains("dark");
-      catTitle.style.backgroundColor = isDark ? "#2c2c2c" : "#f0f0f0";
-      catTitle.style.color = isDark ? "#e0e0e0" : "#333333";
-      catTitle.style.border = `1px solid ${isDark ? "#444" : "#ccc"}`;
-
-      catBlock.appendChild(catTitle);
-
-      const kwContainer = document.createElement("div");
-      kwContainer.style.display = "flex";
-      kwContainer.style.flexWrap = "wrap";
-      kwContainer.style.gap = "6px";
-
-      grouped[category].forEach((keyword) => {
-        const chip = document.createElement("div");
-        chip.textContent = keyword;
-        chip.title = `Click to remove "${keyword}"`;
-        chip.style.padding = "2px 6px";
-        chip.style.border = "1px solid orange";
-        chip.style.borderRadius = "4px";
-        chip.style.cursor = "pointer";
-        chip.style.fontSize = "inherit";
-
-        chip.addEventListener("click", async () => {
-          delete map[keyword];
-          await storage.set({ keywordToCategory: map });
-          chip.remove();
-          if (Object.keys(map).length === 0) {
-            iaBox.textContent = "Nessuna parola chiave appresa.";
-          }
-        });
-
-        kwContainer.appendChild(chip);
-      });
-
-      catBlock.appendChild(kwContainer);
-      iaBox.appendChild(catBlock);
-    }
-  }
-
-  iaBox.classList.remove("hidden");
-  iaBtn.classList.add("active");
-  iaBox.scrollIntoView({ behavior: "smooth", block: "start" });
-});
-
-
-
+ 
+await renderIAKeywords();
 
 
 
@@ -618,8 +547,9 @@ importFileInput.addEventListener("change", async (event) => {
         }
 
 if (!iaBox.classList.contains("hidden")) {
-  await showIA?.();
+  await renderIAKeywords();
 }
+
 
 
         await loadUrls();
@@ -666,8 +596,9 @@ document.getElementById("import-default-btn").addEventListener("click", async ()
       const iaBox = document.getElementById("ia-knowledge-box");
 
 if (!iaBox.classList.contains("hidden")) {
-  await showIA?.();
+  await renderIAKeywords();
 }
+
 
 
       if (!iaBox.classList.contains("hidden")) {
