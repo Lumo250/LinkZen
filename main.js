@@ -749,6 +749,67 @@ sortToggle.addEventListener("click", async () => {
 
 
 
+// Funzione che aggiorna il contenuto visuale della IA Knowledge Box
+async function renderIAKeywords() {
+  const iaBox = document.getElementById("ia-knowledge-box");
+  if (!iaBox) return;
+
+  const { keywordToCategory = {} } = await storage.get({ keywordToCategory: {} });
+  const map = keywordToCategory;
+  const entries = Object.entries(map);
+
+  // Pulisce il contenuto esistente
+  iaBox.querySelector(".ia-content").innerHTML = "";
+
+  if (entries.length === 0) {
+    iaBox.querySelector(".ia-content").textContent = "Nessuna parola chiave appresa.";
+    return;
+  }
+
+  const grouped = {};
+  entries.forEach(([keyword, category]) => {
+    if (!grouped[category]) grouped[category] = [];
+    grouped[category].push(keyword);
+  });
+
+  const content = iaBox.querySelector(".ia-content");
+
+  for (const category in grouped) {
+    const catBlock = document.createElement("div");
+    catBlock.className = "ia-category-block";
+
+    const catTitle = document.createElement("div");
+    catTitle.className = "ia-category-title";
+    catTitle.textContent = `📁 ${category}`;
+
+    const kwContainer = document.createElement("div");
+    kwContainer.className = "ia-keyword-container";
+
+    grouped[category].forEach((keyword) => {
+      const chip = document.createElement("div");
+      chip.className = "ia-keyword-chip";
+      chip.textContent = keyword;
+      chip.title = `Click per rimuovere \"${keyword}\"`;
+
+      chip.addEventListener("click", async () => {
+        delete map[keyword];
+        await storage.set({ keywordToCategory: map });
+        await renderIAKeywords();
+      });
+
+      kwContainer.appendChild(chip);
+    });
+
+    catBlock.appendChild(catTitle);
+    catBlock.appendChild(kwContainer);
+    content.appendChild(catBlock);
+  }
+}
+
+
+
+  
+
 
 // Sostituisci l'intera funzione showCategories con questa:
 
