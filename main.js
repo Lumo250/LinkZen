@@ -477,58 +477,76 @@ document.addEventListener("click", (e) => {
     exportOptions.classList.add("hidden");
   }
 
-  // Import
-  if (!e.target.closest("#import-container") && !importFileDialogOpen) {
-    importDefault.style.display = "flex";
-    importOptions.classList.add("hidden");
-  }
-});
+ // ============================================
+// GESTIONE COMPLETA IMPORT (CUSTOM + DEFAULT)
+// ============================================
 
- 
-  document.getElementById("export-basic").addEventListener("click", async () => {
-    const { visitedUrls = [], userCategories = [] } = await storage.get({ visitedUrls: [], userCategories: [] });
-    const blob = new Blob([JSON.stringify({ visitedUrls, userCategories }, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "linkzen_export_basic.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    exportDefault.style.display = "flex";
-    exportOptions.classList.add("hidden");
-  });
+// Variabile di stato per il dialog
+let importFileDialogOpen = false;
 
-  document.getElementById("export-full").addEventListener("click", async () => {
-    const { visitedUrls = [], userCategories = [], keywordToCategory = {} } = await storage.get({ visitedUrls: [], userCategories: [], keywordToCategory: {} });
-    const blob = new Blob([JSON.stringify({ visitedUrls, userCategories, keywordToCategory }, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "linkzen_export_full.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    exportDefault.style.display = "flex";
-    exportOptions.classList.add("hidden");
-  });
-
-  // Import
+// Elementi UI
 const importBtn = document.getElementById("import-btn");
 const importDefault = document.getElementById("import-default");
 const importOptions = document.getElementById("import-options");
+const importFileInput = document.getElementById("import-file");
 
+// Funzione centrale per gestire i dati importati
+async function handleImportedData(data) {
+  const loader = showAlert("Processing", "Updating your data...", false);
+  
+  try {
+    // Salva i nuovi dati
+    await storage.set(data);
+    
+    // Aggiornamento completo dell'interfaccia
+    await Promise.all([
+      loadUrls(),                      // Ricarica la lista principale
+      updateCategorySuggestions(),     // Aggiorna suggerimenti categorie
+      renderSelectedCategories()       // Aggiorna le categorie selezionate
+    ]);
+    
+    // Aggiornamento condizionale delle finestre
+    const iaBox = document.getElementById("ia-knowledge-box");
+    const ctBox = document.getElementById("categories-box");
+    
+    if (iaBox && !iaBox.classList.contains("hidden")) {
+      await renderIAKeywords();        // Aggiorna IA se visibile
+    }
+    
+    if (ctBox && !ctBox.classList.contains("hidden")) {
+      await showCategories();          // Aggiorna categorie se visibili
+    }
+    
+    loader();
+    showAlert("Success", "Data imported successfully!", true);
+    
+  } catch (error) {
+    loader();
+    showAlert("Error", `Import failed: ${error.message}`, true);
+    console.error("Import error:", error);
+  }
+}
+
+// Event Listener per il pulsante Import
 importBtn.addEventListener("click", (e) => {
   importDefault.style.display = "none";
   importOptions.classList.remove("hidden");
   e.stopPropagation();
 });
 
-document.getElementById("import-custom").addEventListener("click", () => {
-   importFileDialogOpen = true;
-  document.getElementById("import-file").click();
-  
+// Gestione click fuori dall'area import
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#import-container") && !importFileDialogOpen) {
+    importDefault.style.display = "flex";
+    importOptions.classList.add("hidden");
+  }
 });
 
-const importFileInput = document.getElementById("import-file");
+// IMPORT CUSTOM
+document.getElementById("import-custom").addEventListener("click", () => {
+  importFileDialogOpen = true;
+  importFileInput.click();
+});
 
 importFileInput.addEventListener("change", async (event) => {
   importFileDialogOpen = false;
@@ -539,78 +557,68 @@ importFileInput.addEventListener("change", async (event) => {
   reader.onload = async (e) => {
     try {
       const data = JSON.parse(e.target.result);
-
-      if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
-        await storage.set(data);
-
-        const ctBox = document.getElementById("categories-box");
-        const iaBox = document.getElementById("ia-knowledge-box");
-
-        if (!ctBox.classList.contains("hidden")) {
-          await showCategories();
-        }
-
-if (!iaBox.classList.contains("hidden")) {
-  await renderIAKeywords();
-}
-
-        await loadUrls();
-      } else {
-        alert("File non valido. Nessuna lista trovata.");
+      
+      if (!data.visitedUrls || !Array.isArray(data.visitedUrls)) {
+        throw new Error("Invalid file format: missing URL list");
       }
+      
+      // Conferma sovrascrittura se ci sono dati esistenti
+      const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
+      if (visitedUrls.length > 0) {
+        const confirmOverwrite = confirm("This will overwrite your current links. Continue?");
+        if (!confirmOverwrite) return;
+      }
+      
+      await handleImportedData(data);
+      
     } catch (err) {
-      alert("Errore nel file: " + err.message);
+      showAlert("Import Error", `Failed to process file: ${err.message}`, true);
+    } finally {
+      event.target.value = ""; // Reset input file
     }
   };
-
   reader.readAsText(file);
 });
 
-
-// Chiude anche se l’utente annulla la selezione
-importFileInput.addEventListener("blur", () => {
-  importFileDialogOpen = false;
-});
-
-  
+// IMPORT DEFAULT
 document.getElementById("import-default-btn").addEventListener("click", async () => {
   try {
     const { visitedUrls = [] } = await storage.get({ visitedUrls: [] });
-
+    
     if (visitedUrls.length > 0) {
-      const proceed = confirm("This will overwrite your current links. You may want to export them first");
-      if (!proceed) {
+      const confirmOverwrite = confirm("This will overwrite your current links. Continue?");
+      if (!confirmOverwrite) {
         importDefault.style.display = "flex";
         importOptions.classList.add("hidden");
         return;
       }
     }
-
-    const response = await fetch("https://lumo250.github.io/LinkZen/default-config.json");
-    if (!response.ok) throw new Error("Failed to download default config.");
-
+    
+    const loader = showAlert("Loading", "Downloading default configuration...", false);
+    const response = await fetch(DEFAULT_CATEGORIES_URL);
+    
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    
     const data = await response.json();
-
-    if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
-      await storage.set(data);
-
-      const ctBox = document.getElementById("categories-box");
-      const iaBox = document.getElementById("ia-knowledge-box");
-
-if (!iaBox.classList.contains("hidden")) {
-  await renderIAKeywords();
-}
-      await loadUrls();
-    } else {
-      alert("Invalid default config file.");
+    loader();
+    
+    if (!data.visitedUrls || !Array.isArray(data.visitedUrls)) {
+      throw new Error("Invalid default config format");
     }
-
+    
+    await handleImportedData(data);
+    
   } catch (err) {
-    alert("Error importing default config: " + err.message);
+    showAlert("Import Error", `Failed to load default config: ${err.message}`, true);
   } finally {
     importDefault.style.display = "flex";
     importOptions.classList.add("hidden");
   }
+});
+
+// Gestione blur per mobile
+importFileInput.addEventListener("blur", () => {
+  importFileDialogOpen = false;
 });
     
   // Undo
