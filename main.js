@@ -708,7 +708,7 @@ async function renderIAKeywords() {
     grouped[category].push(keyword);
   });
 
-  const content = iaBox.querySelector(".ia-content");
+ 
 
   for (const category in grouped) {
     const catBlock = document.createElement("div");
