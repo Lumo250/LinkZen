@@ -686,7 +686,7 @@ async function renderIAKeywords() {
   if (!iaBox) return;
 
   const content = iaBox.querySelector(".ia-content");
-  if (!content) return; // 🛡️ Protezione in caso di HTML incompleto
+  if (!content) return;
 
   const { keywordToCategory = {} } = await storage.get({ keywordToCategory: {} });
   const map = keywordToCategory;
@@ -699,16 +699,11 @@ async function renderIAKeywords() {
     return;
   }
 
-  // ... resto del codice invariato ...
-
-
   const grouped = {};
   entries.forEach(([keyword, category]) => {
     if (!grouped[category]) grouped[category] = [];
     grouped[category].push(keyword);
   });
-
- 
 
   for (const category in grouped) {
     const catBlock = document.createElement("div");
@@ -741,14 +736,7 @@ async function renderIAKeywords() {
     content.appendChild(catBlock);
   }
 }
-
-
-
   
-
-
-// Sostituisci l'intera funzione showCategories con questa:
-
 
 // ✅ Versione finale e pulita della funzione showCategories()
 // con stile delegato al file CSS o tag <style> dell'HTML
