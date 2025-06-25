@@ -397,7 +397,11 @@ document.getElementById("ia-knowledge-btn").addEventListener("click", async () =
 
   // Apriamo la finestra IA
  
-await renderIAKeywords();
+  await renderIAKeywords();
+  iaBox.classList.remove("hidden");
+  iaBtn.classList.add("active");
+  iaBox.scrollIntoView({ behavior: "smooth", block: "start" });
+});
 
 
 
