@@ -685,17 +685,22 @@ async function renderIAKeywords() {
   const iaBox = document.getElementById("ia-knowledge-box");
   if (!iaBox) return;
 
+  const content = iaBox.querySelector(".ia-content");
+  if (!content) return; // 🛡️ Protezione in caso di HTML incompleto
+
   const { keywordToCategory = {} } = await storage.get({ keywordToCategory: {} });
   const map = keywordToCategory;
   const entries = Object.entries(map);
 
-  // Pulisce il contenuto esistente
-  iaBox.querySelector(".ia-content").innerHTML = "";
+  content.innerHTML = "";
 
   if (entries.length === 0) {
-    iaBox.querySelector(".ia-content").textContent = "Nessuna parola chiave appresa.";
+    content.textContent = "Nessuna parola chiave appresa.";
     return;
   }
+
+  // ... resto del codice invariato ...
+
 
   const grouped = {};
   entries.forEach(([keyword, category]) => {
