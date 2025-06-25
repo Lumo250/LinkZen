@@ -554,8 +554,6 @@ if (!iaBox.classList.contains("hidden")) {
   await renderIAKeywords();
 }
 
-
-
         await loadUrls();
       } else {
         alert("File non valido. Nessuna lista trovata.");
