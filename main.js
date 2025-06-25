@@ -598,7 +598,7 @@ document.getElementById("import-custom").addEventListener("click", () => {
 const importFileInput = document.getElementById("import-file");
 
 importFileInput.addEventListener("change", async (event) => {
-  importFileDialogOpen = false; // dialog chiuso
+  importFileDialogOpen = false;
   const file = event.target.files[0];
   if (!file) return;
 
@@ -606,24 +606,22 @@ importFileInput.addEventListener("change", async (event) => {
   reader.onload = async (e) => {
     try {
       const data = JSON.parse(e.target.result);
+
       if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
-      await storage.set(data);
+        await storage.set(data);
 
-      const ctBox = document.getElementById("categories-box");
-      const iaBox = document.getElementById("ia-knowledge-box");
+        const ctBox = document.getElementById("categories-box");
+        const iaBox = document.getElementById("ia-knowledge-box");
 
-      if (!ctBox.classList.contains("hidden")) {
-      await showCategories();
-      }
+        if (!ctBox.classList.contains("hidden")) {
+          await showCategories();
+        }
 
-      if (!iaBox.classList.contains("hidden")) {
-      await showIA?.();
-      }
+        if (!iaBox.classList.contains("hidden")) {
+          await showIA?.();
+        }
 
-  await loadUrls();
-}
-
-       // alert("Importazione completata.");
+        await loadUrls();
       } else {
         alert("File non valido. Nessuna lista trovata.");
       }
@@ -631,8 +629,10 @@ importFileInput.addEventListener("change", async (event) => {
       alert("Errore nel file: " + err.message);
     }
   };
+
   reader.readAsText(file);
 });
+
 
 // Chiude anche se l’utente annulla la selezione
 importFileInput.addEventListener("blur", () => {
@@ -657,25 +657,22 @@ document.getElementById("import-default-btn").addEventListener("click", async ()
     if (!response.ok) throw new Error("Failed to download default config.");
 
     const data = await response.json();
-    
+
     if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
-    await storage.set(data);
+      await storage.set(data);
 
-    const ctBox = document.getElementById("categories-box");
-    const iaBox = document.getElementById("ia-knowledge-box");
+      const ctBox = document.getElementById("categories-box");
+      const iaBox = document.getElementById("ia-knowledge-box");
 
-    if (!ctBox.classList.contains("hidden")) {
-    await showCategories();
-    }
+      if (!ctBox.classList.contains("hidden")) {
+        await showCategories();
+      }
 
-    if (!iaBox.classList.contains("hidden")) {
-    await showIA?.();
-    }
+      if (!iaBox.classList.contains("hidden")) {
+        await showIA?.();
+      }
 
-  await loadUrls();
-}
-
-      // No success alert needed
+      await loadUrls();
     } else {
       alert("Invalid default config file.");
     }
@@ -687,8 +684,6 @@ document.getElementById("import-default-btn").addEventListener("click", async ()
     importOptions.classList.add("hidden");
   }
 });
-  
-
     
   // Undo
   document.getElementById("undo-btn").addEventListener("click", async () => {
