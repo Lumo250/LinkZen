@@ -1140,13 +1140,22 @@ body.dark .ia-category-title {
     </div>
   </div>
 
-  <div class="list-panel">
-    <div id="url-container" style="position: relative;">
-      <ul id="url-list"></ul>
-      <div id="ia-knowledge-box" class="hidden"></div>
-               <div id="categories-box" class="hidden"></div>
+<div class="list-panel">
+  <div id="url-container" style="position: relative;">
+    <ul id="url-list"></ul>
+
+    <!-- ✅ IA Knowledge Box con contenuto dinamico -->
+    <div id="ia-knowledge-box" class="hidden">
+      <div class="ia-content">
+        <!-- Qui verranno iniettati dinamicamente i blocchi categoria + parole chiave -->
+      </div>
     </div>
+
+    <!-- ✅ Finestra CT (categorie) -->
+    <div id="categories-box" class="hidden"></div>
   </div>
+</div>
+
 
   <!-- Script per registrare il Service Worker -->
   <script>
