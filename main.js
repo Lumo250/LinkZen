@@ -617,8 +617,8 @@ importFileInput.addEventListener("change", async (event) => {
           await showCategories();
         }
 
-if (!iaBox.classList.contains("hidden") && typeof showIA === "function") {
-  await showIA();
+if (!iaBox.classList.contains("hidden")) {
+  await showIA?.();
 }
 
 
@@ -665,8 +665,8 @@ document.getElementById("import-default-btn").addEventListener("click", async ()
       const ctBox = document.getElementById("categories-box");
       const iaBox = document.getElementById("ia-knowledge-box");
 
-if (!iaBox.classList.contains("hidden") && typeof showIA === "function") {
-  await showIA();
+if (!iaBox.classList.contains("hidden")) {
+  await showIA?.();
 }
 
 
