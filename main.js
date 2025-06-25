@@ -607,8 +607,22 @@ importFileInput.addEventListener("change", async (event) => {
     try {
       const data = JSON.parse(e.target.result);
       if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
-        await storage.set(data);
-        await loadUrls();
+      await storage.set(data);
+
+      const ctBox = document.getElementById("categories-box");
+      const iaBox = document.getElementById("ia-knowledge-box");
+
+      if (!ctBox.classList.contains("hidden")) {
+      await showCategories();
+      }
+
+      if (!iaBox.classList.contains("hidden")) {
+      await showIA?.();
+      }
+
+  await loadUrls();
+}
+
        // alert("Importazione completata.");
       } else {
         alert("File non valido. Nessuna lista trovata.");
@@ -643,9 +657,24 @@ document.getElementById("import-default-btn").addEventListener("click", async ()
     if (!response.ok) throw new Error("Failed to download default config.");
 
     const data = await response.json();
+    
     if (data.visitedUrls && Array.isArray(data.visitedUrls)) {
-      await storage.set(data);
-      await loadUrls();
+    await storage.set(data);
+
+    const ctBox = document.getElementById("categories-box");
+    const iaBox = document.getElementById("ia-knowledge-box");
+
+    if (!ctBox.classList.contains("hidden")) {
+    await showCategories();
+    }
+
+    if (!iaBox.classList.contains("hidden")) {
+    await showIA?.();
+    }
+
+  await loadUrls();
+}
+
       // No success alert needed
     } else {
       alert("Invalid default config file.");
