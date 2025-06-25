@@ -820,6 +820,7 @@ defaultTitleWrapper.appendChild(resetBtn);
         if (!userCategories.includes(name)) {
           await storage.set({ userCategories: [...userCategories, name] });
           await showCategories();
+          await loadUrls?.(); // safe call
         } else {
           newChip.remove();
         }
@@ -925,6 +926,7 @@ defaultTitleWrapper.appendChild(resetBtn);
       await storage.set({ userCategories: updatedUser });
       localStorage.setItem("defaultCategories", JSON.stringify(updatedDefaults));
       await showCategories();
+      await loadUrls?.(); // safe call
     });
   };
 
