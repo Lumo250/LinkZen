@@ -369,16 +369,13 @@ if (fontSlider) {
 
 
 // === Apertura IA ===
-document.getElementById("ia-knowledge-btn").addEventListener("click", async () => {
- 
+document.getElementById("ia-knowledge-btn").addEventListener("click", async function () {
   preventBodyScroll(true);
   document.body.classList.add('modal-open');
-  
-  const iaBtn = document.getElementById("ia-knowledge-btn");
+
+  const iaBtn = this;
   const iaBox = document.getElementById("ia-knowledge-box");
   const ctBox = document.getElementById("categories-box");
-  const ctBtn = document.getElementById("categories-btn");
-  const isVisible = !iaBox.classList.contains("hidden");
 
   // Chiudi CT box se aperta
   if (!ctBox.classList.contains("hidden")) {
@@ -387,19 +384,18 @@ document.getElementById("ia-knowledge-btn").addEventListener("click", async () =
   }
 
   // Toggle IA box
-  if (isVisible) {
-    iaBox.classList.add("hidden");
-    iaBtn.classList.remove("active");
-    preventBodyScroll(false);
-    document.body.classList.remove('modal-open');
-  } else {
-    preventBodyScroll(true);
-    document.body.classList.add('modal-open');
+  if (iaBox.classList.contains("hidden")) {
     await renderIAKeywords();
     iaBox.classList.remove("hidden");
     iaBtn.classList.add("active");
-    iaBox.scrollIntoView({ behavior: "smooth", block: "start" }); // opzionale, da rimuovere se crea problemi
+    iaBox.scrollIntoView({ behavior: "smooth", block: "start" });
+  } else {
+    iaBox.classList.add("hidden");
+    iaBtn.classList.remove("active");
   }
+
+  preventBodyScroll(false);
+  document.body.classList.remove('modal-open');
 });
 
 // === Apertura CT ===
