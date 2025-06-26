@@ -374,59 +374,76 @@ document.getElementById("ia-knowledge-btn").addEventListener("click", async () =
   const iaBox = document.getElementById("ia-knowledge-box");
   const ctBox = document.getElementById("categories-box");
   const ctBtn = document.getElementById("categories-btn");
-
   const isVisible = !iaBox.classList.contains("hidden");
 
-  if (isVisible) {
-    iaBox.classList.add("hidden");
-    iaBtn.classList.remove("active");
-    unlockBodyScroll();
-    return;
-  }
-
-  // Chiudi CT se aperta
+  // Chiudi CT box se aperta
   if (!ctBox.classList.contains("hidden")) {
     ctBox.classList.add("hidden");
     ctBtn.classList.remove("active");
   }
 
-  await renderIAKeywords();
-  iaBox.classList.remove("hidden");
-  iaBtn.classList.add("active");
-  iaBox.scrollIntoView({ behavior: "smooth", block: "start" });
-
-  lockBodyScroll();
+  // Toggle IA box
+  if (isVisible) {
+    iaBox.classList.add("hidden");
+    iaBtn.classList.remove("active");
+    preventBodyScroll(false);
+    document.body.classList.remove('modal-open');
+  } else {
+    preventBodyScroll(true);
+    document.body.classList.add('modal-open');
+    await renderIAKeywords();
+    iaBox.classList.remove("hidden");
+    iaBtn.classList.add("active");
+    iaBox.scrollIntoView({ behavior: "smooth", block: "start" }); // opzionale, da rimuovere se crea problemi
+  }
 });
 
 // === Apertura CT ===
-document.getElementById("categories-btn").addEventListener("click", async function () {
-  const ctBtn = this;
+document.getElementById("categories-btn").addEventListener("click", async function() {
+  
+  preventBodyScroll(true);
+  document.body.classList.add('modal-open');
+
+const ctBtn = this;
   const ctBox = document.getElementById("categories-box");
   const iaBox = document.getElementById("ia-knowledge-box");
-  const iaBtn = document.getElementById("ia-knowledge-btn");
-
-  const isVisible = !ctBox.classList.contains("hidden");
-
-  if (isVisible) {
-    ctBox.classList.add("hidden");
-    ctBtn.classList.remove("active");
-    unlockBodyScroll();
-    return;
-  }
-
-  // Chiudi IA se aperta
+  
+  // Chiudi IA box se aperta
   if (!iaBox.classList.contains("hidden")) {
     iaBox.classList.add("hidden");
-    iaBtn.classList.remove("active");
+    document.getElementById("ia-knowledge-btn").classList.remove("active");
   }
-
-  await showCategories();
-  ctBox.classList.remove("hidden");
-  ctBtn.classList.add("active");
-  ctBox.scrollIntoView({ behavior: "smooth", block: "start" });
-
-  lockBodyScroll();
+  
+  // Toggle CT box
+  if (ctBox.classList.contains("hidden")) {
+    await showCategories();
+    ctBox.classList.remove("hidden");
+    ctBtn.classList.add("active");
+    ctBox.scrollIntoView({ behavior: "smooth", block: "start" });
+  } else {
+    ctBox.classList.add("hidden");
+    ctBtn.classList.remove("active");
+  }
+  preventBodyScroll(false);
+  document.body.classList.remove('modal-open');
 });
+
+
+function preventBodyScroll(prevent) {
+  if (prevent) {
+    document.body.addEventListener('touchmove', preventDefault, { passive: false });
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.removeEventListener('touchmove', preventDefault);
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  }
+}
+
+function preventDefault(e) {
+  e.preventDefault();
+}
 
 // === Blocca lo scroll solo del body (non delle finestre modali) ===
 function lockBodyScroll() {
