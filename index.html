@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/InstaScan/1.0.0/instascan.min.js"></script>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta charset="UTF-8" />
+
+  <meta name="theme-color" content="#4CAF50">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="apple-touch-icon" href="icon192.png">
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon128.png">
+  <title>LinkZen</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      margin: 10px;
+      max-height: 520px;
+      overflow: hidden;
+      line-height: 1.2;
+      background-color: #f2f2f2;
+      color: #000;
+      transition: background-color 0.3s, color 0.3s;
+      width: auto;
+      min-width: unset;
+      max-width: 100%; 
+    }
+
+    body.dark {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+    }
+
+    .panel, .list-panel {
+      border-radius: 6px;
+      padding: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 10px;
+      transition: background-color 0.3s;
+    }
+
+    .panel {
+      background-color: #f9f9f9;
+    }
+
+    .list-panel {
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      padding: 6px;
+    }
+
+    body.dark .panel {
+      background-color: #2c2c2c;
+    }
+
+    body.dark .list-panel {
+      background-color: #1e1e1e;
+      border-color: #444;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .button-row button {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 6px 8px;
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+      font-weight: bold;
+      border-radius: 4px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .btn-icon {
+      position: absolute;
+      left: 8px;
+      font-size: 16px;
+    }
+
+    .btn-label {
+      flex: 1;
+      text-align: center;
+    }
+
+    #save-btn { background-color: #4CAF50; color: white; }
+    #reset-btn { background-color: orange; color: black; }
+    #export-btn { background-color: #2196F3; color: white; }
+
+    #import-btn {
+      width: 100%;
+      height: 100%;
+      font-size: 12px;
+      font-weight: bold;
+      background-color: #9C27B0;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    #import-file {
+      display: none;
+    }
+
+    .custom-category-container {
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .custom-input-wrapper {
+      display: flex;
+      position: relative;
+    }
+
+   /* Stili per l'autocomplete e le chips delle categorie */
+#new-category-input {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+}
+
+body.dark #new-category-input {
+  background-color: #444;
+  color: #eee;
+  border-color: #666;
+}
+
+#selected-categories {
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+#selected-categories::-webkit-scrollbar {
+  width: 4px;
+}
+
+#selected-categories::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#selected-categories::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.3);
+  border-radius: 2px;
+}
+
+body.dark #selected-categories::-webkit-scrollbar-thumb {
+  background-color: rgba(200, 200, 200, 0.2);
+}
+
+
+    /* Stile per il pulsante di gestione categorie */
+#manage-categories-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  color: #555;
+  font-size: 16px;
+}
+
+body.dark #manage-categories-btn {
+  color: #aaa;
+}
+
+/* Stile per il popup */
+#categories-popup {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  width: 280px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 100;
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+body.dark #categories-popup {
+  background: #2c2c2c;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;   /* <-- questa è corretta! */
+  padding: 4px 8px;      /* <-- più compatto */
+  min-height: 28px;      /* <-- come le righe delle categorie */
+  border-bottom: 1px solid #eee;
+}
+
+
+body.dark .popup-header {
+  border-bottom-color: #444;
+}
+
+.popup-header h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+#close-popup {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #888;
+}
+
+.popup-content {
+  padding: 12px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+
+/* Container principale della lista */
+#categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* Spaziatura verticale ridotta */
+  padding: 0;
+}
+
+
+
+
+/* Singolo item della categoria */
+.category-item {
+  display: flex;
+  justify-content: space-between; /* Nome a sinistra, X a destra */
+  align-items: center;
+  padding: 4px 8px;
+  min-height: 28px; /* Altezza coerente con la lista principale */
+  width: 100%; /* Occupa tutto lo spazio disponibile */
+}
+
+
+
+.category-item:hover {
+  background-color: #f5f5f5;
+}
+
+body.dark .category-item:hover {
+  background-color: #3a3a3a;
+}
+
+/* Pulsante di cancellazione */
+.delete-category {
+  color: #ff4444;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-left: auto; /* Spinge la X a destra */
+  order: 2; /* Assicura che sia dopo il nome */
+}
+
+/* Nome della categoria */
+.category-item > span:first-child {
+  flex-grow: 1; /* Occupa tutto lo spazio disponibile */
+  text-align: left;
+  padding-right: 8px; /* Spazio tra testo e X */
+}
+
+
+.delete-category:hover {
+  background-color: #ffeeee;
+}
+
+body.dark .delete-category:hover {
+  background-color: #3a2222;
+}
+
+
+    .sort-undo-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      min-height: 30px;
+    }
+
+    .sort-options {
+      display: flex;
+      gap: 10px;
+      font-size: 12px;
+    }
+
+   
+
+
+
+    #undo-or-toggle {
+      width: 42px;
+      height: 24px;
+      position: relative;
+    }
+
+    #undo-btn, #theme-toggle {
+      width: 100%;
+      height: 100%;
+      display: inline-block;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    #undo-btn {
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 4px;
+      background-color: orange;
+      color: black;
+      border: none;
+      cursor: pointer;
+      display: none;
+    }
+
+    #undo-btn:hover {
+      filter: brightness(1.2);
+    }
+
+    #theme-toggle {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+    }
+
+    #theme-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0;
+      right: 0; bottom: 0;
+      background-color: #ccc;
+      border-radius: 20px;
+      transition: .3s;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      border-radius: 50%;
+      transition: .3s;
+    }
+
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(18px);
+    }
+
+    #url-container {
+      max-height: 380px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-gutter: stable;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 4px 0 0 0;
+    }
+
+    li.link-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      overflow: hidden;
+      padding: 3px 0;
+      margin: 0;
+    }
+
+    .index {
+      width: 28px;
+      text-align: right;
+      font-weight: bold;
+      padding-right: 2px;
+      flex-shrink: 0;
+    }
+
+    select.category {
+      font-size: 12px;
+      padding: 4px;
+      border: 1px solid #ccc;
+      border-radius: 2px;
+      background-color: white;
+      appearance: none;
+      width: 90px;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+
+    .link {
+      flex-grow: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: blue;
+      text-decoration: underline;
+    }
+
+    .link.clicked {
+      color: gray;
+    }
+
+    .delete-btn {
+      background-color: transparent;
+      color: orange;
+      border: none;
+      padding: 0;
+      min-width: 14px;
+      min-height: 14px;
+      font-size: 14px;
+      line-height: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-right: 6px;
+      box-shadow: none;
+      text-shadow: none;
+    }
+
+    body:not(.dark) .delete-btn {
+      color: black;
+    }
+
+    body.dark .delete-btn {
+      color: orange;
+    }
+
+    .delete-btn:hover {
+      color: orange;
+    }
+    
+    .link-row.highlight {
+      background-color: #388e3c;
+      transition: background-color 4s ease;
+    }
+    
+    body.dark a.link,
+    body.dark a.link span {
+      color: lightblue !important;
+    }
+
+    body.dark a.link.clicked,
+    body.dark a.link.clicked span {
+      color: #bbb !important;
+    }
+
+    body.dark select.category {
+      background-color: #444;
+      color: #eee;
+      border-color: #666;
+    }
+
+    body.dark #new-category-input {
+      background-color: #444;
+      color: #eee;
+      border-color: #666;
+    }
+
+    body.dark .dropdown-list {
+      background-color: #222;
+      border-color: #444;
+    }
+
+    body.dark .dropdown-item {
+      color: #ccc;
+      border-bottom-color: #333;
+    }
+
+    body.dark .dropdown-item:hover {
+      background-color: #333;
+    }
+
+    #url-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #url-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #url-container::-webkit-scrollbar-thumb {
+      background-color: rgba(100, 100, 100, 0.4);
+      border-radius: 4px;
+    }
+
+    body.dark #url-container::-webkit-scrollbar-thumb {
+      background-color: rgba(200, 200, 200, 0.3);
+    }
+
+
+/* Evita lo shift laterale del layout quando compare una modale */
+body.modal-open {
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+
+   #ia-knowledge-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  z-index: 10;
+  padding: 0; /* Modificato da 12px */
+  font-size: inherit;
+  overflow-y: auto;
+ overflow-x: hidden;
+  max-height: 100%;
+  white-space: pre-wrap;
+  border: 1px solid #ccc;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+/* Stile per il contenuto IA */
+.ia-content {
+  padding: 0; /* Rimuovi il padding superiore  */
+}
+
+body.dark #ia-knowledge-box {
+  background: #121212;
+  color: lightblue;
+  border-color: #444;
+}
+
+#categories-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  z-index: 10;
+  padding: 0; /* Modificato da 12px */
+  overflow-y: auto;
+ overflow-x: hidden;
+  border: 1px solid #ccc;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+/* Stile per il contenuto CT */
+.categories-container {
+  padding: 4px 8px; /* Spostiamo il padding qui */
+    min-height: 50px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    gap: 6px; 
+  touch-action: none; /* ✅ aggiunto qui */
+ /*   transition: all 0.3s; */
+  }
+
+
+body.dark #categories-box {
+  background: #121212;
+  color: lightblue;
+  border-color: #444;
+}
+
+
+
+
+    #ia-knowledge-box.hidden {
+      display: none;
+    }
+
+    #categories-box.hidden {
+      display: none;
+    }
+
+
+
+/* Stile per il pulsante IA (ora uguale a CT) */
+#ia-knowledge-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  background-color: #2196F3;
+  color: black;
+  cursor: pointer;
+  margin-left: 4px;
+  transition: all 0.3s;
+  align-self: center;
+  height: auto;
+}
+
+
+body.dark #ia-knowledge-btn {
+  background-color: #1565C0;
+}
+
+
+
+    #ia-knowledge-btn.active {
+      background-color: #aaa;
+      color: #222;
+      box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4),
+                  inset -2px -2px 5px rgba(255, 255, 255, 0.3);
+      transform: translateY(1px);
+    }
+
+    body.dark #ia-knowledge-btn.active {
+      background-color: #888;
+      color: #111;
+      outline: 1px solid #aaa;
+      box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.4);
+      border: 1px solid #aaa;
+    }
+
+ /* Stile per il pulsante CT */
+#categories-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  background-color: #2196F3;
+  color: black;
+  cursor: pointer;
+  margin-left: 4px;
+  transition: all 0.3s;
+}
+
+body.dark #categories-btn {
+  background-color: #1565C0;
+}
+
+#categories-btn.active {
+  background-color: #aaa;
+  color: #222;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4),
+              inset -2px -2px 5px rgba(255, 255, 255, 0.3);
+  transform: translateY(1px);
+}
+
+body.dark #categories-btn.active {
+  background-color: #888;
+  color: #111;
+  outline: 1px solid #aaa;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.4);
+  border: 1px solid #aaa;
+}
+
+
+/* Stile per i titoli delle sezioni (non sensibili alla dimensione del font) */
+.category-section-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  font-size: 16px !important; /* Dimensione fissa */
+}
+
+body:not(.dark) .category-section-title {
+  background-color: #f0f0f0;
+  color: #333333;
+  border: 1px solid #ccc;
+}
+
+body.dark .category-section-title {
+  background-color: #2c2c2c;
+  color: #e0e0e0;
+  border: 1px solid #444;
+}
+
+/* Stile per le chip delle categorie (sensibili alla dimensione del font) */
+.category-chip {
+  display: inline-block;
+  padding: 4px 8px;
+  margin: 4px;
+  border-radius: 4px;
+  font-size: inherit;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.category-chip.editable {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+
+
+.default-category {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border: 1px solid #bbdefb;
+}
+
+body.dark .default-category {
+  background-color: #0d47a1;
+  color: #e3f2fd;
+  border: 1px solid #1e88e5;
+}
+
+.custom-category {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+  border: 1px solid #c8e6c9;
+}
+
+body.dark .custom-category {
+  background-color: #1b5e20;
+  color: #e8f5e9;
+  border: 1px solid #4caf50;
+}
+
+
+    .btn-wrapper {
+      flex: 1;
+      height: 36px;
+      position: relative;
+      display: flex;
+      align-items: stretch;
+    }
+
+    #export-container {
+      display: flex;
+      flex: 1;
+      height: 36px;
+      position: relative;
+    }
+
+    #export-default,
+    #export-options {
+      width: 100%;
+      display: flex;
+      gap: 4px;
+    }
+
+    #export-options.hidden {
+      display: none;
+    }
+
+    #export-btn,
+    #export-basic,
+    #export-full {
+      flex: 1;
+      height: 100%;
+      font-size: 12px;
+      font-weight: bold;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #export-btn {
+      background-color: #2196F3;
+      color: white;
+    }
+
+    #export-basic {
+      background-color: #e3e3e3;
+      color: #000;
+    }
+
+    #export-full {
+      background-color: #d0d0ff;
+      color: #000;
+    }
+
+    body.dark #export-basic,
+    body.dark #export-full {
+      background-color: #444;
+      color: #eee;
+    }
+
+    #import-container {
+      display: flex;
+      flex: 1;
+      height: 36px;
+      position: relative;
+    }
+
+    #import-default,
+    #import-options {
+      width: 100%;
+      display: flex;
+      gap: 4px;
+    }
+
+    #import-options.hidden {
+      display: none;
+    }
+
+    #import-custom,
+    #import-default-btn {
+      flex: 1;
+      height: 100%;
+      font-size: 12px;
+      font-weight: bold;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #import-custom {
+      background-color: #e3e3e3;
+      color: #000;
+    }
+
+    #import-default-btn {
+      background-color: #d0d0ff;
+      color: #000;
+    }
+
+    body.dark #import-custom,
+    body.dark #import-default-btn {
+      background-color: #444;
+      color: #eee;
+    }
+
+
+
+
+/* Sostituisci il CSS esistente per .pill-selector con questo */
+/* Stile migliorato per il pulsante pillola */
+.single-pill-option {
+  cursor: pointer;
+  display: block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.3s;
+  min-width: 110px; /* Larghezza fissa basata sulla scritta più lunga */
+  text-align: center;
+  box-sizing: border-box;
+  border: 2px solid transparent;
+}
+
+/* Stato "spento" (quando non è attivo) */
+.single-pill-option {
+  background: #e0e0e0;
+  color: #555;
+  border-color: #ccc;
+}
+
+/* Stato "attivo" */
+.single-pill-option.active {
+  background: #4CAF50;
+  color: white;
+  border-color: #388E3C;
+}
+
+/* Stato "custom" */
+.single-pill-option.custom {
+  background: #2196F3;
+  color: white;
+  border-color: #0d8aee;
+}
+
+/* Dark mode */
+body.dark .single-pill-option {
+  background: #333;
+  color: #ccc;
+  border-color: #555;
+}
+
+body.dark .single-pill-option.active {
+  background: #388E3C;
+  border-color: #2E7D32;
+}
+
+body.dark .single-pill-option.custom {
+  background: #1565C0;
+  border-color: #0D47A1;
+}
+
+
+#sort-toggle {
+  background-color: #ddd; /* Grigio di default */
+  color: #666;
+}
+
+#sort-toggle.active {
+  background-color: #4CAF50; /* Verde per "By Category" */
+  color: white;
+}
+
+#sort-toggle.custom {
+  background-color: #2196F3; /* Blu per "By Custom" */
+  color: white;
+}
+
+
+
+
+
+  
+  .category-chip.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+  
+
+  
+  .drop-target {
+    background-color: rgba(76, 175, 80, 0.1);
+    border: 2px dashed #4CAF50;
+  }
+  
+  body.dark .drop-target {
+    background-color: rgba(76, 175, 80, 0.2);
+    border-color: #388E3C;
+  }
+
+ 
+
+.add-category-btn {
+  background-color: #4CAF50;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+body.dark .add-category-btn {
+  background-color: #388E3C;
+}
+
+.add-category-btn:hover {
+  background-color: #45a049;
+}
+
+body.dark .add-category-btn:hover {
+  background-color: #2e7d32;
+}
+
+.custom-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px !important; /* Riduci il margine inferiore */
+  padding: 0 4px !important; /* Aggiungi un po' di padding laterale se necessario */
+}
+
+  .delete-chip-btn {
+    margin-left: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #cc0000;
+  }
+
+  .delete-chip-btn:hover {
+    color: red;
+  }
+
+  .editable:focus {
+    border: 1px dashed #ccc;
+    padding: 2px;
+  }
+
+.category-chip.editable {
+  background-color: #fff8e1;
+  border: 1px dashed #ccc;
+  padding: 4px 8px;
+  outline: none;
+}
+
+body.dark .category-chip.editable {
+  background-color: #2b2b1a;
+  border-color: #666;
+}
+
+
+
+
+
+.reset-defaults-btn {
+  font-size: 13px;
+  padding: 4px 10px;
+  border: 1px solid #999;
+  background-color: #eee;
+  color: #333;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.reset-defaults-btn:hover {
+  background-color: #ddd;
+}
+
+body.dark .reset-defaults-btn {
+  background-color: #2b2b2b;
+  border-color: #555;
+  color: #ccc;
+}
+
+body.dark .reset-defaults-btn:hover {
+  background-color: #3a3a3a;
+}
+
+.ia-category-block {
+  margin-bottom: 15px;
+}
+
+.ia-category-title {
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+body.dark .ia-category-title {
+  background-color: #2c2c2c;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+.ia-keyword-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.ia-keyword-chip {
+  padding: 2px 6px;
+  border: 1px solid orange;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+
+
+/* Stile per le opzioni delle categorie nel dropdown */
+select.category option.default-category {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+}
+
+select.category option.custom-category {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+}
+
+/* Dark mode */
+body.dark select.category option.default-category {
+  background-color: #0d47a1;
+  color: #e3f2fd;
+}
+
+body.dark select.category option.custom-category {
+  background-color: #1b5e20;
+  color: #e8f5e9;
+}
+    
+
+
+
+.category-chip,
+.category-section-title,
+.custom-title-wrapper,
+.custom-category,
+.default-category {
+  -webkit-user-select: none; /* Safari */
+  user-select: none;
+  -webkit-touch-callout: none; /* iOS: disabilita il popup per copiare */
+}
+   
+
+
+h3.category-section-title {
+  pointer-events: none;
+}
+
+ 
+.modal-open {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+
+
+
+/* Aggiungi in fondo al tuo CSS esistente */
+#font-control {
+  align-items: center;
+  margin: 0 5px;
+}
+
+#font-slider {
+  -webkit-appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: #ddd;
+  outline: none;
+}
+
+#font-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+  border: none;
+}
+
+body.dark #font-slider {
+  background: #555;
+}
+
+body.dark #font-slider::-webkit-slider-thumb {
+  background: #388E3C;
+}
+
+
+
+#font-slider {
+  touch-action: manipulation;
+  min-width: 80px;
+}
+
+
+
+    /* Fix globale per iOS */
+    input, textarea, select {
+      font-size: 16px;
+      transform-origin: left top;
+      touch-action: manipulation;
+    }
+    
+    /* Previene zoom su focus */
+    @media screen and (max-width: 767px) {
+      input[type="text"] {
+        font-size: 16px !important;
+      }
+    }
+
+
+.hidden {
+  display: none !important;
+}
+
+
+
+
+
+
+
+
+
+  </style>
+</head>
+
+<body id="main-body">
+  <div class="panel">
+
+    <!-- Prima riga -->
+    <div class="button-row" style="display: flex; gap: 12px; align-items: center;">
+      <div class="btn-wrapper">
+        <button id="save-btn" aria-label="Save current page" style="min-width: 80px; height: 36px;">
+          <span class="btn-icon">💾</span>
+          <span class="btn-label">Save</span>
+        </button>
+      </div>
+
+      <div class="btn-wrapper" style="flex: 1; display: flex; gap: 8px;">
+        <button id="ia-knowledge-btn" aria-label="Show learned keywords" style="flex: 1; height: 36px;">
+          📚 IA
+        </button>
+        <button id="categories-btn" aria-label="Show categories list" style="flex: 1; height: 36px;">
+          📂 CT
+        </button>
+      </div>
+    </div>
+
+    <!-- Seconda riga -->
+    <div class="button-row" style="display: flex; gap: 12px; align-items: center;">
+      <div class="btn-wrapper" id="export-container">
+        <div id="export-default">
+          <button id="export-btn" aria-label="Export links" style="min-width: 80px; height: 36px;">
+            <span class="btn-icon">📤</span>
+            <span class="btn-label">Export</span>
+          </button>
+        </div>
+        <div id="export-options" class="hidden">
+          <button id="export-basic" aria-label="Export basic data">🔹 Basic</button>
+          <button id="export-full" aria-label="Export full data with AI keywords">🔸 With IA</button>
+        </div>
+      </div>
+
+      <div class="btn-wrapper" id="import-container">
+        <div id="import-default">
+          <button id="import-btn" aria-label="Import links" style="min-width: 80px; height: 36px;">
+            <span class="btn-icon">📥</span>
+            <span class="btn-label">Import</span>
+          </button>
+        </div>
+        <div id="import-options" class="hidden">
+          <button id="import-custom" aria-label="Import custom file">🔹 Custom</button>
+          <button id="import-default-btn" aria-label="Import default configuration">🔸 Default</button>
+        </div>
+        <input type="file" id="import-file" accept=".json" />
+      </div>
+
+      <!-- Wrapper a destra con Reset e toggle dark mode -->
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
+        <button id="reset-btn" aria-label="Reset visited links" style="min-width: 80px; height: 36px;">
+          <span class="btn-icon">♻️</span>
+          <span class="btn-label">Reset</span>
+        </button>
+
+        <label id="theme-toggle" aria-label="Toggle dark mode" style="display: flex; align-items: center; cursor: pointer;">
+          <input type="checkbox" id="toggle-theme" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Custom category container -->
+    <div class="custom-category-container">
+      <div class="sort-undo-bar" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
+
+        <div class="sort-options single-pill-selector">
+          <div id="sort-toggle" class="single-pill-option active">By Input</div>
+        </div>
+
+        <div id="zoom-controls" style="display: flex; align-items: center; gap: 6px;">
+          <!-- Slider dimensioni font -->
+          <div id="font-control" style="
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-right: 8px;
+            background: rgba(0,0,0,0.05);
+            padding: 4px 8px;
+            border-radius: 20px;
+          ">
+            <input type="range" id="font-slider" min="0.7" max="1.5" step="0.1" value="1"
+              style="width: 70px; height: 4px; accent-color: #4CAF50;">
+          </div>
+
+          <!-- Pulsanti IA e CT rimossi da qui, sono nella prima riga -->
+        </div>
+
+        <div id="undo-or-toggle" style="display: flex; align-items: center; gap: 8px;">
+          <button id="undo-btn" title="Undo removal" aria-label="Undo last removal">&#8630;</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="list-panel">
+    <div id="url-container" style="position: relative;">
+      <ul id="url-list"></ul>
+
+      <!-- IA Knowledge Box con contenuto dinamico -->
+      <div id="ia-knowledge-box" class="hidden">
+        <div class="ia-content">
+          <!-- Qui verranno iniettati dinamicamente i blocchi categoria + parole chiave -->
+        </div>
+      </div>
+
+      <!-- Finestra CT (categorie) -->
+      <div id="categories-box" class="hidden"></div>
+    </div>
+  </div>
+
+  <!-- Script per registrare il Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: '/' })
+          .then(registration => {
+            console.log('Service Worker registrato con successo:', registration.scope);
+          })
+          .catch(error => {
+            console.error('Registrazione Service Worker fallita:', error);
+          });
+      });
+    }
+  </script>
+
+  <!-- Script principale dell'applicazione -->
+  <script src="./main.js"></script>
+</body>
+</html>
