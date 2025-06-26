@@ -370,6 +370,10 @@ if (fontSlider) {
 
 // === Apertura IA ===
 document.getElementById("ia-knowledge-btn").addEventListener("click", async () => {
+ 
+  preventBodyScroll(true);
+  document.body.classList.add('modal-open');
+  
   const iaBtn = document.getElementById("ia-knowledge-btn");
   const iaBox = document.getElementById("ia-knowledge-box");
   const ctBox = document.getElementById("categories-box");
@@ -379,7 +383,7 @@ document.getElementById("ia-knowledge-btn").addEventListener("click", async () =
   // Chiudi CT box se aperta
   if (!ctBox.classList.contains("hidden")) {
     ctBox.classList.add("hidden");
-    ctBtn.classList.remove("active");
+    document.getElementById("categories-btn").classList.remove("active");
   }
 
   // Toggle IA box
